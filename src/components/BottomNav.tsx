@@ -16,6 +16,10 @@ export function BottomNav() {
 
   return (
     <nav className="bottom-nav">
+      <div className="nav-brand">
+        <span className="nb-logo">🫂</span>
+        <span className="nb-name">GLP Buddy</span>
+      </div>
       {ITEMS.map((it) => (
         <NavLink
           key={it.to}
