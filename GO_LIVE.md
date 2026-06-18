@@ -179,34 +179,39 @@ Then update Supabase **Site URL** (Phase 4) to the Netlify URL.
 
 ---
 
-## Phase 11 — Legal & safety hardening (⏱️ varies) 🌐🧑‍💻
+## Phase 11 — Legal & safety hardening (partly ✅) 🌐🧑‍💻
 
-1. Have a lawyer review `src/pages/legal/Privacy.tsx` and `Terms.tsx`
+1. ⏳ Have a lawyer review `src/pages/legal/Privacy.tsx` and `Terms.tsx`
    (templates) — important given the medication context.
-2. Record **accepted-terms** with a version stamp on the profile.
-3. Add an **18+ age gate** at signup.
-4. Keep the medical-advice disclaimer prominent (already on safety screen + chat).
+2. ✅ **Accepted-terms version** is recorded on acceptance (`TERMS_VERSION` →
+   `profiles.terms_version`, migration `0004`). Bump the constant to re-prompt.
+3. ✅ **18+ age gate** + explicit Terms/Privacy agreement on the safety screen
+   (`profiles.age_confirmed`).
+4. ✅ Medical-advice disclaimer is prominent on the safety screen and in chat.
 
 ---
 
-## Phase 12 — Trust, moderation & abuse (⏱️ a few days) 🧑‍💻🌐
+## Phase 12 — Trust, moderation & abuse (partly ✅) 🧑‍💻🌐
 
-1. Add a staff role (e.g. `is_staff` custom claim) and RLS so only staff read
-   all `reports_blocks`; turn `src/pages/Moderation.tsx` into a real dashboard
-   (resolve/suspend actions writing back to the DB).
-2. Add a chat **content classifier** that flags dosing/medical-advice language
-   (keyword + LLM) and surfaces a reminder.
-3. Add **rate limiting** (Supabase Edge / Cloudflare in front) and basic abuse
-   detection on signups and messaging.
+1. ✅ **Staff role** added: `profiles.is_staff` + RLS so only staff read/update
+   `reports_blocks` (migration `0004`), and the `/moderation` route + Profile
+   link are staff-gated in Supabase mode. Grant staff with
+   `update public.profiles set is_staff = true where id = '<uuid>';`.
+   ⏳ Flesh out resolve/suspend actions to write back to the DB.
+2. ✅ Chat **content classifier** (`src/utils/safety.ts`) flags dosing/medical
+   language and shows a non-blocking reminder. ⏳ Add an LLM/server check to
+   back up the heuristic.
+3. ⏳ Add **rate limiting** (Supabase Edge / Cloudflare) and abuse detection.
 
 ---
 
-## Phase 13 — Performance & polish (⏱️ 1 day) 🧑‍💻
+## Phase 13 — Performance & polish (partly ✅) 🧑‍💻
 
-1. **Code-split** the bundle (it's ~605 KB due to Supabase + Sentry): lazy-load
-   routes with `React.lazy` and split vendors via `build.rollupOptions`.
-2. Run **Lighthouse** (PWA + performance + a11y) and fix top issues.
-3. Accessibility/i18n pass (the app already collects a language field).
+1. ✅ **Code-split** done: routes are `React.lazy`-loaded and react/supabase/
+   sentry vendors are split via `build.rollupOptions.manualChunks`. The initial
+   app chunk is now ~53 KB (was ~617 KB); per-route chunks load on demand.
+2. ⏳ Run **Lighthouse** (PWA + performance + a11y) and fix top issues.
+3. ⏳ Accessibility/i18n pass (the app already collects a language field).
 
 ---
 

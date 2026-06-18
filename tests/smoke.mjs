@@ -49,7 +49,9 @@ await step('bio', async () => {
   await page.getByRole('button', { name: 'Continue' }).click()
 })
 await step('safety accept', async () => {
-  await page.locator('input[type=checkbox]').check()
+  const boxes = page.locator('input[type=checkbox]')
+  const n = await boxes.count()
+  for (let i = 0; i < n; i++) await boxes.nth(i).check()
   await page.getByRole('button', { name: /I agree/ }).click()
 })
 await page.waitForURL('**/matches')
@@ -66,6 +68,12 @@ await step('chat send', async () => {
   await page.locator('button.send').click()
   await page.waitForTimeout(300)
   if (await page.getByText('Hey buddy!').count() < 1) throw new Error('message not sent')
+  // Medical-advice classifier should warn (but not block) on dosing language.
+  await page.locator('input.input').fill('should i increase my dose to 1 mg?')
+  await page.waitForTimeout(200)
+  if (await page.getByText(/looks like dosing or medical advice/i).count() < 1)
+    throw new Error('medical-advice classifier did not warn')
+  await page.locator('input.input').fill('')
 })
 await step('milestone -> timeline', async () => {
   await page.goto(base + '/home', { waitUntil: 'networkidle' })

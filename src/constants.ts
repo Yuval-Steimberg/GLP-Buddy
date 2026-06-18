@@ -142,3 +142,7 @@ export const END_REASONS = [
 
 export const MAX_BUDDIES = 3
 export const TRIO_MIN_ACCOUNT_AGE_DAYS = 90
+
+// Bump when Terms/Privacy change materially; stored on acceptance so you can
+// re-prompt users who accepted an older version.
+export const TERMS_VERSION = '2026-06-18'

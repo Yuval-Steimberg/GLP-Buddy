@@ -5,6 +5,7 @@ import { Avatar } from '../components/Avatar'
 import { Sheet } from '../components/Sheet'
 import { REACTIONS, END_REASONS } from '../constants'
 import { clockTime } from '../utils/format'
+import { looksLikeMedicalAdvice } from '../utils/safety'
 import type { Reaction } from '../types'
 
 export function Chat() {
@@ -107,6 +108,12 @@ export function Chat() {
         })}
       </div>
 
+      {looksLikeMedicalAdvice(text) && (
+        <div className="banner warn" style={{ margin: '0 14px 8px' }}>
+          ⚠️ This looks like dosing or medical advice. Please keep it peer support —
+          for medication questions, point your buddy to their clinician.
+        </div>
+      )}
       <div className="chat-input">
         <input
           className="input"

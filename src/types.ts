@@ -61,6 +61,7 @@ export interface User {
   createdAt: number // epoch ms — used for Buddy Trio eligibility
   acceptedSafety: boolean
   onboardingComplete: boolean
+  isStaff?: boolean
   // Behaviour signals used for Buddy Trio eligibility scoring.
   endedRelationshipCount: number
 }

@@ -100,9 +100,12 @@ export const profiles = {
     if (error) throw error
   },
 
-  async acceptSafety(id: string): Promise<void> {
+  async acceptSafety(id: string, termsVersion: string): Promise<void> {
     const sb = requireSupabase()
-    const { error } = await sb.from('profiles').update({ accepted_safety: true }).eq('id', id)
+    const { error } = await sb
+      .from('profiles')
+      .update({ accepted_safety: true, age_confirmed: true, terms_version: termsVersion })
+      .eq('id', id)
     if (error) throw error
   },
 

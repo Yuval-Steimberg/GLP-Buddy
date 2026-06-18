@@ -20,7 +20,7 @@ import type {
   BuddyTrioGroup,
 } from '../types'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
-import { BUDDY_LEVELS, MAX_BUDDIES, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
+import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { hydrate } from './hydrate'
@@ -282,7 +282,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       void (async () => {
         const me = await api.auth.currentUserId()
         if (!me) return
-        await api.profiles.acceptSafety(me)
+        await api.profiles.acceptSafety(me, TERMS_VERSION)
         await refresh()
       })()
       return

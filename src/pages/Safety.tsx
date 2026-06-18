@@ -5,9 +5,14 @@ import { useStore } from '../store/AppStore'
 export function Safety() {
   const navigate = useNavigate()
   const { acceptSafety } = useStore()
-  const [checked, setChecked] = useState(false)
+  const [understood, setUnderstood] = useState(false)
+  const [adult, setAdult] = useState(false)
+  const [agreedTerms, setAgreedTerms] = useState(false)
+
+  const ready = understood && adult && agreedTerms
 
   const accept = () => {
+    if (!ready) return
     acceptSafety()
     navigate('/matches')
   }
@@ -45,8 +50,8 @@ export function Safety() {
       >
         <input
           type="checkbox"
-          checked={checked}
-          onChange={(e) => setChecked(e.target.checked)}
+          checked={understood}
+          onChange={(e) => setUnderstood(e.target.checked)}
           style={{ width: 22, height: 22, marginTop: 2 }}
         />
         <span style={{ fontWeight: 700, fontSize: 14 }}>
@@ -55,7 +60,39 @@ export function Safety() {
         </span>
       </label>
 
-      <button className="btn" disabled={!checked} onClick={accept}>
+      <label
+        className="card flat list-tap"
+        style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}
+      >
+        <input
+          type="checkbox"
+          checked={adult}
+          onChange={(e) => setAdult(e.target.checked)}
+          style={{ width: 22, height: 22, marginTop: 2 }}
+        />
+        <span style={{ fontWeight: 700, fontSize: 14 }}>
+          I confirm I am 18 years of age or older.
+        </span>
+      </label>
+
+      <label
+        className="card flat list-tap"
+        style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}
+      >
+        <input
+          type="checkbox"
+          checked={agreedTerms}
+          onChange={(e) => setAgreedTerms(e.target.checked)}
+          style={{ width: 22, height: 22, marginTop: 2 }}
+        />
+        <span style={{ fontWeight: 700, fontSize: 14 }}>
+          I agree to the{' '}
+          <a onClick={(e) => { e.preventDefault(); navigate('/terms') }}>Terms</a> and{' '}
+          <a onClick={(e) => { e.preventDefault(); navigate('/privacy') }}>Privacy Policy</a>.
+        </span>
+      </label>
+
+      <button className="btn" disabled={!ready} onClick={accept}>
         I agree — find my buddy
       </button>
     </div>

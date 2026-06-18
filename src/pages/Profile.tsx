@@ -133,11 +133,13 @@ export function Profile() {
             <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Terms of Service</span>
             <span className="muted">›</span>
           </button>
-          <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/moderation')}>
-            <span style={{ fontSize: 18 }}>🛡️</span>
-            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Moderation queue (staff)</span>
-            <span className="muted">›</span>
-          </button>
+          {(!USE_SUPABASE || currentUser.isStaff) && (
+            <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/moderation')}>
+              <span style={{ fontSize: 18 }}>🛡️</span>
+              <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Moderation queue (staff)</span>
+              <span className="muted">›</span>
+            </button>
+          )}
         </div>
       </div>
 

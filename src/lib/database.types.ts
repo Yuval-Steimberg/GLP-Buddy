@@ -18,6 +18,9 @@ export interface ProfileRow {
   bio: string | null
   interests: string[]
   accepted_safety: boolean
+  age_confirmed: boolean
+  terms_version: string | null
+  is_staff: boolean
   onboarding_complete: boolean
   ended_relationship_count: number
   created_at: string

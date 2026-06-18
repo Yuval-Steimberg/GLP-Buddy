@@ -59,6 +59,7 @@ export function rowToUser(r: ProfileRow): User {
     createdAt: ms(r.created_at),
     acceptedSafety: r.accepted_safety,
     onboardingComplete: r.onboarding_complete,
+    isStaff: r.is_staff,
     endedRelationshipCount: r.ended_relationship_count,
   }
 }
