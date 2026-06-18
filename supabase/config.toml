@@ -19,9 +19,9 @@ port = 54323
 
 [auth]
 enabled = true
-# In production set site_url to your domain, e.g. "https://buddyglp.com".
+# In production set site_url to your domain, e.g. "https://glpenpal.com".
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173", "https://buddyglp.com", "https://www.buddyglp.com", "https://glpbuddy-app.netlify.app"]
+additional_redirect_urls = ["http://localhost:5173", "https://glpenpal.com", "https://www.glpenpal.com", "https://buddyglp.netlify.app"]
 jwt_expiry = 3600
 enable_signup = true
 
