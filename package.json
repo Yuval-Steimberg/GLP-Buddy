@@ -1,9 +1,9 @@
 {
-  "name": "glp-buddy",
+  "name": "glpenpal",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "GLP Buddy - a peer-support platform for people on GLP-1 medications.",
+  "description": "GLPenPal - a peer-support platform for people on GLP-1 medications.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

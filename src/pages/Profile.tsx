@@ -113,7 +113,7 @@ export function Profile() {
       <div className="card" style={{ background: 'var(--surface-2)' }}>
         <h3>Trust &amp; safety</h3>
         <p style={{ fontSize: 13 }}>
-          GLP Buddy is peer support — <strong>not medical advice</strong>. Never share dosing
+          GLPenPal is peer support — <strong>not medical advice</strong>. Never share dosing
           guidance, and for concerning symptoms contact a clinician or emergency services.
           You can report or block any buddy from your chat.
         </p>

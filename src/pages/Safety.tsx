@@ -26,7 +26,7 @@ export function Safety() {
 
       <div className="card" style={{ marginTop: 18 }}>
         <p style={{ color: 'var(--ink)', fontWeight: 600 }}>
-          <strong>GLP Buddy is a peer-support platform and does not provide medical
+          <strong>GLPenPal is a peer-support platform and does not provide medical
           advice.</strong>
         </p>
         <p>
@@ -55,7 +55,7 @@ export function Safety() {
           style={{ width: 22, height: 22, marginTop: 2 }}
         />
         <span style={{ fontWeight: 700, fontSize: 14 }}>
-          I understand GLP Buddy is for friendship and peer support, not medical
+          I understand GLPenPal is for friendship and peer support, not medical
           advice.
         </span>
       </label>

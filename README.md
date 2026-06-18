@@ -1,15 +1,15 @@
-# 🫂 GLP Buddy
+# 🫂 GLPenPal
 
-**A GLP buddy who gets it.**
+**A GLP pen pal who gets it.**
 
-GLP Buddy is a mobile-first peer-support web app that matches people using
+GLPenPal is a mobile-first peer-support web app that matches people using
 GLP-1 medications (Ozempic, Wegovy, Mounjaro, Zepbound, Saxenda, and similar)
 with a long-term buddy going through a similar journey.
 
 It is a **friendship, accountability and peer-support platform — not a medical
 advice app, calorie tracker, diet app, or a replacement for a doctor.**
 
-> GLP Buddy helps people using GLP medications build meaningful long-term
+> GLPenPal helps people using GLP medications build meaningful long-term
 > peer-support relationships with people who understand their journey.
 
 ---
@@ -94,7 +94,7 @@ deploying to Netlify. Set `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (see
 node tests/smoke.mjs   # Playwright E2E smoke test of the core flow
 ```
 
-> **Note:** GLP Buddy is for peer support only and does not provide medical
+> **Note:** GLPenPal is for peer support only and does not provide medical
 > advice. Users should never advise each other on dosing, medication changes,
 > stopping medication, or urgent symptoms, and should contact a clinician for
 > medical questions or concerning symptoms.

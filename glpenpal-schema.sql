@@ -1,8 +1,8 @@
--- GLP Buddy — full schema (migrations 0001–0004 combined). Run once in Supabase SQL Editor.
+-- GLPenPal — full schema (migrations 0001–0004 combined). Run once in Supabase SQL Editor.
 
 -- ======================= 0001_init.sql =======================
 -- ===========================================================================
--- GLP Buddy — initial schema
+-- GLPenPal — initial schema
 -- Postgres / Supabase. All access is governed by Row Level Security (RLS):
 -- a user can only read/write their own data or data for buddy relationships /
 -- trios they belong to. Run with `supabase db push` (see PRODUCTION.md).

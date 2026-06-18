@@ -1,4 +1,4 @@
-# 🚀 Taking GLP Buddy to production
+# 🚀 Taking GLPenPal to production
 
 This repo ships in two modes:
 

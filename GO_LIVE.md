@@ -1,4 +1,4 @@
-# ✅ GLP Buddy — complete go-live runbook
+# ✅ GLPenPal — complete go-live runbook
 
 Do these in order. By the end you'll have a real, multi-user app live on the
 internet with accounts, a database, realtime chat, and push notifications.
@@ -19,7 +19,7 @@ Legend: 🧑‍💻 = code in this repo · 🌐 = needs your account/dashboard �
    ```
 3. Clone and install:
    ```bash
-   git clone <your-repo-url> && cd GLP-Buddy
+   git clone <your-repo-url> && cd glpenpal
    npm install
    ```
 

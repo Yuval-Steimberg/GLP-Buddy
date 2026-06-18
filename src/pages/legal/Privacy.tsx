@@ -14,7 +14,7 @@ export function Privacy() {
         <p className="muted" style={{ fontSize: 12 }}>Last updated: template — review with legal counsel before launch.</p>
 
         <h3>Who we are</h3>
-        <p>GLP Buddy ("we") is a peer-support platform that connects people using GLP-1 medications. We are not a healthcare provider and do not provide medical advice.</p>
+        <p>GLPenPal ("we") is a peer-support platform that connects people using GLP-1 medications. We are not a healthcare provider and do not provide medical advice.</p>
 
         <h3>What we collect</h3>
         <p>Account details (email), profile information you provide (nickname, age range, gender, medication, treatment stage, weight ranges, goals, bio and interests), the messages and milestones you create, and basic technical/usage data.</p>
@@ -32,10 +32,10 @@ export function Privacy() {
         <p>You can edit your profile, end buddy relationships, block users, and request export or deletion of your data at any time by contacting support.</p>
 
         <h3>Age</h3>
-        <p>GLP Buddy is for adults 18 and over.</p>
+        <p>GLPenPal is for adults 18 and over.</p>
 
         <div className="banner warn" style={{ marginTop: 12 }}>
-          GLP Buddy does not provide medical advice. For medical questions or concerning symptoms, contact a clinician.
+          GLPenPal does not provide medical advice. For medical questions or concerning symptoms, contact a clinician.
         </div>
       </div>
     </div>

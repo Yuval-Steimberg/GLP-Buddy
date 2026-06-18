@@ -19,7 +19,7 @@ export function BottomNav() {
     <nav className="bottom-nav">
       <div className="nav-brand">
         <span className="nb-logo"><BrandMark size={26} /></span>
-        <span className="nb-name">GLP Buddy</span>
+        <span className="nb-name">GLPenPal</span>
       </div>
       {ITEMS.map((it) => (
         <NavLink

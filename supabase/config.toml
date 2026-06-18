@@ -1,6 +1,6 @@
 # Supabase project config. Set project_id to your linked project ref
 # (Project Settings → General) before running `supabase link`.
-project_id = "glp-buddy"
+project_id = "glpenpal"
 
 [api]
 enabled = true

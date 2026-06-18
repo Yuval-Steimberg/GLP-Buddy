@@ -46,7 +46,7 @@ export function AuthScreen() {
     <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 40 }}>
       <a className="auth-back" onClick={() => navigate('/')}>← Back to home</a>
       <div className="logo"><BrandMark size={56} /></div>
-      <h1 style={{ fontSize: 34 }}>GLP Buddy</h1>
+      <h1 style={{ fontSize: 34 }}>GLPenPal</h1>
       <div className="tag" style={{ fontSize: 16 }}>
         {mode === 'signin' ? 'Welcome back' : 'Create your account'}
       </div>
@@ -87,14 +87,14 @@ export function AuthScreen() {
 
       {!magicSent && (
         <p className="muted" style={{ fontSize: 13 }}>
-          {mode === 'signin' ? 'New to GLP Buddy?' : 'Already have an account?'}{' '}
+          {mode === 'signin' ? 'New to GLPenPal?' : 'Already have an account?'}{' '}
           <a onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ fontWeight: 800, cursor: 'pointer' }}>
             {mode === 'signin' ? 'Create one' : 'Sign in'}
           </a>
         </p>
       )}
       <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-        Peer support only. GLP Buddy does not provide medical advice.
+        Peer support only. GLPenPal does not provide medical advice.
       </p>
     </div>
   )

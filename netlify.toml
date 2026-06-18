@@ -1,4 +1,4 @@
-# Netlify deployment config for the GLP Buddy SPA.
+# Netlify deployment config for the GLPenPal SPA.
 [build]
   command = "npm run build"
   publish = "dist"

@@ -8,9 +8,9 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {}
   } catch (_e) {
-    data = { title: 'GLP Buddy', body: event.data ? event.data.text() : '' }
+    data = { title: 'GLPenPal', body: event.data ? event.data.text() : '' }
   }
-  const title = data.title || 'GLP Buddy'
+  const title = data.title || 'GLPenPal'
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',

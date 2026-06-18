@@ -25,7 +25,7 @@ import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { hydrate } from './hydrate'
 
-const STORAGE_KEY = 'glp-buddy-state-v1'
+const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
 
 function genId(prefix: string): string {

@@ -23,7 +23,7 @@ export function Landing() {
       <header className="mkt-nav">
         <div className="mkt-brand">
           <BrandMark size={30} />
-          <span className="mkt-brand-name">GLP Buddy</span>
+          <span className="mkt-brand-name">GLPenPal</span>
         </div>
         <div className="mkt-nav-actions">
           <a className="mkt-link" onClick={scrollTo('how')}>How it works</a>
@@ -38,7 +38,7 @@ export function Landing() {
         <div className="mkt-hero-text">
           <div className="mkt-eyebrow"><Icon name="users" size={15} /> Peer support for your GLP-1 journey</div>
           <h1 className="mkt-h1">
-            A GLP buddy who <span className="grad">gets it</span>.
+            A GLP pen pal who <span className="grad">gets it</span>.
           </h1>
           <p className="mkt-sub">
             Get matched 1:1 with someone on a similar medication, stage and goals —
@@ -120,14 +120,14 @@ export function Landing() {
       <footer className="mkt-footer">
         <div className="mkt-brand">
           <BrandMark size={26} />
-          <span className="mkt-brand-name">GLP Buddy</span>
+          <span className="mkt-brand-name">GLPenPal</span>
         </div>
         <div className="mkt-foot-links">
           <a onClick={() => navigate('/terms')}>Terms</a>
           <a onClick={() => navigate('/privacy')}>Privacy</a>
         </div>
         <p className="mkt-disclaimer">
-          Peer support only. GLP Buddy does not provide medical advice. For medical
+          Peer support only. GLPenPal does not provide medical advice. For medical
           questions or concerning symptoms, contact a clinician.
         </p>
       </footer>

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// GLP Buddy — core data models
+// GLPenPal — core data models
 // These mirror the tables/models an eventual backend would expose. For the MVP
 // they live entirely client-side and are persisted to localStorage.
 // ---------------------------------------------------------------------------
