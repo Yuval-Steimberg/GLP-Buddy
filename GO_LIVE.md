@@ -163,7 +163,7 @@ Then update Supabase **Site URL** (Phase 4) to the Netlify URL.
 
 ## Phase 9 — Custom domain & HTTPS (⏱️ 30 min) 🌐
 
-1. Netlify **Domain settings → Add custom domain** (e.g. `glpbuddy.app`).
+1. Netlify **Domain settings → Add custom domain** (e.g. `buddyglp.com`).
 2. Point DNS to Netlify; HTTPS is auto-provisioned via Let's Encrypt.
 3. Update Supabase **Site URL**/redirects and `VITE_VAPID_SUBJECT` to the domain.
 4. Confirm the PWA installs ("Add to Home Screen") on a phone over HTTPS.
