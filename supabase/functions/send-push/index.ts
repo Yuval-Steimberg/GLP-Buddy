@@ -18,7 +18,7 @@ const admin = createClient(
 )
 
 webpush.setVapidDetails(
-  Deno.env.get('VAPID_SUBJECT') ?? 'mailto:support@glpbuddy.app',
+  Deno.env.get('VAPID_SUBJECT') ?? 'mailto:support@glpbuddy.com',
   Deno.env.get('VAPID_PUBLIC_KEY')!,
   Deno.env.get('VAPID_PRIVATE_KEY')!,
 )

@@ -143,10 +143,11 @@ GitHub integration.
 - [ ] **Code-split** the bundle (Sentry/Supabase) to trim initial JS.
 - [ ] **Accessibility & i18n** pass (the app already collects a language field).
 
-## Remaining integration note
+## Backend integration — done
 
-`src/services/api.ts` is the production data layer and mirrors the local store's
-surface. The local `AppStore` still drives state in demo mode. To run fully on
-Supabase, hydrate `AppStore` from `api.*` on load and route its actions through
-`api.*` (each method has a 1:1 counterpart). The auth gate, schema, RPC, and
-realtime subscriptions are already in place to support this.
+`AppStore` is now fully wired to Supabase when `USE_SUPABASE` is true: it
+hydrates from `src/store/hydrate.ts` on load/auth-change and routes every action
+through `src/services/api.ts`, with realtime notifications and server-side notify
+triggers (`0003_notify_triggers.sql`). Local demo mode is unchanged. The only
+remaining work is operational (provision the project, run migrations, deploy) and
+a live two-account verification — see GO_LIVE.md Phase 3.

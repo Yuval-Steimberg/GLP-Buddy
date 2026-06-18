@@ -19,8 +19,9 @@ port = 54323
 
 [auth]
 enabled = true
+# In production set site_url to your domain, e.g. "https://glpbuddy.com".
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173"]
+additional_redirect_urls = ["http://localhost:5173", "https://glpbuddy.com", "https://www.glpbuddy.com"]
 jwt_expiry = 3600
 enable_signup = true
 

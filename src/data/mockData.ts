@@ -150,6 +150,25 @@ export const MOCK_USERS: User[] = [
   }),
 ]
 
+// Empty state for Supabase mode — no mock users; data is hydrated from the
+// server after authentication.
+export function buildEmptyState(): AppState {
+  return {
+    currentUserId: null,
+    users: {},
+    approvals: [],
+    relationships: [],
+    messages: [],
+    milestones: [],
+    timeline: [],
+    notifications: [],
+    reports: [],
+    trios: [],
+    trioMessages: [],
+    passedUserIds: [],
+  }
+}
+
 export function buildInitialState(): AppState {
   const users: Record<string, User> = {}
   MOCK_USERS.forEach((u) => {

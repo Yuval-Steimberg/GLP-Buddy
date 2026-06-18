@@ -19,8 +19,11 @@ import type {
   MilestoneType,
   BuddyTrioGroup,
 } from '../types'
-import { buildInitialState } from '../data/mockData'
+import { buildEmptyState, buildInitialState } from '../data/mockData'
 import { BUDDY_LEVELS, MAX_BUDDIES, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
+import { USE_SUPABASE } from '../lib/env'
+import * as api from '../services/api'
+import { hydrate } from './hydrate'
 
 const STORAGE_KEY = 'glp-buddy-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -30,6 +33,8 @@ function genId(prefix: string): string {
 }
 
 function load(): AppState {
+  // Supabase mode: start empty; real data is hydrated after auth.
+  if (USE_SUPABASE) return buildEmptyState()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw) as AppState
@@ -140,13 +145,54 @@ const AppStoreContext = createContext<AppStoreValue | null>(null)
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(load)
 
+  // Local mode: persist the whole cache to localStorage. (Supabase mode is the
+  // source of truth, so we never cache another user's data to disk.)
   useEffect(() => {
+    if (USE_SUPABASE) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     } catch {
       /* ignore */
     }
   }, [state])
+
+  // Supabase mode: pull a fresh snapshot for the signed-in user. Called on
+  // load, on auth change, and after every mutating action (refetch semantics).
+  const refresh = useCallback(async () => {
+    if (!USE_SUPABASE) return
+    const me = await api.auth.currentUserId()
+    if (!me) {
+      setState(buildEmptyState())
+      return
+    }
+    try {
+      setState(await hydrate(me))
+    } catch (e) {
+      console.error('hydrate failed', e)
+    }
+  }, [])
+
+  // Supabase mode: hydrate on auth changes and subscribe to realtime so a
+  // buddy's messages / notifications appear without a manual refresh.
+  useEffect(() => {
+    if (!USE_SUPABASE) return
+    let cleanupRealtime: (() => void) | undefined
+    void refresh()
+    const unsub = api.auth.onAuthChange((userId) => {
+      cleanupRealtime?.()
+      cleanupRealtime = undefined
+      if (!userId) {
+        setState(buildEmptyState())
+        return
+      }
+      void refresh()
+      cleanupRealtime = api.notifications.subscribe(userId, () => void refresh())
+    })
+    return () => {
+      unsub()
+      cleanupRealtime?.()
+    }
+  }, [refresh])
 
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : null
 
@@ -175,6 +221,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   // ---- onboarding --------------------------------------------------------
   const completeOnboarding = useCallback((profile: Profile) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (!me) return
+        await api.profiles.saveOnboarding(me, profile)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       const id = prev.currentUserId ?? genId('me')
       const user: User = {
@@ -220,9 +275,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       })
       return next
     })
-  }, [pushNotification])
+  }, [pushNotification, refresh])
 
   const acceptSafety = useCallback(() => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (!me) return
+        await api.profiles.acceptSafety(me)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       const u = prev.users[prev.currentUserId]
@@ -231,9 +295,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         users: { ...prev.users, [u.id]: { ...u, acceptedSafety: true } },
       }
     })
-  }, [])
+  }, [refresh])
 
   const resetApp = useCallback(() => {
+    if (USE_SUPABASE) {
+      void api.auth.signOut()
+      return
+    }
     localStorage.removeItem(STORAGE_KEY)
     setState(buildInitialState())
   }, [])
@@ -280,6 +348,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const connectWith = useCallback(
     (userId: string) => {
+      if (USE_SUPABASE) {
+        // approve_buddy RPC records the approval and, if mutual, atomically
+        // creates the relationship + notifications server-side.
+        void (async () => {
+          try {
+            await api.matching.approveBuddy(userId)
+          } catch (e) {
+            console.error('approveBuddy failed', e)
+          }
+          await refresh()
+        })()
+        return
+      }
       setState((prev) => {
         if (!prev.currentUserId) return prev
         const me = prev.currentUserId
@@ -357,11 +438,22 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         })
       }, 3500)
     },
-    [pushNotification, createMatchInDraft],
+    [pushNotification, createMatchInDraft, refresh],
   )
 
   const approveIncoming = useCallback(
     (userId: string) => {
+      if (USE_SUPABASE) {
+        void (async () => {
+          try {
+            await api.matching.approveBuddy(userId)
+          } catch (e) {
+            console.error('approveBuddy failed', e)
+          }
+          await refresh()
+        })()
+        return
+      }
       setState((prev) => {
         if (!prev.currentUserId) return prev
         const me = prev.currentUserId
@@ -390,10 +482,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         return next
       })
     },
-    [pushNotification, createMatchInDraft],
+    [pushNotification, createMatchInDraft, refresh],
   )
 
   const declineIncoming = useCallback((userId: string) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.matching.pass(me, userId)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       const me = prev.currentUserId
@@ -407,19 +507,35 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         passedUserIds: [...prev.passedUserIds, userId],
       }
     })
-  }, [])
+  }, [refresh])
 
   const passUser = useCallback((userId: string) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.matching.pass(me, userId)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => ({
       ...prev,
       passedUserIds: [...new Set([...prev.passedUserIds, userId])],
     }))
-  }, [])
+  }, [refresh])
 
   // ---- chat --------------------------------------------------------------
   const sendMessage = useCallback((relationshipId: string, text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.chat.send(relationshipId, me, trimmed)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       return {
@@ -437,9 +553,21 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh])
 
   const reactToMessage = useCallback((messageId: string, reaction: Reaction) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const msg = state.messages.find((m) => m.id === messageId)
+        if (!msg) return
+        const reactions = msg.reactions.includes(reaction)
+          ? msg.reactions.filter((r) => r !== reaction)
+          : [...msg.reactions, reaction]
+        await api.chat.react(messageId, reactions)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => ({
       ...prev,
       messages: prev.messages.map((m) =>
@@ -453,11 +581,41 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           : m,
       ),
     }))
-  }, [])
+  }, [refresh, state.messages])
 
   // ---- milestones + timeline --------------------------------------------
   const addMilestone = useCallback(
     (relationshipId: string, type: MilestoneType, note: string) => {
+      if (USE_SUPABASE) {
+        void (async () => {
+          const me = await api.auth.currentUserId()
+          if (!me) return
+          await api.milestones.add(relationshipId, me, type, note)
+          await api.timeline.addEvent(
+            relationshipId,
+            me,
+            'milestone',
+            note ? `${type} — ${note}` : type,
+          )
+          // Milestone-driven buddy-level unlocks (the buddy's "milestone added"
+          // notification is created server-side by a DB trigger).
+          const rel = state.relationships.find((r) => r.id === relationshipId)
+          if (rel) {
+            const newLevels: string[] = []
+            if (type === 'Overcame plateau' && !rel.levelKeys.includes('plateau')) newLevels.push('plateau')
+            if (type === 'Reached goal weight' && !rel.levelKeys.includes('goal_reached')) newLevels.push('goal_reached')
+            if (newLevels.length) {
+              await api.relationships.setLevels(relationshipId, [...rel.levelKeys, ...newLevels])
+              for (const key of newLevels) {
+                const lvl = BUDDY_LEVELS.find((l) => l.key === key)!
+                await api.timeline.addEvent(relationshipId, me, 'level', `Buddy level unlocked: ${lvl.emoji} ${lvl.label}`)
+              }
+            }
+          }
+          await refresh()
+        })()
+        return
+      }
       setState((prev) => {
         if (!prev.currentUserId) return prev
         const me = prev.currentUserId
@@ -536,10 +694,22 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         return next
       })
     },
-    [pushNotification],
+    [pushNotification, refresh, state.relationships],
   )
 
   const reactToTimeline = useCallback((eventId: string, reaction: Reaction) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const ev = state.timeline.find((e) => e.id === eventId)
+        if (!ev) return
+        const reactions = ev.reactions.includes(reaction)
+          ? ev.reactions.filter((r) => r !== reaction)
+          : [...ev.reactions, reaction]
+        await api.timeline.react(eventId, reactions)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => ({
       ...prev,
       timeline: prev.timeline.map((e) =>
@@ -553,11 +723,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           : e,
       ),
     }))
-  }, [])
+  }, [refresh, state.timeline])
 
   const commentOnTimeline = useCallback((relationshipId: string, text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.timeline.addEvent(relationshipId, me, 'comment', trimmed)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       return {
@@ -576,7 +754,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh])
 
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
@@ -587,6 +765,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       'However today goes, you\'re doing great 🎉',
     ]
     const text = messages[Math.floor(Math.random() * messages.length)]
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.chat.send(relationshipId, me, text)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       return {
@@ -604,11 +790,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh])
 
   const addReflection = useCallback((relationshipId: string, text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.timeline.addEvent(relationshipId, me, 'reflection', trimmed)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       return {
@@ -627,18 +821,34 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh])
 
   // ---- notifications -----------------------------------------------------
   const markAllRead = useCallback(() => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.notifications.markAllRead(me)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => ({
       ...prev,
       notifications: prev.notifications.map((n) => ({ ...n, read: true })),
     }))
-  }, [])
+  }, [refresh])
 
   // ---- trust + safety ----------------------------------------------------
   const reportUser = useCallback((userId: string, reason: string) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.safety.report(me, userId, reason)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       return {
@@ -656,9 +866,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh])
 
   const blockUser = useCallback((userId: string) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (!me) return
+        await api.safety.block(me, userId)
+        await api.matching.pass(me, userId)
+        const rel = state.relationships.find(
+          (r) => r.active && r.userIds.includes(userId) && r.userIds.includes(me),
+        )
+        if (rel) await api.relationships.end(rel.id, 'Blocked')
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       const me = prev.currentUserId
@@ -684,9 +908,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         passedUserIds: [...new Set([...prev.passedUserIds, userId])],
       }
     })
-  }, [])
+  }, [refresh, state.relationships])
 
   const endRelationship = useCallback((relationshipId: string, reason: string) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        await api.relationships.end(relationshipId, reason)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       const u = prev.users[prev.currentUserId]
@@ -705,7 +936,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         passedUserIds: prev.passedUserIds.filter((id) => id !== otherId),
       }
     })
-  }, [])
+  }, [refresh])
 
   // ---- buddy trio --------------------------------------------------------
   const trioEligibility = useCallback((): TrioEligibility => {
@@ -737,6 +968,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const createTrio = useCallback(
     (buddyUserIds: string[]) => {
       if (buddyUserIds.length !== 2) return
+      if (USE_SUPABASE) {
+        void (async () => {
+          const me = await api.auth.currentUserId()
+          if (me) await api.trios.create(me, buddyUserIds)
+          await refresh()
+        })()
+        return
+      }
       setState((prev) => {
         if (!prev.currentUserId) return prev
         const me = prev.currentUserId
@@ -780,12 +1019,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         })
       }, 3000)
     },
-    [pushNotification],
+    [pushNotification, refresh],
   )
 
   const sendTrioMessage = useCallback((trioId: string, text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    if (USE_SUPABASE) {
+      void (async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.trios.send(trioId, me, trimmed)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => {
       if (!prev.currentUserId) return prev
       return {
@@ -803,9 +1050,21 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh])
 
   const reactToTrioMessage = useCallback((messageId: string, reaction: Reaction) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        const msg = state.trioMessages.find((m) => m.id === messageId)
+        if (!msg) return
+        const reactions = msg.reactions.includes(reaction)
+          ? msg.reactions.filter((r) => r !== reaction)
+          : [...msg.reactions, reaction]
+        await api.trios.reactToMessage(messageId, reactions)
+        await refresh()
+      })()
+      return
+    }
     setState((prev) => ({
       ...prev,
       trioMessages: prev.trioMessages.map((m) =>
@@ -819,7 +1078,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           : m,
       ),
     }))
-  }, [])
+  }, [refresh, state.trioMessages])
 
   // Demo helper: backdate the account + an active relationship so reviewers
   // can experience the unlocked Buddy Trio flow without waiting 90 days.

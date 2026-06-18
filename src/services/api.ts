@@ -138,6 +138,17 @@ export const matching = {
     if (error) throw error
   },
 
+  // Every approval involving the user (sent or received), any status.
+  async allForUser(userId: string): Promise<ApprovalRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('match_approvals')
+      .select('*')
+      .or(`from_user.eq.${userId},to_user.eq.${userId}`)
+    if (error) throw error
+    return data ?? []
+  },
+
   async incoming(userId: string): Promise<ApprovalRow[]> {
     const sb = requireSupabase()
     const { data, error } = await sb
@@ -179,6 +190,15 @@ export const relationships = {
     const { error } = await sb
       .from('relationships')
       .update({ active: false, end_reason: reason })
+      .eq('id', relationshipId)
+    if (error) throw error
+  },
+
+  async setLevels(relationshipId: string, levelKeys: string[]): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('relationships')
+      .update({ level_keys: levelKeys })
       .eq('id', relationshipId)
     if (error) throw error
   },
@@ -229,6 +249,17 @@ export const chat = {
 }
 
 export const milestones = {
+  async list(relationshipId: string): Promise<MilestoneRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('milestones')
+      .select('*')
+      .eq('relationship_id', relationshipId)
+      .order('created_at')
+    if (error) throw error
+    return data ?? []
+  },
+
   async add(relationshipId: string, authorId: string, type: string, note: string): Promise<MilestoneRow> {
     const sb = requireSupabase()
     const { data, error } = await sb
@@ -360,6 +391,29 @@ export const trios = {
     const { data, error } = await sb.from('trio_members').select('*').eq('trio_id', trioId)
     if (error) throw error
     return data ?? []
+  },
+
+  // All trios (active + pending) the user belongs to, with their members.
+  async mine(userId: string): Promise<{ trio: TrioRow; members: TrioMemberRow[] }[]> {
+    const sb = requireSupabase()
+    const { data: rows, error } = await sb
+      .from('trio_members')
+      .select('trio_id')
+      .eq('user_id', userId)
+    if (error) throw error
+    const ids = [...new Set((rows ?? []).map((r) => r.trio_id))]
+    const out: { trio: TrioRow; members: TrioMemberRow[] }[] = []
+    for (const id of ids) {
+      const { data: trio } = await sb.from('trios').select('*').eq('id', id).maybeSingle()
+      if (trio) out.push({ trio, members: await this.members(id) })
+    }
+    return out
+  },
+
+  async reactToMessage(messageId: string, reactions: string[]): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('trio_messages').update({ reactions }).eq('id', messageId)
+    if (error) throw error
   },
 
   async approve(trioId: string, userId: string): Promise<void> {
