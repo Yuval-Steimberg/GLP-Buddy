@@ -6,6 +6,7 @@ import { MAX_BUDDIES } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
 import { auth } from '../services/api'
 import { enablePush, pushSupported } from '../lib/push'
+import { Icon } from '../components/Icon'
 
 export function Profile() {
   const navigate = useNavigate()
@@ -14,6 +15,18 @@ export function Profile() {
   const p = currentUser.profile
   const rels = activeRelationships()
   const elig = trioEligibility()
+
+  // Log out: in Supabase mode end the session (App then shows the landing);
+  // in demo mode clear the local profile on this device.
+  const logout = async () => {
+    if (USE_SUPABASE) {
+      await auth.signOut()
+      navigate('/')
+    } else if (confirm('Log out? This clears the demo profile on this device.')) {
+      resetApp()
+      navigate('/')
+    }
+  }
 
   const info: [string, string][] = [
     ['Age', p.ageRange],
@@ -144,18 +157,18 @@ export function Profile() {
       </div>
 
       <button className="btn outline" onClick={() => navigate('/onboarding')}>Edit profile</button>
-      {USE_SUPABASE && (
-        <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => auth.signOut()}>
-          Sign out
+      <button className="btn secondary" style={{ marginTop: 8 }} onClick={logout}>
+        <Icon name="logout" size={18} /> Log out
+      </button>
+      {!USE_SUPABASE && (
+        <button
+          className="btn ghost"
+          style={{ marginTop: 8, color: 'var(--danger)' }}
+          onClick={() => { if (confirm('Reset the demo and clear all data?')) { resetApp(); navigate('/') } }}
+        >
+          Reset demo data
         </button>
       )}
-      <button
-        className="btn ghost"
-        style={{ marginTop: 8, color: 'var(--danger)' }}
-        onClick={() => { if (confirm('Reset the demo and clear all data?')) { resetApp(); navigate('/') } }}
-      >
-        Reset demo data
-      </button>
     </div>
   )
 }
