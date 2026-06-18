@@ -78,6 +78,22 @@ npm run build    # type-check + production build
 npm run preview  # preview the production build
 ```
 
+## 🚀 Production
+
+The app runs in **local demo mode** by default (mock data, no accounts). It also
+ships a full **Supabase backend** (auth, Postgres + row-level security, realtime,
+web push), is an installable **PWA**, and includes Netlify deploy config, CI, and
+legal/safety pages.
+
+To go live, see **[PRODUCTION.md](PRODUCTION.md)** — it walks through creating the
+Supabase project, running the migrations in `supabase/`, enabling push, and
+deploying to Netlify. Set `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (see
+`.env.example`) to switch from demo mode to the real backend.
+
+```bash
+node tests/smoke.mjs   # Playwright E2E smoke test of the core flow
+```
+
 > **Note:** GLP Buddy is for peer support only and does not provide medical
 > advice. Users should never advise each other on dosing, medication changes,
 > stopping medication, or urgent symptoms, and should contact a clinician for

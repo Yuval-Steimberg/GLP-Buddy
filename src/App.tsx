@@ -13,12 +13,40 @@ import { Timeline } from './pages/Timeline'
 import { Notifications } from './pages/Notifications'
 import { Profile } from './pages/Profile'
 import { Trio } from './pages/Trio'
+import { Privacy } from './pages/legal/Privacy'
+import { Terms } from './pages/legal/Terms'
+import { Moderation } from './pages/Moderation'
+import { AuthScreen } from './auth/AuthScreen'
+import { useSession } from './auth/useSession'
+import { USE_SUPABASE } from './lib/env'
 
 const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pending', '/trio', '/notifications']
 
 export function App() {
   const { currentUser } = useStore()
   const location = useLocation()
+  const session = useSession()
+
+  // Supabase mode: require a real session before anything else.
+  if (USE_SUPABASE) {
+    if (session.loading) {
+      return (
+        <div className="app-shell">
+          <div className="empty" style={{ marginTop: 120 }}>
+            <div className="big">🫂</div>
+            <p>Loading…</p>
+          </div>
+        </div>
+      )
+    }
+    if (!session.userId) {
+      return (
+        <div className="app-shell">
+          <AuthScreen />
+        </div>
+      )
+    }
+  }
 
   const onboarded = currentUser?.onboardingComplete
   const safe = currentUser?.acceptedSafety
@@ -46,6 +74,11 @@ export function App() {
         <Route path="/notifications" element={<Guard><Notifications /></Guard>} />
         <Route path="/profile" element={<Guard><Profile /></Guard>} />
         <Route path="/trio" element={<Guard><Trio /></Guard>} />
+        <Route path="/moderation" element={<Guard><Moderation /></Guard>} />
+
+        {/* Public legal pages */}
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

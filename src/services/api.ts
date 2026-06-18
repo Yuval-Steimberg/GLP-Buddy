@@ -1,0 +1,398 @@
+// ===========================================================================
+// Production data layer — every server operation the app needs, backed by
+// Supabase with Row Level Security. The local demo store (AppStore.tsx) mirrors
+// this surface in-memory; flipping VITE_BACKEND=supabase routes through here.
+// ===========================================================================
+import { requireSupabase, supabase } from '../lib/supabase'
+import type {
+  ApprovalRow,
+  MessageRow,
+  MilestoneRow,
+  NotificationRow,
+  ProfileRow,
+  RelationshipRow,
+  TimelineEventRow,
+  TrioMemberRow,
+  TrioMessageRow,
+  TrioRow,
+} from '../lib/database.types'
+import type { Profile } from '../types'
+
+// ---- Auth -----------------------------------------------------------------
+export const auth = {
+  async signUp(email: string, password: string, nickname: string) {
+    const sb = requireSupabase()
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { nickname } },
+    })
+    if (error) throw error
+    return data
+  },
+
+  async signIn(email: string, password: string) {
+    const sb = requireSupabase()
+    const { data, error } = await sb.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return data
+  },
+
+  async sendMagicLink(email: string) {
+    const sb = requireSupabase()
+    const { error } = await sb.auth.signInWithOtp({ email })
+    if (error) throw error
+  },
+
+  async signOut() {
+    await supabase?.auth.signOut()
+  },
+
+  async currentUserId(): Promise<string | null> {
+    if (!supabase) return null
+    const { data } = await supabase.auth.getUser()
+    return data.user?.id ?? null
+  },
+
+  onAuthChange(cb: (userId: string | null) => void) {
+    if (!supabase) return () => {}
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => {
+      cb(session?.user?.id ?? null)
+    })
+    return () => data.subscription.unsubscribe()
+  },
+}
+
+// ---- Profiles -------------------------------------------------------------
+function profileToRow(p: Profile): Partial<ProfileRow> {
+  return {
+    nickname: p.nickname,
+    age_range: p.ageRange,
+    gender: p.gender,
+    gender_preference: p.genderPreference,
+    language: p.language,
+    country: p.country,
+    medication: p.medication,
+    treatment_stage: p.treatmentStage,
+    current_weight_range: p.currentWeightRange,
+    goal_weight_range: p.goalWeightRange,
+    main_goal: p.mainGoal,
+    communication_preference: p.communicationPreference,
+    bio: p.bio,
+    interests: p.interests,
+  }
+}
+
+export const profiles = {
+  async get(id: string): Promise<ProfileRow | null> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.from('profiles').select('*').eq('id', id).maybeSingle()
+    if (error) throw error
+    return data
+  },
+
+  async saveOnboarding(id: string, p: Profile): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('profiles')
+      .update({ ...profileToRow(p), onboarding_complete: true })
+      .eq('id', id)
+    if (error) throw error
+  },
+
+  async acceptSafety(id: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('profiles').update({ accepted_safety: true }).eq('id', id)
+    if (error) throw error
+  },
+
+  // Candidate pool for match discovery (RLS lets authenticated users read all
+  // profiles; ranking/highlights are computed client-side in scoreMatch).
+  async candidates(excludeId: string): Promise<ProfileRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('profiles')
+      .select('*')
+      .neq('id', excludeId)
+      .eq('onboarding_complete', true)
+    if (error) throw error
+    return data ?? []
+  },
+}
+
+// ---- Matching -------------------------------------------------------------
+export const matching = {
+  // Atomic mutual-match: see supabase/migrations/0002_match_rpc.sql.
+  async approveBuddy(targetId: string): Promise<string | null> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('approve_buddy', { target: targetId })
+    if (error) throw error
+    return (data as string | null) ?? null
+  },
+
+  async pass(fromId: string, targetId: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('match_approvals')
+      .upsert({ from_user: fromId, to_user: targetId, status: 'passed' })
+    if (error) throw error
+  },
+
+  async incoming(userId: string): Promise<ApprovalRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('match_approvals')
+      .select('*')
+      .eq('to_user', userId)
+      .eq('status', 'pending')
+    if (error) throw error
+    return data ?? []
+  },
+
+  async outgoing(userId: string): Promise<ApprovalRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('match_approvals')
+      .select('*')
+      .eq('from_user', userId)
+      .eq('status', 'pending')
+    if (error) throw error
+    return data ?? []
+  },
+}
+
+// ---- Relationships --------------------------------------------------------
+export const relationships = {
+  async active(userId: string): Promise<RelationshipRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('relationships')
+      .select('*')
+      .or(`user_a.eq.${userId},user_b.eq.${userId}`)
+      .eq('active', true)
+    if (error) throw error
+    return data ?? []
+  },
+
+  async end(relationshipId: string, reason: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('relationships')
+      .update({ active: false, end_reason: reason })
+      .eq('id', relationshipId)
+    if (error) throw error
+  },
+}
+
+// ---- Messages / milestones / timeline ------------------------------------
+export const chat = {
+  async list(relationshipId: string): Promise<MessageRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('messages')
+      .select('*')
+      .eq('relationship_id', relationshipId)
+      .order('created_at')
+    if (error) throw error
+    return data ?? []
+  },
+
+  async send(relationshipId: string, senderId: string, text: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('messages')
+      .insert({ relationship_id: relationshipId, sender_id: senderId, text })
+    if (error) throw error
+  },
+
+  async react(messageId: string, reactions: string[]): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('messages').update({ reactions }).eq('id', messageId)
+    if (error) throw error
+  },
+
+  // Realtime: invoke cb whenever a message lands for this relationship.
+  subscribe(relationshipId: string, cb: (m: MessageRow) => void) {
+    const sb = requireSupabase()
+    const channel = sb
+      .channel(`messages:${relationshipId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `relationship_id=eq.${relationshipId}` },
+        (payload) => cb(payload.new as MessageRow),
+      )
+      .subscribe()
+    return () => {
+      void sb.removeChannel(channel)
+    }
+  },
+}
+
+export const milestones = {
+  async add(relationshipId: string, authorId: string, type: string, note: string): Promise<MilestoneRow> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('milestones')
+      .insert({ relationship_id: relationshipId, author_id: authorId, type, note })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+}
+
+export const timeline = {
+  async list(relationshipId: string): Promise<TimelineEventRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('timeline_events')
+      .select('*')
+      .eq('relationship_id', relationshipId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data ?? []
+  },
+
+  async addEvent(
+    relationshipId: string,
+    authorId: string,
+    type: string,
+    text: string,
+    refId?: string,
+  ): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('timeline_events').insert({
+      relationship_id: relationshipId,
+      author_id: authorId,
+      type,
+      text,
+      ref_id: refId ?? null,
+    })
+    if (error) throw error
+  },
+
+  async react(eventId: string, reactions: string[]): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('timeline_events').update({ reactions }).eq('id', eventId)
+    if (error) throw error
+  },
+}
+
+// ---- Notifications --------------------------------------------------------
+export const notifications = {
+  async list(userId: string): Promise<NotificationRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data ?? []
+  },
+
+  async markAllRead(userId: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', userId)
+      .eq('read', false)
+    if (error) throw error
+  },
+
+  subscribe(userId: string, cb: (n: NotificationRow) => void) {
+    const sb = requireSupabase()
+    const channel = sb
+      .channel(`notifications:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        (payload) => cb(payload.new as NotificationRow),
+      )
+      .subscribe()
+    return () => {
+      void sb.removeChannel(channel)
+    }
+  },
+}
+
+// ---- Trust & safety -------------------------------------------------------
+export const safety = {
+  async report(reporterId: string, targetUserId: string, reason: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('reports_blocks')
+      .insert({ reporter_id: reporterId, target_user_id: targetUserId, kind: 'report', reason })
+    if (error) throw error
+  },
+
+  async block(reporterId: string, targetUserId: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('reports_blocks')
+      .insert({ reporter_id: reporterId, target_user_id: targetUserId, kind: 'block', reason: 'Blocked' })
+    if (error) throw error
+  },
+}
+
+// ---- Buddy Trio -----------------------------------------------------------
+export const trios = {
+  async create(creatorId: string, buddyIds: string[]): Promise<TrioRow> {
+    const sb = requireSupabase()
+    const { data: trio, error } = await sb
+      .from('trios')
+      .insert({ created_by: creatorId, active: false })
+      .select()
+      .single()
+    if (error) throw error
+    const members = [
+      { trio_id: trio.id, user_id: creatorId, approved: true },
+      ...buddyIds.map((id) => ({ trio_id: trio.id, user_id: id, approved: false })),
+    ]
+    const { error: mErr } = await sb.from('trio_members').insert(members)
+    if (mErr) throw mErr
+    return trio
+  },
+
+  async members(trioId: string): Promise<TrioMemberRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.from('trio_members').select('*').eq('trio_id', trioId)
+    if (error) throw error
+    return data ?? []
+  },
+
+  async approve(trioId: string, userId: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('trio_members')
+      .update({ approved: true })
+      .eq('trio_id', trioId)
+      .eq('user_id', userId)
+    if (error) throw error
+    // Activate once everyone has approved.
+    const all = await this.members(trioId)
+    if (all.length > 0 && all.every((m) => m.approved)) {
+      await sb.from('trios').update({ active: true }).eq('id', trioId)
+    }
+  },
+
+  async messages(trioId: string): Promise<TrioMessageRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('trio_messages')
+      .select('*')
+      .eq('trio_id', trioId)
+      .order('created_at')
+    if (error) throw error
+    return data ?? []
+  },
+
+  async send(trioId: string, senderId: string, text: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('trio_messages')
+      .insert({ trio_id: trioId, sender_id: senderId, text })
+    if (error) throw error
+  },
+}

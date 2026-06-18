@@ -3,6 +3,9 @@ import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MAX_BUDDIES } from '../constants'
+import { USE_SUPABASE } from '../lib/env'
+import { auth } from '../services/api'
+import { enablePush, pushSupported } from '../lib/push'
 
 export function Profile() {
   const navigate = useNavigate()
@@ -103,7 +106,47 @@ export function Profile() {
         </p>
       </div>
 
+      <div className="card">
+        <h3 style={{ marginBottom: 8 }}>Notifications &amp; legal</h3>
+        <div className="stack">
+          {pushSupported() && (
+            <button
+              className="row list-tap"
+              style={{ width: '100%', background: 'none' }}
+              onClick={async () => {
+                const ok = await enablePush(currentUser.id)
+                alert(ok ? 'Push notifications enabled 🔔' : 'Push was not enabled.')
+              }}
+            >
+              <span style={{ fontSize: 18 }}>🔔</span>
+              <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Enable push notifications</span>
+              <span className="muted">›</span>
+            </button>
+          )}
+          <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/privacy')}>
+            <span style={{ fontSize: 18 }}>🔒</span>
+            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Privacy Policy</span>
+            <span className="muted">›</span>
+          </button>
+          <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/terms')}>
+            <span style={{ fontSize: 18 }}>📄</span>
+            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Terms of Service</span>
+            <span className="muted">›</span>
+          </button>
+          <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/moderation')}>
+            <span style={{ fontSize: 18 }}>🛡️</span>
+            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Moderation queue (staff)</span>
+            <span className="muted">›</span>
+          </button>
+        </div>
+      </div>
+
       <button className="btn outline" onClick={() => navigate('/onboarding')}>Edit profile</button>
+      {USE_SUPABASE && (
+        <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => auth.signOut()}>
+          Sign out
+        </button>
+      )}
       <button
         className="btn ghost"
         style={{ marginTop: 8, color: 'var(--danger)' }}
