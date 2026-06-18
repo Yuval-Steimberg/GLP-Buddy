@@ -50,9 +50,21 @@ export function App() {
       )
     }
     if (!session.userId) {
+      // Logged-out visitors get the marketing landing first (value before the
+      // sign-up form), with auth + legal pages reachable as public routes.
       return (
         <div className="app-shell">
-          <main className="app-main"><AuthScreen /></main>
+          <main className="app-main">
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                <Route path="/auth" element={<AuthScreen />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Suspense>
+          </main>
         </div>
       )
     }

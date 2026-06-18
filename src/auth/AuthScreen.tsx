@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { auth } from '../services/api'
 
 // Real email/password auth for Supabase-backed deployments. Rendered by the
 // App shell when VITE_BACKEND=supabase and there is no active session.
 export function AuthScreen() {
+  const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,7 +42,8 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 48 }}>
+    <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 40 }}>
+      <a className="auth-back" onClick={() => navigate('/')}>← Back to home</a>
       <div className="logo">🫂</div>
       <h1 style={{ fontSize: 34 }}>GLP Buddy</h1>
       <div className="tag" style={{ fontSize: 16 }}>
