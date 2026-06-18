@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
+import { Icon, BrandMark, type IconName } from './Icon'
 
-const ITEMS = [
-  { to: '/home', label: 'Home', ico: '🏠' },
-  { to: '/matches', label: 'Matches', ico: '🤝' },
-  { to: '/timeline', label: 'Timeline', ico: '🌱' },
-  { to: '/chat', label: 'Chat', ico: '💬' },
-  { to: '/profile', label: 'Profile', ico: '🙂' },
+const ITEMS: { to: string; label: string; ico: IconName }[] = [
+  { to: '/home', label: 'Home', ico: 'home' },
+  { to: '/matches', label: 'Matches', ico: 'users' },
+  { to: '/timeline', label: 'Timeline', ico: 'growth' },
+  { to: '/chat', label: 'Chat', ico: 'chat' },
+  { to: '/profile', label: 'Profile', ico: 'profile' },
 ]
 
 export function BottomNav() {
@@ -17,7 +18,7 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav">
       <div className="nav-brand">
-        <span className="nb-logo">🫂</span>
+        <span className="nb-logo"><BrandMark size={26} /></span>
         <span className="nb-name">GLP Buddy</span>
       </div>
       {ITEMS.map((it) => (
@@ -26,7 +27,7 @@ export function BottomNav() {
           to={it.to}
           className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
         >
-          <span className="nav-ico">{it.ico}</span>
+          <span className="nav-ico"><Icon name={it.ico} /></span>
           <span>{it.label}</span>
           {it.to === '/matches' && incoming > 0 && (
             <span className="nav-badge">{incoming}</span>

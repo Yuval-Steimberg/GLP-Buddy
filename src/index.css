@@ -2,25 +2,25 @@
 /* GLP Buddy — warm, supportive, mobile-first design system                 */
 /* ----------------------------------------------------------------------- */
 :root {
-  --bg: #fbf7f2;
+  --bg: #f4f8f6;
   --surface: #ffffff;
-  --surface-2: #f4eee7;
-  --ink: #2e2a3a;
-  --ink-soft: #6c6678;
-  --ink-faint: #9a93a6;
-  --primary: #7c6cf0;
-  --primary-soft: #ede9ff;
-  --primary-ink: #5a48d6;
-  --accent: #ff8a65;
-  --accent-soft: #ffe7df;
-  --green: #4caf82;
-  --green-soft: #dff3ea;
-  --gold: #f0b429;
+  --surface-2: #e8f1ee;
+  --ink: #1f2a32;
+  --ink-soft: #586a6e;
+  --ink-faint: #93a3a4;
+  --primary: #0e9f87;
+  --primary-soft: #d6f0ea;
+  --primary-ink: #0a7d6b;
+  --accent: #f4845f;
+  --accent-soft: #fde7df;
+  --green: #16a34a;
+  --green-soft: #dcf5e6;
+  --gold: #e0a526;
   --danger: #e05656;
   --danger-soft: #fbe3e3;
-  --line: #ece5dc;
-  --shadow: 0 6px 24px rgba(80, 70, 120, 0.08);
-  --shadow-lg: 0 12px 40px rgba(80, 70, 120, 0.14);
+  --line: #e0eae6;
+  --shadow: 0 6px 24px rgba(16, 70, 60, 0.09);
+  --shadow-lg: 0 12px 40px rgba(16, 70, 60, 0.15);
   --radius: 20px;
   --radius-sm: 14px;
   --maxw: 460px;
@@ -426,7 +426,7 @@ textarea.input { min-height: 110px; resize: vertical; }
 /* ----- Landing --------------------------------------------------------- */
 .landing {
   min-height: 100vh;
-  background: linear-gradient(160deg, #efe9ff 0%, #fbf7f2 45%, #ffe7df 100%);
+  background: linear-gradient(160deg, #d6f0ea 0%, #f4f8f6 45%, #fde7df 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -470,8 +470,8 @@ textarea.input { min-height: 110px; resize: vertical; }
 /* Polish + motion + responsive desktop layout                              */
 /* ======================================================================= */
 :root {
-  --ring: 0 0 0 4px rgba(124, 108, 240, 0.20);
-  --shadow-sm: 0 2px 8px rgba(80, 70, 120, 0.06);
+  --ring: 0 0 0 4px rgba(14, 159, 135, 0.20);
+  --shadow-sm: 0 2px 8px rgba(16, 70, 60, 0.06);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --sidebar-w: 256px;
   --content-w: 640px;
@@ -509,10 +509,10 @@ html { scroll-behavior: smooth; }
   transition: transform 0.14s var(--ease), box-shadow 0.22s var(--ease), filter 0.2s ease, opacity 0.2s ease, background 0.2s ease;
 }
 .btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.success) {
-  background: linear-gradient(135deg, var(--primary) 0%, #6a5be8 100%);
-  box-shadow: 0 8px 20px rgba(124, 108, 240, 0.30);
+  background: linear-gradient(135deg, var(--primary) 0%, #13b890 100%);
+  box-shadow: 0 8px 20px rgba(14, 159, 135, 0.30);
 }
-.btn.success { box-shadow: 0 8px 20px rgba(76, 175, 130, 0.28); }
+.btn.success { box-shadow: 0 8px 20px rgba(22, 163, 74, 0.28); }
 .btn::after {
   content: '';
   position: absolute;
@@ -525,7 +525,7 @@ html { scroll-behavior: smooth; }
 .btn:active { transform: translateY(0) scale(0.98); }
 @media (hover: hover) {
   .btn:hover { transform: translateY(-2px); }
-  .btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.success):hover { box-shadow: 0 14px 30px rgba(124, 108, 240, 0.42); }
+  .btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.success):hover { box-shadow: 0 14px 30px rgba(14, 159, 135, 0.42); }
   .btn:hover::after { animation: sheen 0.9s var(--ease); }
   .btn.secondary:hover, .btn.outline:hover { background: var(--surface-2); }
   .btn.ghost:hover { background: var(--primary-soft); }
@@ -553,21 +553,21 @@ select.input:focus-visible,
 }
 
 /* ----- Entrance: screen + staggered cards ----------------------------- */
-.screen { animation: rise 0.42s var(--ease) both; }
-.screen > .card:nth-child(1) { animation: rise 0.5s var(--ease) 0.02s both; }
-.screen > .card:nth-child(2) { animation: rise 0.5s var(--ease) 0.07s both; }
-.screen > .card:nth-child(3) { animation: rise 0.5s var(--ease) 0.12s both; }
-.screen > .card:nth-child(4) { animation: rise 0.5s var(--ease) 0.17s both; }
-.screen > .card:nth-child(5) { animation: rise 0.5s var(--ease) 0.22s both; }
-.screen > .card:nth-child(6) { animation: rise 0.5s var(--ease) 0.27s both; }
-.bubble { animation: pop 0.24s var(--ease) both; }
+.screen { animation: rise 0.42s var(--ease) backwards; }
+.screen > .card:nth-child(1) { animation: rise 0.5s var(--ease) 0.02s backwards; }
+.screen > .card:nth-child(2) { animation: rise 0.5s var(--ease) 0.07s backwards; }
+.screen > .card:nth-child(3) { animation: rise 0.5s var(--ease) 0.12s backwards; }
+.screen > .card:nth-child(4) { animation: rise 0.5s var(--ease) 0.17s backwards; }
+.screen > .card:nth-child(5) { animation: rise 0.5s var(--ease) 0.22s backwards; }
+.screen > .card:nth-child(6) { animation: rise 0.5s var(--ease) 0.27s backwards; }
+.bubble { animation: pop 0.24s var(--ease) backwards; }
 
 /* Mobile nav active bounce */
 .nav-item .nav-ico { transition: transform 0.2s var(--ease); }
 .nav-item.active .nav-ico { transform: translateY(-2px) scale(1.12); }
 
 /* ----- Landing / hero polish ------------------------------------------ */
-.landing .logo { animation: floaty 4.5s ease-in-out infinite; filter: drop-shadow(0 12px 20px rgba(124, 108, 240, 0.25)); }
+.landing .logo { animation: floaty 4.5s ease-in-out infinite; filter: drop-shadow(0 12px 20px rgba(14, 159, 135, 0.25)); }
 .landing .feature {
   transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
   border: 1px solid rgba(255, 255, 255, 0.55);
@@ -588,7 +588,7 @@ select.input:focus-visible,
   body {
     background:
       radial-gradient(1100px 560px at 100% -8%, rgba(255, 138, 101, 0.10), transparent 60%),
-      radial-gradient(900px 520px at -8% 112%, rgba(124, 108, 240, 0.13), transparent 55%),
+      radial-gradient(900px 520px at -8% 112%, rgba(14, 159, 135, 0.13), transparent 55%),
       var(--bg);
     background-attachment: fixed;
   }
@@ -692,7 +692,7 @@ select.input:focus-visible,
 }
 .auth-back:hover { opacity: 1; }
 
-.mkt { width: 100%; color: var(--ink); overflow-x: clip; animation: rise 0.4s var(--ease) both; }
+.mkt { width: 100%; color: var(--ink); overflow-x: clip; animation: rise 0.4s var(--ease) backwards; }
 .mkt a { cursor: pointer; }
 
 /* Top nav */
@@ -782,10 +782,10 @@ select.input:focus-visible,
 .mkt-chat { display: flex; flex-direction: column; gap: 8px; }
 .mkt-bubble { max-width: 86%; padding: 10px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.4; font-weight: 600; }
 .mkt-bubble.them { align-self: flex-start; background: var(--surface-2); color: var(--ink); border-bottom-left-radius: 5px; }
-.mkt-bubble.me { align-self: flex-end; background: linear-gradient(135deg, var(--primary), #6a5be8); color: #fff; border-bottom-right-radius: 5px; }
+.mkt-bubble.me { align-self: flex-end; background: linear-gradient(135deg, var(--primary), #13b890); color: #fff; border-bottom-right-radius: 5px; }
 .mkt-milestone { margin-top: 12px; background: var(--green-soft); color: #2e7d5b; border-radius: 14px; padding: 10px 12px; font-size: 12.5px; font-weight: 700; text-align: center; }
 .mkt-blob { position: absolute; border-radius: 50%; filter: blur(42px); z-index: 1; opacity: 0.5; }
-.mkt-blob-1 { width: 240px; height: 240px; background: rgba(124, 108, 240, 0.45); top: -34px; right: -24px; }
+.mkt-blob-1 { width: 240px; height: 240px; background: rgba(14, 159, 135, 0.45); top: -34px; right: -24px; }
 .mkt-blob-2 { width: 220px; height: 220px; background: rgba(255, 138, 101, 0.45); bottom: -40px; left: -24px; }
 
 /* Content sections */
@@ -837,8 +837,8 @@ select.input:focus-visible,
 .mkt-disclaimer { font-size: 12px; color: var(--ink-faint); max-width: 460px; margin: 0; line-height: 1.5; }
 
 /* Entrance / motion */
-.mkt-hero-text { animation: rise 0.5s var(--ease) both; }
-.mkt-hero-visual { animation: rise 0.6s var(--ease) 0.1s both; }
+.mkt-hero-text { animation: rise 0.5s var(--ease) backwards; }
+.mkt-hero-visual { animation: rise 0.6s var(--ease) 0.1s backwards; }
 .mkt-preview { animation: floaty 6s ease-in-out infinite; }
 
 @media (min-width: 900px) {
@@ -852,3 +852,12 @@ select.input:focus-visible,
   .mkt-footer { flex-direction: row; justify-content: space-between; text-align: left; }
   .mkt-disclaimer { text-align: right; }
 }
+
+/* ----- Icon alignment (SVG icons replacing emoji) --------------------- */
+.nav-ico { display: inline-grid; place-items: center; }
+.mkt-card-icon { color: var(--primary); }
+.mkt-eyebrow svg, .mkt-trust svg { flex-shrink: 0; }
+.mkt-trust span { display: inline-flex; align-items: center; gap: 6px; }
+.mkt-brand svg, .nb-logo svg, .mkt-final-logo svg { display: block; }
+.nb-logo { display: inline-flex; }
+.mkt-final-logo { display: flex; justify-content: center; }

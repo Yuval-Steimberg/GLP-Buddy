@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { USE_SUPABASE } from '../lib/env'
+import { Icon, BrandMark, type IconName } from '../components/Icon'
 
 export function Landing() {
   const navigate = useNavigate()
@@ -21,7 +22,7 @@ export function Landing() {
     <div className="mkt">
       <header className="mkt-nav">
         <div className="mkt-brand">
-          <span className="mkt-brand-logo">🫂</span>
+          <BrandMark size={30} />
           <span className="mkt-brand-name">GLP Buddy</span>
         </div>
         <div className="mkt-nav-actions">
@@ -35,7 +36,7 @@ export function Landing() {
       {/* Hero */}
       <section className="mkt-hero">
         <div className="mkt-hero-text">
-          <div className="mkt-eyebrow">🤝 Peer support for your GLP-1 journey</div>
+          <div className="mkt-eyebrow"><Icon name="users" size={15} /> Peer support for your GLP-1 journey</div>
           <h1 className="mkt-h1">
             A GLP buddy who <span className="grad">gets it</span>.
           </h1>
@@ -48,11 +49,11 @@ export function Landing() {
             <button className="btn outline" onClick={scrollTo('how')}>See how it works</button>
           </div>
           <div className="mkt-trust">
-            <span>🔒 Private by design</span>
+            <span><Icon name="lock" size={15} /> Private by design</span>
             <span className="dot">•</span>
-            <span>💙 Not medical advice</span>
+            <span><Icon name="heart" size={15} /> Not medical advice</span>
             <span className="dot">•</span>
-            <span>🔞 18+</span>
+            <span><Icon name="shield" size={15} /> 18+ only</span>
           </div>
         </div>
 
@@ -60,7 +61,7 @@ export function Landing() {
         <div className="mkt-hero-visual" aria-hidden="true">
           <div className="mkt-preview">
             <div className="mkt-preview-head">
-              <div className="mkt-ava" style={{ background: 'linear-gradient(135deg,#7c6cf0,#ff8a65)' }}>P</div>
+              <div className="mkt-ava" style={{ background: 'linear-gradient(135deg,#0e9f87,#f4845f)' }}>P</div>
               <div>
                 <div className="mkt-preview-name">Priya</div>
                 <div className="mkt-preview-sub">Ozempic · same stage as you</div>
@@ -68,11 +69,13 @@ export function Landing() {
               <span className="chip green" style={{ marginLeft: 'auto' }}>92% match</span>
             </div>
             <div className="mkt-chat">
-              <div className="mkt-bubble them">Took my first injection today 😅 nervous but did it!</div>
-              <div className="mkt-bubble me">That's huge!! Week one was the hardest for me — so proud of you 💪</div>
-              <div className="mkt-bubble them">Honestly needed to hear that. Glad I'm not doing this alone 🫶</div>
+              <div className="mkt-bubble them">Took my first injection today — nervous, but I did it.</div>
+              <div className="mkt-bubble me">That's huge. Week one was the hardest for me, so I'm really proud of you.</div>
+              <div className="mkt-bubble them">Honestly needed to hear that. Glad I'm not doing this alone.</div>
             </div>
-            <div className="mkt-milestone">🎯 Priya reached a new milestone — <strong>first month complete</strong></div>
+            <div className="mkt-milestone">
+              <Icon name="spark" size={15} style={{ verticalAlign: '-2px' }} /> Priya reached a milestone — <strong>first month complete</strong>
+            </div>
           </div>
           <div className="mkt-blob mkt-blob-1" />
           <div className="mkt-blob mkt-blob-2" />
@@ -84,11 +87,11 @@ export function Landing() {
         <div className="mkt-eyebrow center">Why it works</div>
         <h2 className="mkt-h2">Built for the whole journey, not just day one.</h2>
         <div className="mkt-grid">
-          <Feature icon="🤝" title="Matched on your journey"
+          <Feature icon="users" title="Matched on your journey"
             body="Same medication, treatment stage and goals — so the person you meet actually understands what you're going through." />
-          <Feature icon="🌱" title="Made for the long run"
+          <Feature icon="growth" title="Made for the long run"
             body="Shared milestones, a private timeline and gentle check-ins keep you both motivated week after week." />
-          <Feature icon="💬" title="A private space, just you two"
+          <Feature icon="lock" title="A private space, just you two"
             body="No feeds, no followers, no judgement. Real peer support in a calm, safe space — never medical advice." />
         </div>
       </section>
@@ -107,7 +110,7 @@ export function Landing() {
       {/* Final CTA */}
       <section className="mkt-final">
         <div className="mkt-final-inner">
-          <div className="mkt-final-logo">🫂</div>
+          <div className="mkt-final-logo"><BrandMark size={52} /></div>
           <h2>Your journey is better with a buddy.</h2>
           <p>Free to join. Match with someone who truly gets it — today.</p>
           <button className="btn mkt-cta" onClick={cta}>Find my buddy →</button>
@@ -116,7 +119,7 @@ export function Landing() {
 
       <footer className="mkt-footer">
         <div className="mkt-brand">
-          <span className="mkt-brand-logo">🫂</span>
+          <BrandMark size={26} />
           <span className="mkt-brand-name">GLP Buddy</span>
         </div>
         <div className="mkt-foot-links">
@@ -132,10 +135,10 @@ export function Landing() {
   )
 }
 
-function Feature({ icon, title, body }: { icon: string; title: string; body: string }) {
+function Feature({ icon, title, body }: { icon: IconName; title: string; body: string }) {
   return (
     <div className="mkt-card">
-      <div className="mkt-card-icon">{icon}</div>
+      <div className="mkt-card-icon"><Icon name={icon} size={24} /></div>
       <h3>{title}</h3>
       <p>{body}</p>
     </div>

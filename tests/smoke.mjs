@@ -17,7 +17,7 @@ async function step(name, fn) {
 }
 
 await page.goto(base, { waitUntil: 'networkidle' })
-await step('landing -> find buddy', async () => { await page.getByText('Find my buddy').click() })
+await step('landing -> find buddy', async () => { await page.getByText('Find my buddy').first().click() })
 await step('onboarding name/age/gender', async () => {
   await page.locator('input.input').first().fill('Sam')
   await page.getByRole('button', { name: '25–34' }).click()
