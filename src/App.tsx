@@ -45,14 +45,26 @@ export function App() {
     if (session.loading) {
       return (
         <div className="app-shell">
-          <Loading />
+          <main className="app-main"><Loading /></main>
         </div>
       )
     }
     if (!session.userId) {
+      // Logged-out visitors get the marketing landing first (value before the
+      // sign-up form), with auth + legal pages reachable as public routes.
       return (
         <div className="app-shell">
-          <AuthScreen />
+          <main className="app-main">
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                <Route path="/auth" element={<AuthScreen />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Suspense>
+          </main>
         </div>
       )
     }
@@ -66,6 +78,8 @@ export function App() {
 
   return (
     <div className="app-shell">
+      {showNav && <BottomNav />}
+      <main className="app-main">
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/" element={onboarded && safe ? <Navigate to="/home" /> : <Landing />} />
@@ -94,8 +108,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Suspense>
-
-      {showNav && <BottomNav />}
+      </main>
     </div>
   )
 }
