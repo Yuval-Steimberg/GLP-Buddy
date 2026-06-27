@@ -861,3 +861,84 @@ select.input:focus-visible,
 .mkt-brand svg, .nb-logo svg, .mkt-final-logo svg { display: block; }
 .nb-logo { display: inline-flex; }
 .mkt-final-logo { display: flex; justify-content: center; }
+
+/* ======================================================================= */
+/* Professional refinement pass — type, weight, flatter UI, calmer depth   */
+/* ======================================================================= */
+:root {
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow: 0 4px 16px rgba(16, 70, 60, 0.06);
+  --shadow-lg: 0 16px 44px rgba(16, 70, 60, 0.12);
+  --shadow-sm: 0 1px 3px rgba(16, 70, 60, 0.06);
+}
+
+body {
+  font-family: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
+.mkt-h1 { font-weight: 800; letter-spacing: -0.03em; }
+
+/* Flat, restrained buttons (no gradient, no sheen, minimal lift) */
+.btn { font-weight: 600; letter-spacing: 0; }
+.btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.success) {
+  background: var(--primary);
+  box-shadow: 0 1px 2px rgba(16, 70, 60, 0.12);
+}
+.btn.success { box-shadow: 0 1px 2px rgba(16, 70, 60, 0.12); }
+.btn::after { content: none; }
+@media (hover: hover) {
+  .btn:hover { transform: translateY(-1px); }
+  .btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.success):hover {
+    background: #0c8c77;
+    box-shadow: 0 4px 14px rgba(14, 159, 135, 0.30);
+  }
+}
+
+/* Solid (non-gradient) brand wordmark + emphasis — cleaner than gradient text */
+.mkt-brand-name, .nb-name {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--ink);
+}
+.mkt-h1 .grad {
+  background: none;
+  -webkit-text-fill-color: var(--primary-ink);
+  color: var(--primary-ink);
+}
+
+/* Calmer cards + inputs */
+.card { box-shadow: var(--shadow); border: 1px solid var(--line); }
+.input, textarea.input, select.input { border-color: #d7e2dd; }
+.chip { font-weight: 600; }
+.option { font-weight: 600; }
+
+/* Tighter, lighter nav labels */
+.nav-item { font-weight: 600; }
+
+/* Soften the hero blobs so it reads premium, not loud */
+.mkt-blob { opacity: 0.38; }
+
+/* Icon containers for empty states + list rows (replacing emoji) */
+.empty-ico {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+}
+.row-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  color: var(--primary-ink);
+}

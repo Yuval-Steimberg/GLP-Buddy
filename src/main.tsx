@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppStoreProvider } from './store/AppStore'
 import { App } from './App'
 import { initSentry } from './lib/sentry'
+import '@fontsource-variable/inter'
 import './index.css'
 
 initSentry()

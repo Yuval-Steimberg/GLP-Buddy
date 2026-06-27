@@ -4,6 +4,7 @@ import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
+import { Icon } from '../components/Icon'
 import { MILESTONE_EMOJI } from '../constants'
 import { timeAgo } from '../utils/format'
 import type { BuddyRelationship } from '../types'
@@ -25,7 +26,7 @@ export function BuddyHome() {
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
 
-  const greet = `Hi ${currentUser?.profile.nickname} 👋`
+  const greet = `Hi ${currentUser?.profile.nickname}`
 
   const encourage = (rel: BuddyRelationship) => {
     sendEncouragement(rel.id)
@@ -39,7 +40,7 @@ export function BuddyHome() {
 
       {rels.length === 0 ? (
         <div className="empty">
-          <div className="big">🫂</div>
+          <div className="empty-ico"><Icon name="users" size={30} /></div>
           <h3>Your buddy space is waiting</h3>
           <p>Once you and someone match, you'll get a private shared space here.</p>
           <button className="btn" style={{ marginTop: 10 }} onClick={() => navigate('/matches')}>
@@ -64,7 +65,7 @@ export function BuddyHome() {
                 <div style={{ flex: 1 }}>
                   <h3>{buddy.profile.nickname}</h3>
                   <div className="muted" style={{ fontSize: 13 }}>
-                    💊 {buddy.profile.medication}
+                    {buddy.profile.medication}
                   </div>
                 </div>
                 <span className="chip green">Buddy</span>
@@ -124,16 +125,16 @@ export function BuddyHome() {
 
               {encouraged === rel.id && (
                 <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginTop: 12 }}>
-                  💛 Encouragement sent to {buddy.profile.nickname}!
+                  Encouragement sent to {buddy.profile.nickname}.
                 </div>
               )}
 
               <div className="btn-row" style={{ marginTop: 14 }}>
-                <button className="btn" onClick={() => navigate(`/chat/${rel.id}`)}>💬 Chat</button>
-                <button className="btn secondary" onClick={() => setMilestoneFor(rel.id)}>＋ Milestone</button>
+                <button className="btn" onClick={() => navigate(`/chat/${rel.id}`)}><Icon name="chat" size={17} /> Chat</button>
+                <button className="btn secondary" onClick={() => setMilestoneFor(rel.id)}>Add milestone</button>
               </div>
               <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => encourage(rel)}>
-                💛 Send encouragement
+                Send encouragement
               </button>
               <button className="btn ghost" style={{ marginTop: 2 }} onClick={() => navigate('/timeline')}>
                 View shared timeline →
@@ -165,7 +166,7 @@ function TrioTeaser({ eligible, active, onOpen }: { eligible: boolean; active: b
       style={{ background: active ? 'var(--primary-soft)' : 'var(--surface-2)' }}
     >
       <div className="row">
-        <span style={{ fontSize: 28 }}>{active ? '👥' : eligible ? '🎉' : '🔒'}</span>
+        <span className="row-ico"><Icon name={active ? 'users' : eligible ? 'spark' : 'lock'} size={22} /></span>
         <div style={{ flex: 1 }}>
           <strong>Buddy Trio</strong>
           <div className="muted" style={{ fontSize: 13 }}>

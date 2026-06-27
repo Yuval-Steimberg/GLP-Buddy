@@ -77,7 +77,7 @@ await step('chat send', async () => {
 })
 await step('milestone -> timeline', async () => {
   await page.goto(base + '/home', { waitUntil: 'networkidle' })
-  await page.getByRole('button', { name: /Milestone/ }).first().click()
+  await page.getByRole('button', { name: /milestone/i }).first().click()
   await page.getByRole('button', { name: /Reached goal weight/ }).click()
   await page.getByRole('button', { name: 'Add to timeline' }).click()
   await page.waitForTimeout(300)

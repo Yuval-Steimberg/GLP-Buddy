@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react'
 
 export type IconName =
   | 'home' | 'users' | 'growth' | 'chat' | 'profile' | 'bell'
-  | 'lock' | 'heart' | 'shield' | 'spark' | 'logout'
+  | 'lock' | 'heart' | 'shield' | 'spark' | 'logout' | 'clock' | 'search' | 'doc'
 
 // Clean, consistent line icons (currentColor, 24px grid) used in place of
 // emoji for a more professional, branded look.
@@ -56,6 +56,12 @@ export function Icon({ name, size = 22, style }: { name: IconName; size?: number
       return <svg {...p}><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16l-1.8-4.5L5 9.7l5.2-1.8z" /></svg>
     case 'logout':
       return <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+    case 'clock':
+      return <svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7.5V12l3 2" /></svg>
+    case 'search':
+      return <svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20.5 20.5 16.5 16.5" /></svg>
+    case 'doc':
+      return <svg {...p}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h6" /></svg>
   }
 }
 

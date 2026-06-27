@@ -26,7 +26,7 @@ export function MilestoneSheet({
 
   return (
     <Sheet open={open} onClose={onClose}>
-      <h2>Add a milestone 🎉</h2>
+      <h2>Add a milestone</h2>
       <p style={{ marginTop: 4 }}>It appears on your shared timeline and your buddy gets a nudge.</p>
       <div className="option-grid" style={{ marginBottom: 16 }}>
         {MILESTONE_TYPES.map((m) => (

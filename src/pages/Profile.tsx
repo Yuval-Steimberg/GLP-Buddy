@@ -52,8 +52,8 @@ export function Profile() {
         </div>
         <h2>{p.nickname}</h2>
         <div className="chip-row" style={{ justifyContent: 'center', marginTop: 8 }}>
-          <span className="chip primary">💊 {p.medication}</span>
-          <span className="chip green">🎯 {p.mainGoal}</span>
+          <span className="chip primary">{p.medication}</span>
+          <span className="chip green">{p.mainGoal}</span>
         </div>
         <p style={{ marginTop: 12 }}>{p.bio}</p>
         {p.interests.length > 0 && (
@@ -88,7 +88,7 @@ export function Profile() {
       </div>
 
       <div className="card list-tap" style={{ display: 'flex', gap: 12, alignItems: 'center' }} onClick={() => navigate('/trio')}>
-        <span style={{ fontSize: 26 }}>{activeTrio() ? '👥' : elig.eligible ? '🎉' : '🔒'}</span>
+        <span className="row-ico"><Icon name={activeTrio() ? 'users' : elig.eligible ? 'spark' : 'lock'} size={22} /></span>
         <div style={{ flex: 1 }}>
           <strong>Buddy Trio</strong>
           <div className="muted" style={{ fontSize: 13 }}>
@@ -128,27 +128,27 @@ export function Profile() {
               style={{ width: '100%', background: 'none' }}
               onClick={async () => {
                 const ok = await enablePush(currentUser.id)
-                alert(ok ? 'Push notifications enabled 🔔' : 'Push was not enabled.')
+                alert(ok ? 'Push notifications enabled.' : 'Push was not enabled.')
               }}
             >
-              <span style={{ fontSize: 18 }}>🔔</span>
+              <span className="row-ico"><Icon name="bell" size={18} /></span>
               <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Enable push notifications</span>
               <span className="muted">›</span>
             </button>
           )}
           <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/privacy')}>
-            <span style={{ fontSize: 18 }}>🔒</span>
+            <span className="row-ico"><Icon name="lock" size={18} /></span>
             <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Privacy Policy</span>
             <span className="muted">›</span>
           </button>
           <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/terms')}>
-            <span style={{ fontSize: 18 }}>📄</span>
+            <span className="row-ico"><Icon name="doc" size={18} /></span>
             <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Terms of Service</span>
             <span className="muted">›</span>
           </button>
           {(!USE_SUPABASE || currentUser.isStaff) && (
             <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/moderation')}>
-              <span style={{ fontSize: 18 }}>🛡️</span>
+              <span className="row-ico"><Icon name="shield" size={18} /></span>
               <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Moderation queue (staff)</span>
               <span className="muted">›</span>
             </button>

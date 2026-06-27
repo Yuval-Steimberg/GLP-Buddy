@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { ProfileCard } from '../components/ProfileCard'
+import { Icon } from '../components/Icon'
 
 export function Matches() {
   const navigate = useNavigate()
@@ -28,7 +29,7 @@ export function Matches() {
           style={{ background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', gap: 12 }}
           onClick={() => navigate('/pending')}
         >
-          <span style={{ fontSize: 26 }}>⏳</span>
+          <span className="row-ico"><Icon name="clock" size={20} /></span>
           <div style={{ flex: 1 }}>
             <strong style={{ color: 'var(--primary-ink)' }}>Pending matches</strong>
             <div className="muted" style={{ fontSize: 13 }}>
@@ -42,18 +43,18 @@ export function Matches() {
       )}
 
       <div className="banner info" style={{ marginBottom: 16 }}>
-        🤝 Matches are always mutual — a buddy space only opens when you <em>both</em> say yes.
+        Matches are always mutual — a buddy space only opens when you <em>both</em> say yes.
       </div>
 
       {justConnected && (
         <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginBottom: 16 }}>
-          ✅ Request sent to {justConnected}. We'll let you know if they connect back!
+          Request sent to {justConnected}. We'll let you know if they connect back.
         </div>
       )}
 
       {list.length === 0 ? (
         <div className="empty">
-          <div className="big">🔍</div>
+          <div className="empty-ico"><Icon name="search" size={30} /></div>
           <h3>No more suggestions right now</h3>
           <p>Check back soon — we're always finding new people on a similar journey.</p>
         </div>
