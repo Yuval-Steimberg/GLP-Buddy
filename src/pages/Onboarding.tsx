@@ -76,6 +76,28 @@ export function Onboarding() {
     }
   }
 
+  // Explains why "Continue" is disabled so users aren't left guessing.
+  const missingHint = (): string => {
+    switch (step) {
+      case 0:
+        if (!p.nickname.trim()) return 'Add your name or nickname to continue.'
+        if (!p.ageRange) return 'Pick your age range to continue.'
+        if (!p.gender) return 'Pick your gender to continue.'
+        return ''
+      case 1:
+        if (!p.country) return 'Select your country to continue.'
+        return 'Choose your preferences to continue.'
+      case 3:
+        if (!p.currentWeightRange) return 'Pick your current weight range to continue.'
+        if (!p.goalWeightRange) return 'Pick your goal weight range to continue.'
+        return ''
+      case 5:
+        return `Add a little more to your bio — at least 10 characters (${p.bio.trim().length}/10).`
+      default:
+        return 'Make a selection to continue.'
+    }
+  }
+
   const next = () => {
     if (step < TOTAL_STEPS - 1) {
       setStep((s) => s + 1)
@@ -230,6 +252,11 @@ export function Onboarding() {
       <button className="btn" disabled={!canContinue()} onClick={next} style={{ marginTop: 8 }}>
         {step === TOTAL_STEPS - 1 ? 'Continue' : 'Next'}
       </button>
+      {!canContinue() && (
+        <p className="muted center" style={{ fontSize: 12.5, marginTop: 10 }}>
+          {missingHint()}
+        </p>
+      )}
     </div>
   )
 }
