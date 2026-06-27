@@ -25,7 +25,9 @@ export const auth = {
     const { data, error } = await sb.auth.signUp({
       email,
       password,
-      options: { data: { nickname } },
+      // Send any confirmation link back to wherever the app runs (e.g.
+      // https://glpenpal.com) so the session is picked up on return.
+      options: { data: { nickname }, emailRedirectTo: window.location.origin },
     })
     if (error) throw error
     return data

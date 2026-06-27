@@ -13,16 +13,26 @@ export function AuthScreen() {
   const [nickname, setNickname] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [magicSent, setMagicSent] = useState(false)
+  // When set, we show a "check your inbox" card (magic link or email confirmation).
+  const [notice, setNotice] = useState<string | null>(null)
 
   const submit = async () => {
     setBusy(true)
     setError('')
     try {
-      if (mode === 'signup') await auth.signUp(email, password, nickname || 'New buddy')
-      else await auth.signIn(email, password)
+      if (mode === 'signup') {
+        const data = await auth.signUp(email, password, nickname || 'New buddy')
+        // If email confirmation is required, there's no session yet — tell the
+        // user to confirm. Otherwise the App auto-redirects on the new session.
+        if (!data.session) {
+          setNotice(`We sent a confirmation link to ${email}. Open it to activate your account, then come back and sign in.`)
+        }
+      } else {
+        await auth.signIn(email, password)
+        // On success the session fires and the App swaps to the app screens.
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong')
+      setError(friendlyAuthError(e))
     } finally {
       setBusy(false)
     }
@@ -34,9 +44,9 @@ export function AuthScreen() {
     setError('')
     try {
       await auth.sendMagicLink(email)
-      setMagicSent(true)
+      setNotice(`We sent a magic sign-in link to ${email}.`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send link')
+      setError(friendlyAuthError(e))
     } finally {
       setBusy(false)
     }
@@ -52,11 +62,14 @@ export function AuthScreen() {
       </div>
 
       <div className="card" style={{ marginTop: 24, textAlign: 'left' }}>
-        {magicSent ? (
+        {notice ? (
           <div className="center">
             <div className="empty-ico" style={{ margin: '0 auto 10px' }}><Icon name="mail" size={28} /></div>
             <h3>Check your inbox</h3>
-            <p>We sent a magic sign-in link to {email}.</p>
+            <p>{notice}</p>
+            <button className="btn ghost" style={{ marginTop: 10 }} onClick={() => { setNotice(null); setMode('signin') }}>
+              Back to sign in
+            </button>
           </div>
         ) : (
           <>
@@ -85,7 +98,7 @@ export function AuthScreen() {
         )}
       </div>
 
-      {!magicSent && (
+      {!notice && (
         <p className="muted" style={{ fontSize: 13 }}>
           {mode === 'signin' ? 'New to GLPenPal?' : 'Already have an account?'}{' '}
           <a onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ fontWeight: 800, cursor: 'pointer' }}>
@@ -98,4 +111,20 @@ export function AuthScreen() {
       </p>
     </div>
   )
+}
+
+// Turn raw Supabase/network errors into something a person can act on.
+function friendlyAuthError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e)
+  if (/load failed|failed to fetch|networkerror|fetch/i.test(msg))
+    return "Couldn't reach the server. Check your connection and try again in a moment."
+  if (/email not confirmed/i.test(msg))
+    return 'Please confirm your email first — open the link we sent to your inbox, then sign in.'
+  if (/invalid login credentials/i.test(msg))
+    return 'That email or password looks wrong. Try again, or create an account.'
+  if (/user already registered/i.test(msg))
+    return 'An account with this email already exists — try signing in instead.'
+  if (/password should be at least/i.test(msg))
+    return 'Password is too short — use at least 6 characters.'
+  return msg
 }
