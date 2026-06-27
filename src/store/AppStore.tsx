@@ -24,6 +24,7 @@ import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } f
 import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { hydrate } from './hydrate'
+import { rowToMessage } from './mappers'
 
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -195,7 +196,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       }
       // Use the id the event already gives us — never getUser() here.
       void hydrateFor(userId)
-      cleanupRealtime = api.notifications.subscribe(userId, () => void hydrateFor(userId))
+      // Notifications drive a re-sync; messages stream in live (instant chat).
+      const unsubNtf = api.notifications.subscribe(userId, () => void hydrateFor(userId))
+      const unsubMsg = api.chat.subscribeAll((row) => {
+        setState((prev) => {
+          const m = rowToMessage(row)
+          const i = prev.messages.findIndex((x) => x.id === m.id)
+          if (i === -1) return { ...prev, messages: [...prev.messages, m] }
+          const messages = prev.messages.slice()
+          messages[i] = m
+          return { ...prev, messages }
+        })
+      })
+      cleanupRealtime = () => { unsubNtf(); unsubMsg() }
     })
     return () => {
       unsub()

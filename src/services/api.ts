@@ -251,6 +251,26 @@ export const chat = {
       void sb.removeChannel(channel)
     }
   },
+
+  // Realtime across all of the user's chats: fires on new messages AND on
+  // reaction updates (RLS limits delivery to the user's own relationships).
+  // Powers instant, refresh-free chat like any messaging app.
+  subscribeAll(cb: (m: MessageRow) => void) {
+    const sb = requireSupabase()
+    const channel = sb
+      .channel('messages-all')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        (payload) => {
+          if (payload.new && (payload.new as MessageRow).id) cb(payload.new as MessageRow)
+        },
+      )
+      .subscribe()
+    return () => {
+      void sb.removeChannel(channel)
+    }
+  },
 }
 
 export const milestones = {
