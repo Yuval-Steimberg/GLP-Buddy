@@ -71,6 +71,17 @@ export function App() {
     }
   }
 
+  // Supabase mode: once signed in, wait for the user's profile to hydrate
+  // before routing — otherwise we'd flash the landing or push a returning
+  // (already-onboarded) user back through onboarding.
+  if (USE_SUPABASE && session.userId && !currentUser) {
+    return (
+      <div className="app-shell">
+        <main className="app-main"><Loading /></main>
+      </div>
+    )
+  }
+
   const onboarded = currentUser?.onboardingComplete
   const safe = currentUser?.acceptedSafety
   const showNav =
@@ -83,7 +94,14 @@ export function App() {
       <main className="app-main">
       <Suspense fallback={<Loading />}>
         <Routes>
-          <Route path="/" element={onboarded && safe ? <Navigate to="/home" /> : <Landing />} />
+          <Route
+            path="/"
+            element={
+              onboarded && safe ? <Navigate to="/home" />
+                : currentUser ? <Navigate to={onboarded ? '/safety' : '/onboarding'} />
+                : <Landing />
+            }
+          />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route
             path="/safety"
