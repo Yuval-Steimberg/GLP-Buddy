@@ -158,6 +158,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   // Supabase mode: pull a fresh snapshot for the signed-in user. Called on
   // load, on auth change, and after every mutating action (refetch semantics).
+  // Hydrate for a known user id. IMPORTANT: this does only REST calls — it must
+  // NOT call any supabase.auth.* method (getUser/getSession), because that
+  // deadlocks supabase-js when invoked from inside the onAuthStateChange
+  // callback below (the auth lock is already held during the callback).
+  const hydrateFor = useCallback(async (userId: string) => {
+    try {
+      setState(await hydrate(userId))
+    } catch (e) {
+      console.error('hydrate failed', e)
+    }
+  }, [])
+
   const refresh = useCallback(async () => {
     if (!USE_SUPABASE) return
     const me = await api.auth.currentUserId()
@@ -165,12 +177,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       setState(buildEmptyState())
       return
     }
-    try {
-      setState(await hydrate(me))
-    } catch (e) {
-      console.error('hydrate failed', e)
-    }
-  }, [])
+    await hydrateFor(me)
+  }, [hydrateFor])
 
   // Supabase mode: hydrate on auth changes and subscribe to realtime so a
   // buddy's messages / notifications appear without a manual refresh.
@@ -185,14 +193,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setState(buildEmptyState())
         return
       }
-      void refresh()
-      cleanupRealtime = api.notifications.subscribe(userId, () => void refresh())
+      // Use the id the event already gives us — never getUser() here.
+      void hydrateFor(userId)
+      cleanupRealtime = api.notifications.subscribe(userId, () => void hydrateFor(userId))
     })
     return () => {
       unsub()
       cleanupRealtime?.()
     }
-  }, [refresh])
+  }, [refresh, hydrateFor])
 
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : null
 
