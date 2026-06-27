@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
+import { Icon } from '../components/Icon'
 import { timeAgo } from '../utils/format'
 
 // Lightweight in-app moderation queue. In the local demo it reads reports from
@@ -19,12 +20,12 @@ export function Moderation() {
       </div>
 
       <div className="banner info" style={{ marginBottom: 16 }}>
-        🛡️ Staff-only queue (placeholder). Reports and blocks land here for review.
+        Staff-only queue (placeholder). Reports and blocks land here for review.
       </div>
 
       {reports.length === 0 ? (
         <div className="empty">
-          <div className="big">✅</div>
+          <div className="empty-ico"><Icon name="check" size={30} /></div>
           <h3>Queue is clear</h3>
           <p>No reports or blocks to review.</p>
         </div>
@@ -34,7 +35,7 @@ export function Moderation() {
           return (
             <div className="card" key={r.id}>
               <div className="row between">
-                <strong>{r.kind === 'block' ? '🚫 Block' : '🚩 Report'}</strong>
+                <strong>{r.kind === 'block' ? 'Block' : 'Report'}</strong>
                 <span className="muted" style={{ fontSize: 11 }}>{timeAgo(r.createdAt)}</span>
               </div>
               <p style={{ fontSize: 14, marginBottom: 4 }}>

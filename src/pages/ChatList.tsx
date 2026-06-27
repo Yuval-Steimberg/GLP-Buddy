@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
+import { Icon } from '../components/Icon'
 import { timeAgo } from '../utils/format'
 
 export function ChatList() {
@@ -16,7 +17,7 @@ export function ChatList() {
 
       {rels.length === 0 && !trio ? (
         <div className="empty">
-          <div className="big">💬</div>
+          <div className="empty-ico"><Icon name="chat" size={30} /></div>
           <h3>No conversations yet</h3>
           <p>Match with a buddy to start chatting in a private space.</p>
           <button className="btn" style={{ marginTop: 10 }} onClick={() => navigate('/matches')}>
@@ -45,7 +46,7 @@ export function ChatList() {
                     {last && <span className="muted" style={{ fontSize: 11 }}>{timeAgo(last.createdAt)}</span>}
                   </div>
                   <div className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {last ? last.text : 'Say hi 👋'}
+                    {last ? last.text : 'Say hi'}
                   </div>
                 </div>
               </div>
@@ -58,7 +59,7 @@ export function ChatList() {
               style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--primary-soft)' }}
               onClick={() => navigate('/trio')}
             >
-              <div className="avatar" style={{ width: 50, height: 50, background: 'var(--primary)', fontSize: 22 }}>👥</div>
+              <div className="avatar" style={{ width: 50, height: 50, background: 'var(--primary)' }}><Icon name="users" size={22} /></div>
               <div style={{ flex: 1 }}>
                 <strong>Your Buddy Trio</strong>
                 <div className="muted" style={{ fontSize: 13 }}>Group chat · 3 members</div>

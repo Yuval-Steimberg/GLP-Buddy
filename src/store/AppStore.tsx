@@ -649,7 +649,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           type === 'Reached goal weight' ? 'goal_reached' : 'milestone',
           `${prev.users[me].profile.nickname} added a milestone`,
           type === 'Reached goal weight'
-            ? `${prev.users[me].profile.nickname} reached their goal weight! 🎯`
+            ? `${prev.users[me].profile.nickname} reached their goal weight!`
             : `${type}. React or leave a comment to cheer them on.`,
           '/timeline',
         )

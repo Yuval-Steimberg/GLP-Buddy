@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
+import { Icon } from '../components/Icon'
 
 export function Safety() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export function Safety() {
   return (
     <div className="screen no-nav">
       <div className="center" style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 52 }}>🛟</div>
+        <div className="empty-ico" style={{ margin: '0 auto 6px' }}><Icon name="shield" size={30} /></div>
         <h1>Before you start</h1>
       </div>
 
@@ -40,7 +41,7 @@ export function Safety() {
       </div>
 
       <div className="banner warn" style={{ marginBottom: 18 }}>
-        🚑 If you're experiencing severe or concerning symptoms, contact your
+        If you're experiencing severe or concerning symptoms, contact your
         doctor or local emergency services right away.
       </div>
 

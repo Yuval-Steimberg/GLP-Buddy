@@ -28,7 +28,7 @@ export function Pending() {
               <div style={{ flex: 1 }}>
                 <strong>{u.profile.nickname}</strong>
                 <div className="muted" style={{ fontSize: 13 }}>
-                  💊 {u.profile.medication} · {u.profile.treatmentStage}
+                  {u.profile.medication} · {u.profile.treatmentStage}
                 </div>
               </div>
             </div>
@@ -63,7 +63,7 @@ export function Pending() {
                 <strong>{u.profile.nickname}</strong>
                 <div className="muted" style={{ fontSize: 13 }}>Awaiting their reply…</div>
               </div>
-              <span className="chip accent">⏳ Pending</span>
+              <span className="chip accent">Pending</span>
             </div>
           </div>
         ))

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { Avatar } from '../components/Avatar'
+import { Icon } from '../components/Icon'
 import { Sheet } from '../components/Sheet'
 import { REACTIONS, END_REASONS } from '../constants'
 import { clockTime } from '../utils/format'
@@ -54,20 +55,20 @@ export function Chat() {
         <Avatar name={buddy.profile.nickname} size={40} />
         <div style={{ flex: 1 }}>
           <strong>{buddy.profile.nickname}</strong>
-          <div className="muted" style={{ fontSize: 12 }}>💊 {buddy.profile.medication} · {buddy.profile.treatmentStage}</div>
+          <div className="muted" style={{ fontSize: 12 }}>{buddy.profile.medication} · {buddy.profile.treatmentStage}</div>
         </div>
         <button className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="Options">⋯</button>
       </div>
 
       <div className="chat-body" ref={bodyRef}>
         <div className="banner warn" style={{ marginBottom: 6 }}>
-          💬 Friendly reminder: no dosing or medical advice. For symptoms, contact a clinician.
+          Friendly reminder: no dosing or medical advice. For symptoms, contact a clinician.
         </div>
 
         {msgs.length === 0 && (
           <div className="center muted" style={{ marginTop: 30 }}>
-            <div style={{ fontSize: 36 }}>👋</div>
-            Say hi to {buddy.profile.nickname} and break the ice!
+            <div className="empty-ico" style={{ margin: '0 auto 10px' }}><Icon name="chat" size={26} /></div>
+            Say hi to {buddy.profile.nickname} and break the ice.
           </div>
         )}
 
@@ -110,7 +111,7 @@ export function Chat() {
 
       {looksLikeMedicalAdvice(text) && (
         <div className="banner warn" style={{ margin: '0 14px 8px' }}>
-          ⚠️ This looks like dosing or medical advice. Please keep it peer support —
+          This looks like dosing or medical advice. Please keep it peer support —
           for medication questions, point your buddy to their clinician.
         </div>
       )}
@@ -122,7 +123,7 @@ export function Chat() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
         />
-        <button className="send" onClick={send} disabled={!text.trim()}>➤</button>
+        <button className="send" onClick={send} disabled={!text.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
       </div>
 
       {/* Options menu */}
@@ -130,20 +131,20 @@ export function Chat() {
         <h2>{buddy.profile.nickname}</h2>
         <p style={{ marginTop: 4 }}>Manage this buddy relationship.</p>
         <div className="banner warn" style={{ marginBottom: 14 }}>
-          🚑 Concerning symptoms? Contact a clinician or emergency services — not your buddy.
+          Concerning symptoms? Contact a clinician or emergency services — not your buddy.
         </div>
         <button className="btn secondary" onClick={() => { setMenuOpen(false); setEndOpen(true) }}>
           End this buddy relationship
         </button>
         <button className="btn outline" style={{ marginTop: 8 }} onClick={() => { setMenuOpen(false); setReportOpen(true) }}>
-          🚩 Report {buddy.profile.nickname}
+          Report {buddy.profile.nickname}
         </button>
         <button
           className="btn danger"
           style={{ marginTop: 8 }}
           onClick={() => { blockUser(buddy.id); setMenuOpen(false); navigate('/chat') }}
         >
-          🚫 Block {buddy.profile.nickname}
+          Block {buddy.profile.nickname}
         </button>
       </Sheet>
 

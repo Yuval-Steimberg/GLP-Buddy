@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
+import { Icon } from '../components/Icon'
 import { MILESTONE_EMOJI, REACTIONS, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
 import { clockTime, timeAgo } from '../utils/format'
 import type { Reaction } from '../types'
@@ -31,7 +32,7 @@ export function Trio() {
 
       <div className="card" style={{ background: 'linear-gradient(135deg, var(--primary-soft), var(--accent-soft))' }}>
         <div className="row">
-          <span style={{ fontSize: 34 }}>👥</span>
+          <span className="row-ico" style={{ width: 46, height: 46 }}><Icon name="users" size={24} /></span>
           <div>
             <h2>Buddy Trio</h2>
             <p style={{ margin: 0, fontSize: 13 }}>A small, tight-knit support group of exactly three.</p>
@@ -77,7 +78,7 @@ function LockedTrio({
   return (
     <>
       <div className="banner info" style={{ marginBottom: 16 }}>
-        🔒 Buddy Trio unlocks only for highly engaged users with a stable buddy history.
+        Buddy Trio unlocks only for highly engaged users with a stable buddy history.
         It's about depth, not speed.
       </div>
       <div className="card">
@@ -85,7 +86,7 @@ function LockedTrio({
         <div className="stack">
           {checks.map((c) => (
             <div className="row" key={c.label} style={{ gap: 10 }}>
-              <span style={{ fontSize: 18 }}>{c.met ? '✅' : '⬜'}</span>
+              <span className="lp-check" data-met={c.met}>{c.met && <Icon name="check" size={13} />}</span>
               <span style={{ fontWeight: 700, fontSize: 14, color: c.met ? 'var(--ink)' : 'var(--ink-faint)' }}>
                 {c.label}
               </span>
@@ -101,7 +102,7 @@ function LockedTrio({
       <button className="btn secondary" onClick={onFindBuddy}>Build a stable buddy relationship →</button>
 
       <div className="card flat" style={{ marginTop: 14, background: 'var(--surface-2)' }}>
-        <strong style={{ fontSize: 13 }}>👀 For reviewers / demo</strong>
+        <strong style={{ fontSize: 13 }}>For reviewers / demo</strong>
         <p style={{ fontSize: 13, marginTop: 4 }}>
           Skip the 3-month wait and preview the unlocked Trio creation flow.
         </p>
@@ -129,7 +130,7 @@ function CreateTrio({
     return (
       <div className="card">
         <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginBottom: 12 }}>
-          🎉 You're eligible for Buddy Trio!
+          You're eligible for Buddy Trio.
         </div>
         <p>You need at least two active buddies to form a Trio. Match with one more buddy first.</p>
       </div>
@@ -139,7 +140,7 @@ function CreateTrio({
   return (
     <>
       <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginBottom: 16 }}>
-        🎉 You're eligible! Invite two of your buddies to form a Trio.
+        You're eligible! Invite two of your buddies to form a Trio.
       </div>
       <div className="card">
         <h3 style={{ marginBottom: 10 }}>Pick two buddies ({selected.length}/2)</h3>
@@ -159,7 +160,7 @@ function CreateTrio({
             >
               <Avatar name={b.profile.nickname} size={38} />
               <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>{b.profile.nickname}</span>
-              <span>{selected.includes(b.id) ? '✅' : '○'}</span>
+              <span className="lp-check" data-met={selected.includes(b.id)}>{selected.includes(b.id) && <Icon name="check" size={13} />}</span>
             </button>
           ))}
         </div>
@@ -176,7 +177,7 @@ function PendingTrio({ members, pending }: { members: string[]; pending: string[
   const { state } = useStore()
   return (
     <div className="card center">
-      <div style={{ fontSize: 40 }}>⏳</div>
+      <div className="empty-ico" style={{ margin: '0 auto 8px' }}><Icon name="clock" size={28} /></div>
       <h3>Waiting for approvals</h3>
       <p>Your Trio is created once all three members approve. Hang tight!</p>
       <div className="stack" style={{ marginTop: 10, textAlign: 'left' }}>
@@ -249,8 +250,8 @@ function TrioSpace({ trioId }: { trioId: string }) {
       </div>
 
       <div className="chip-row" style={{ marginBottom: 14 }}>
-        <button className={`chip ${tab === 'chat' ? 'primary' : ''}`} onClick={() => setTab('chat')}>💬 Group chat</button>
-        <button className={`chip ${tab === 'timeline' ? 'primary' : ''}`} onClick={() => setTab('timeline')}>🌱 Shared milestones</button>
+        <button className={`chip ${tab === 'chat' ? 'primary' : ''}`} onClick={() => setTab('chat')}>Group chat</button>
+        <button className={`chip ${tab === 'timeline' ? 'primary' : ''}`} onClick={() => setTab('timeline')}>Shared milestones</button>
       </div>
 
       {tab === 'chat' ? (
@@ -258,7 +259,7 @@ function TrioSpace({ trioId }: { trioId: string }) {
           <div className="card" ref={bodyRef} style={{ maxHeight: '50vh', overflowY: 'auto' }}>
             {msgs.length === 0 && (
               <div className="center muted" style={{ padding: 20 }}>
-                <div style={{ fontSize: 32 }}>👋</div>
+                <div className="empty-ico" style={{ margin: '0 auto 8px' }}><Icon name="chat" size={26} /></div>
                 Welcome to your Trio! Say hello to the group.
               </div>
             )}

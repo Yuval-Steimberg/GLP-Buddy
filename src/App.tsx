@@ -7,6 +7,7 @@ import { Onboarding } from './pages/Onboarding'
 import { Safety } from './pages/Safety'
 import { AuthScreen } from './auth/AuthScreen'
 import { useSession } from './auth/useSession'
+import { BrandMark } from './components/Icon'
 import { USE_SUPABASE } from './lib/env'
 
 // Code-split the authenticated app + secondary screens so the landing/auth
@@ -29,7 +30,7 @@ const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pend
 function Loading() {
   return (
     <div className="empty" style={{ marginTop: 120 }}>
-      <div className="big">🫂</div>
+      <div className="empty-ico"><BrandMark size={30} /></div>
       <p>Loading…</p>
     </div>
   )

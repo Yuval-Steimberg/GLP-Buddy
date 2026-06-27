@@ -5,17 +5,18 @@ import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
 import { Sheet } from '../components/Sheet'
+import { Icon, type IconName } from '../components/Icon'
 import { REACTIONS } from '../constants'
 import { timeAgo } from '../utils/format'
 import type { Reaction, TimelineEventType } from '../types'
 
-const TYPE_ICON: Record<TimelineEventType, string> = {
-  milestone: '🎯',
-  comment: '💬',
-  reaction: '❤️',
-  moment: '✨',
-  reflection: '📝',
-  level: '🏆',
+const TYPE_ICON: Record<TimelineEventType, IconName> = {
+  milestone: 'spark',
+  comment: 'chat',
+  reaction: 'heart',
+  moment: 'spark',
+  reflection: 'doc',
+  level: 'spark',
 }
 
 export function Timeline() {
@@ -41,7 +42,7 @@ export function Timeline() {
       <div className="screen">
         <TopBar title="Timeline" />
         <div className="empty">
-          <div className="big">🌱</div>
+          <div className="empty-ico"><Icon name="growth" size={30} /></div>
           <h3>Your shared journey starts here</h3>
           <p>Match with a buddy to build a timeline of milestones, reflections and moments together.</p>
           <button className="btn" style={{ marginTop: 10 }} onClick={() => navigate('/matches')}>
@@ -98,12 +99,12 @@ export function Timeline() {
       </div>
 
       <div className="btn-row" style={{ marginBottom: 16 }}>
-        <button className="btn secondary" onClick={() => setMilestoneOpen(true)}>🎯 Milestone</button>
-        <button className="btn secondary" onClick={() => setReflectionOpen(true)}>📝 Reflection</button>
+        <button className="btn secondary" onClick={() => setMilestoneOpen(true)}>Add milestone</button>
+        <button className="btn secondary" onClick={() => setReflectionOpen(true)}>Reflection</button>
       </div>
 
       <div className="banner info" style={{ marginBottom: 18 }}>
-        🌱 Your timeline is what makes this a long-term friendship — a place to look back on how far you've come together.
+        Your timeline is what makes this a long-term friendship — a place to look back on how far you've come together.
       </div>
 
       {events.length === 0 ? (
@@ -112,7 +113,7 @@ export function Timeline() {
         <div className="timeline">
           {events.map((e) => (
             <div className="tl-item" key={e.id}>
-              <div className="tl-dot">{TYPE_ICON[e.type]}</div>
+              <div className="tl-dot"><Icon name={TYPE_ICON[e.type]} size={12} /></div>
               <div className="card" style={{ marginBottom: 0 }}>
                 <div className="row between">
                   <strong style={{ fontSize: 14 }}>{nameFor(e.authorId)}</strong>
@@ -163,7 +164,7 @@ export function Timeline() {
       <MilestoneSheet open={milestoneOpen} onClose={() => setMilestoneOpen(false)} relationshipId={rel.id} />
 
       <Sheet open={reflectionOpen} onClose={() => setReflectionOpen(false)}>
-        <h2>Monthly reflection 📝</h2>
+        <h2>Monthly reflection</h2>
         <p style={{ marginTop: 4 }}>How has this month felt? What are you proud of? What's been hard?</p>
         <textarea
           className="input"

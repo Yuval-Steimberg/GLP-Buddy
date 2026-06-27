@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth } from '../services/api'
-import { BrandMark } from '../components/Icon'
+import { BrandMark, Icon } from '../components/Icon'
 
 // Real email/password auth for Supabase-backed deployments. Rendered by the
 // App shell when VITE_BACKEND=supabase and there is no active session.
@@ -54,7 +54,7 @@ export function AuthScreen() {
       <div className="card" style={{ marginTop: 24, textAlign: 'left' }}>
         {magicSent ? (
           <div className="center">
-            <div style={{ fontSize: 36 }}>📬</div>
+            <div className="empty-ico" style={{ margin: '0 auto 10px' }}><Icon name="mail" size={28} /></div>
             <h3>Check your inbox</h3>
             <p>We sent a magic sign-in link to {email}.</p>
           </div>
