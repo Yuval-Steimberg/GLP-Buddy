@@ -9,6 +9,17 @@ import './index.css'
 
 initSentry()
 
+// Optional privacy-friendly analytics (Plausible). Activates only when
+// VITE_PLAUSIBLE_DOMAIN is set (e.g. "glpenpal.com") — no-op otherwise.
+const analyticsDomain = import.meta.env.VITE_PLAUSIBLE_DOMAIN
+if (analyticsDomain) {
+  const s = document.createElement('script')
+  s.defer = true
+  s.setAttribute('data-domain', String(analyticsDomain))
+  s.src = 'https://plausible.io/js/script.js'
+  document.head.appendChild(s)
+}
+
 // When a new deploy's service worker takes control, reload once so users
 // always get the fresh build instead of a stale cached shell.
 if ('serviceWorker' in navigator) {
