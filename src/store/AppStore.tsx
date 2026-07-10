@@ -842,10 +842,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     ]
     const text = messages[Math.floor(Math.random() * messages.length)]
     if (USE_SUPABASE) {
+      // Send as a real chat message; it shows in the chat via realtime, and the
+      // Home screen confirms with a banner. Guarded so a failure can't become
+      // an unhandled rejection (Sentry).
       void (async () => {
-        const me = await api.auth.currentUserId()
-        if (me) await api.chat.send(relationshipId, me, text)
-        await refresh()
+        try {
+          const uid = await api.auth.currentUserId()
+          if (uid) await api.chat.send(relationshipId, uid, text)
+        } catch (e) {
+          console.error('sendEncouragement failed', e)
+        }
       })()
       return
     }

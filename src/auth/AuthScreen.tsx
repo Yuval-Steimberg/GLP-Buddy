@@ -67,7 +67,7 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 40 }}>
+    <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 'calc(40px + env(safe-area-inset-top))' }}>
       <a className="auth-back" onClick={() => navigate('/')}>← Back to home</a>
       <div className="logo"><BrandMark size={56} /></div>
       <h1 style={{ fontSize: 34 }}>GLPenPal</h1>

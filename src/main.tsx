@@ -21,12 +21,20 @@ if (analyticsDomain) {
   document.head.appendChild(s)
 }
 
-// When a new deploy's service worker takes control, reload once so users
-// always get the fresh build instead of a stale cached shell.
+// When a NEW deploy's service worker takes over, reload once so users get the
+// fresh build. We must ignore the very first controllerchange on a fresh load
+// (the initial SW install claiming the page) — reloading on that made the app
+// load twice on first visit.
 if ('serviceWorker' in navigator) {
   let refreshing = false
+  let hadController = !!navigator.serviceWorker.controller
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return
+    if (!hadController) {
+      // First-ever control acquisition on this page — not an update.
+      hadController = true
+      return
+    }
     refreshing = true
     window.location.reload()
   })
