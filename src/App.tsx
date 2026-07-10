@@ -39,19 +39,47 @@ function lazyWithReload<T extends React.ComponentType<unknown>>(
   })
 }
 
-const Matches = lazyWithReload(() => import('./pages/Matches').then((m) => ({ default: m.Matches })))
-const Pending = lazyWithReload(() => import('./pages/Pending').then((m) => ({ default: m.Pending })))
-const BuddyHome = lazyWithReload(() => import('./pages/BuddyHome').then((m) => ({ default: m.BuddyHome })))
-const ChatList = lazyWithReload(() => import('./pages/ChatList').then((m) => ({ default: m.ChatList })))
-const Chat = lazyWithReload(() => import('./pages/Chat').then((m) => ({ default: m.Chat })))
-const Timeline = lazyWithReload(() => import('./pages/Timeline').then((m) => ({ default: m.Timeline })))
-const Notifications = lazyWithReload(() => import('./pages/Notifications').then((m) => ({ default: m.Notifications })))
-const Profile = lazyWithReload(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
-const EditProfile = lazyWithReload(() => import('./pages/EditProfile').then((m) => ({ default: m.EditProfile })))
-const Trio = lazyWithReload(() => import('./pages/Trio').then((m) => ({ default: m.Trio })))
-const Moderation = lazyWithReload(() => import('./pages/Moderation').then((m) => ({ default: m.Moderation })))
-const Privacy = lazyWithReload(() => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })))
-const Terms = lazyWithReload(() => import('./pages/legal/Terms').then((m) => ({ default: m.Terms })))
+// Import thunks kept in one place so we can also PREFETCH them on idle — once
+// the chunks are warmed, moving between pages is instant (no Suspense spinner).
+const imports = {
+  Matches: () => import('./pages/Matches').then((m) => ({ default: m.Matches })),
+  Pending: () => import('./pages/Pending').then((m) => ({ default: m.Pending })),
+  BuddyHome: () => import('./pages/BuddyHome').then((m) => ({ default: m.BuddyHome })),
+  ChatList: () => import('./pages/ChatList').then((m) => ({ default: m.ChatList })),
+  Chat: () => import('./pages/Chat').then((m) => ({ default: m.Chat })),
+  Timeline: () => import('./pages/Timeline').then((m) => ({ default: m.Timeline })),
+  Notifications: () => import('./pages/Notifications').then((m) => ({ default: m.Notifications })),
+  Profile: () => import('./pages/Profile').then((m) => ({ default: m.Profile })),
+  EditProfile: () => import('./pages/EditProfile').then((m) => ({ default: m.EditProfile })),
+  Trio: () => import('./pages/Trio').then((m) => ({ default: m.Trio })),
+  Moderation: () => import('./pages/Moderation').then((m) => ({ default: m.Moderation })),
+  Privacy: () => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })),
+  Terms: () => import('./pages/legal/Terms').then((m) => ({ default: m.Terms })),
+}
+
+let prefetched = false
+function prefetchPages() {
+  if (prefetched) return
+  prefetched = true
+  const run = () => Object.values(imports).forEach((fn) => { fn().catch(() => {}) })
+  const ric = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback
+  if (ric) ric(run)
+  else setTimeout(run, 1200)
+}
+
+const Matches = lazyWithReload(imports.Matches)
+const Pending = lazyWithReload(imports.Pending)
+const BuddyHome = lazyWithReload(imports.BuddyHome)
+const ChatList = lazyWithReload(imports.ChatList)
+const Chat = lazyWithReload(imports.Chat)
+const Timeline = lazyWithReload(imports.Timeline)
+const Notifications = lazyWithReload(imports.Notifications)
+const Profile = lazyWithReload(imports.Profile)
+const EditProfile = lazyWithReload(imports.EditProfile)
+const Trio = lazyWithReload(imports.Trio)
+const Moderation = lazyWithReload(imports.Moderation)
+const Privacy = lazyWithReload(imports.Privacy)
+const Terms = lazyWithReload(imports.Terms)
 
 const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pending', '/trio', '/notifications']
 
@@ -69,6 +97,10 @@ export function App() {
   const location = useLocation()
   const session = useSession()
   const [recovering, setRecovering] = useState(false)
+
+  // Warm all route chunks once, during idle time after first paint, so
+  // navigating between pages doesn't show a loading spinner.
+  useEffect(() => { prefetchPages() }, [])
 
   // Password-reset links arrive as a PASSWORD_RECOVERY auth event — show the
   // "set new password" screen over everything until it's done.

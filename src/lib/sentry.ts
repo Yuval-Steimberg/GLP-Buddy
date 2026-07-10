@@ -1,10 +1,11 @@
-import * as Sentry from '@sentry/react'
 import { SENTRY_DSN } from './env'
 
-// Initialise error + performance monitoring only when a DSN is configured,
-// so local/demo builds stay quiet and dependency-free at runtime.
-export function initSentry() {
+// Initialise error + performance monitoring only when a DSN is configured.
+// The @sentry/react bundle (~50 kB gzip) is dynamically imported, so builds
+// without a DSN never download it — keeping initial load lean.
+export async function initSentry() {
   if (!SENTRY_DSN) return
+  const Sentry = await import('@sentry/react')
   Sentry.init({
     dsn: SENTRY_DSN,
     integrations: [Sentry.browserTracingIntegration()],
@@ -12,5 +13,3 @@ export function initSentry() {
     environment: import.meta.env.MODE,
   })
 }
-
-export { Sentry }

@@ -5,11 +5,21 @@ import { AppStoreProvider } from './store/AppStore'
 import { App } from './App'
 import { InstallPrompt } from './components/InstallPrompt'
 import { initSentry } from './lib/sentry'
+import { SUPABASE_URL } from './lib/env'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/space-grotesk'
 import './index.css'
 
-initSentry()
+void initSentry()
+
+// Warm the TLS connection to Supabase so the first data request is faster.
+if (SUPABASE_URL) {
+  const link = document.createElement('link')
+  link.rel = 'preconnect'
+  link.href = SUPABASE_URL
+  link.crossOrigin = 'anonymous'
+  document.head.appendChild(link)
+}
 
 // Optional privacy-friendly analytics (Plausible). Activates only when
 // VITE_PLAUSIBLE_DOMAIN is set (e.g. "glpenpal.com") — no-op otherwise.
