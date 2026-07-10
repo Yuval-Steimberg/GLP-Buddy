@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { USE_SUPABASE } from '../lib/env'
@@ -27,6 +28,7 @@ export function Landing() {
           <nav className="lp-nav-links">
             <a onClick={scrollTo('how')}>How it works</a>
             <a onClick={scrollTo('features')}>Features</a>
+            <a onClick={scrollTo('voices')}>Community</a>
             <a onClick={scrollTo('faq')}>FAQ</a>
           </nav>
           <button className="lp-btn lp-btn-sm" onClick={cta}>
@@ -42,7 +44,7 @@ export function Landing() {
         <div className="lp-hero-in">
           <div className="lp-hero-copy">
             <div className="lp-eyebrow"><span className="lp-dot" /> Peer support for GLP‑1</div>
-            <h1 className="lp-h1">You don't have to do GLP‑1 <span className="lp-em">alone</span>.</h1>
+            <h1 className="lp-h1">The GLP‑1 journey feels lighter <span className="lp-em">with someone beside you</span>.</h1>
             <p className="lp-lead">
               Get matched 1:1 with a pen pal on the same medication, stage and goals — for the
               wins, the rough side‑effect weeks, and the days the scale makes no sense.
@@ -61,7 +63,9 @@ export function Landing() {
           </div>
 
           <div className="lp-hero-art">
-            <PhoneMock />
+            <div className="lp-phone-wrap">
+              <PhoneMock />
+            </div>
             <div className="lp-float lp-float-match">
               <div className="lp-float-ico" style={{ background: 'var(--primary-soft)', color: 'var(--primary-ink)' }}>
                 <Icon name="users" size={18} />
@@ -94,16 +98,26 @@ export function Landing() {
         </div>
       </section>
 
+      {/* Stats band */}
+      <section className="lp-stats">
+        <Reveal className="lp-stats-in">
+          <Stat n={5} label="GLP‑1 medications supported" />
+          <Stat n={100} suffix="%" label="Private, peer‑led — no feeds, no ads" />
+          <Stat n={2} suffix=" min" label="To build your profile and get matched" />
+          <Stat text="1:1" label="Every connection is mutual, both opt in" />
+        </Reveal>
+      </section>
+
       {/* Problem */}
       <section className="lp-problem">
-        <div className="lp-problem-in">
+        <Reveal className="lp-problem-in">
           <div className="lp-eyebrow center"><span className="lp-dot" /> The hard part</div>
           <h2 className="lp-h2">The injection isn't the hard part.</h2>
           <p className="lp-sub">
             It's the plateaus. The side‑effect weeks. The comparison. And explaining it to people
             who haven't lived it. A pen pal who's actually on the same path changes everything.
           </p>
-        </div>
+        </Reveal>
       </section>
 
       {/* Features — alternating product rows */}
@@ -113,47 +127,89 @@ export function Landing() {
           title="Matched on what actually matters"
           body="We pair you on medication, treatment stage, goals and communication style — not just who's nearby. Every match is mutual, so your private space only opens when you both say yes."
           art={<MatchMock />}
+          cta={<InlineCta onClick={cta}>Find your match</InlineCta>}
         />
         <FeatureRow
           reverse
           eyebrow="Private by design"
           title="A space that's just the two of you"
-          body="No feeds. No followers. No judgement. Just a calm, secure 1:1 to check in, vent on the hard days, and cheer each other on."
+          body="No feeds. No followers. No judgement. Just a calm, secure 1:1 to check in, vent on the hard days, share a photo, and cheer each other on."
           art={<ChatMock />}
+          cta={<InlineCta onClick={cta}>Start a private space</InlineCta>}
         />
         <FeatureRow
           eyebrow="Stay motivated"
           title="Celebrate every milestone together"
           body="Log first injections, plateaus beaten and goals reached on a shared timeline — and get a nudge whenever your pen pal hits one too."
           art={<TimelineMock />}
+          cta={<InlineCta onClick={cta}>Build your timeline</InlineCta>}
         />
       </section>
 
       {/* How it works */}
       <section className="lp-how" id="how">
-        <div className="lp-eyebrow center"><span className="lp-dot" /> How it works</div>
-        <h2 className="lp-h2 center">Your pen pal in three steps</h2>
+        <Reveal>
+          <div className="lp-eyebrow center"><span className="lp-dot" /> How it works</div>
+          <h2 className="lp-h2 center">Your pen pal in three steps</h2>
+        </Reveal>
         <div className="lp-steps">
-          <Step n="1" title="Tell us about you" body="A short, private profile — your medication, stage, goals and what support means to you." />
-          <Step n="2" title="Get matched" body="We suggest compatible pen pals. Matches are always mutual — you both opt in." />
-          <Step n="3" title="Grow together" body="Chat, share milestones and show up for each other through the ups and downs." />
+          {[
+            ['1', 'Tell us about you', 'A short, private profile — your medication, stage, goals and what support means to you.'],
+            ['2', 'Get matched', 'We suggest compatible pen pals. Matches are always mutual — you both opt in.'],
+            ['3', 'Grow together', 'Chat, share milestones and show up for each other through the ups and downs.'],
+          ].map(([n, t, b], i) => (
+            <Reveal key={n} delay={i * 90}><Step n={n} title={t} body={b} /></Reveal>
+          ))}
         </div>
+      </section>
+
+      {/* Community voices */}
+      <section className="lp-voices" id="voices">
+        <Reveal>
+          <div className="lp-eyebrow center"><span className="lp-dot" /> The community</div>
+          <h2 className="lp-h2 center">Real support sounds like this</h2>
+          <p className="lp-sub center" style={{ maxWidth: 560, margin: '12px auto 0' }}>
+            The kind of everyday encouragement members share in their private 1:1 spaces.
+          </p>
+        </Reveal>
+        <div className="lp-quotes">
+          {[
+            ['“Week two knocked me flat. Having someone who just *got it* — no explaining — got me through.”', 'Wegovy · month 2'],
+            ['“We check in every morning. Some days it’s a win, some days it’s just ‘still here.’ Both count.”', 'Mounjaro · month 5'],
+            ['“I stopped comparing myself to strangers online and started rooting for one real person. Game changer.”', 'Ozempic · month 3'],
+          ].map(([q, who], i) => (
+            <Reveal key={i} delay={i * 90}>
+              <figure className="lp-quote">
+                <div className="lp-quote-mark" aria-hidden><Icon name="chat" size={18} /></div>
+                <blockquote>{q}</blockquote>
+                <figcaption>{who}</figcaption>
+              </figure>
+            </Reveal>
+          ))}
+        </div>
+        <p className="lp-voices-note">Representative of the peer support shared on GLPenPal. Not medical advice.</p>
       </section>
 
       {/* Values band */}
       <section className="lp-values">
         <div className="lp-values-grid">
-          <Value icon="heart" t="Always mutual" s="No cold messages — every connection is opted into by both people." />
-          <Value icon="lock" t="Private & secure" s="1:1 spaces protected by row‑level security. Just you two." />
-          <Value icon="users" t="Judgement‑free" s="Real peer support from someone who genuinely gets it." />
-          <Value icon="growth" t="Built for the long run" s="Milestones, timelines and check‑ins that keep you both going." />
+          {[
+            ['heart', 'Always mutual', 'No cold messages — every connection is opted into by both people.'],
+            ['lock', 'Private & secure', '1:1 spaces protected by row‑level security. Just you two.'],
+            ['users', 'Judgement‑free', 'Real peer support from someone who genuinely gets it.'],
+            ['growth', 'Built for the long run', 'Milestones, timelines and check‑ins that keep you both going.'],
+          ].map(([icon, t, s], i) => (
+            <Reveal key={t} delay={i * 80}><Value icon={icon as ValueIcon} t={t} s={s} /></Reveal>
+          ))}
         </div>
       </section>
 
       {/* FAQ */}
       <section className="lp-faq" id="faq">
-        <div className="lp-eyebrow center"><span className="lp-dot" /> FAQ</div>
-        <h2 className="lp-h2 center">Questions, answered</h2>
+        <Reveal>
+          <div className="lp-eyebrow center"><span className="lp-dot" /> FAQ</div>
+          <h2 className="lp-h2 center">Questions, answered</h2>
+        </Reveal>
         <div className="lp-faq-list">
           <Faq q="Is this medical advice?" a="No. GLPenPal is peer support between people — friendship and encouragement, never dosing or medical guidance. For medical questions or concerning symptoms, talk to a clinician." />
           <Faq q="Is it really private?" a="Yes. Conversations are strictly 1:1 and protected by row‑level security in the database — only you and your pen pal can ever see your space." />
@@ -165,13 +221,13 @@ export function Landing() {
 
       {/* Final CTA */}
       <section className="lp-final">
-        <div className="lp-final-card">
+        <Reveal className="lp-final-card">
           <div className="lp-glow lp-glow-c" />
           <BrandMark size={56} />
           <h2 className="lp-h2">Someone out there gets exactly what you're going through.</h2>
           <p className="lp-sub">Find them today — it only takes a couple of minutes.</p>
           <button className="lp-btn lp-btn-lg" onClick={cta}>Find my pen pal — it's free</button>
-        </div>
+        </Reveal>
       </section>
 
       <footer className="lp-footer">
@@ -193,23 +249,87 @@ export function Landing() {
   )
 }
 
+/* ---------------- motion + primitives ---------------- */
+
+// Reveal-on-scroll wrapper (IntersectionObserver, one-shot). Respects reduced
+// motion via CSS (.lp-reveal transitions are disabled by the global media rule).
+function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setInView(true); io.disconnect() } },
+      { threshold: 0.14, rootMargin: '0px 0px -6% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return (
+    <div ref={ref} className={`lp-reveal${inView ? ' lp-in' : ''} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  )
+}
+
+function Stat({ n, suffix = '', text, label }: { n?: number; suffix?: string; text?: string; label: string }) {
+  return (
+    <div className="lp-stat">
+      <div className="lp-stat-n">{text ? text : <Counter to={n ?? 0} suffix={suffix} />}</div>
+      <div className="lp-stat-l">{label}</div>
+    </div>
+  )
+}
+
+function Counter({ to, suffix = '' }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setVal(to); return }
+      const dur = 1300
+      let start: number | null = null
+      const step = (t: number) => {
+        if (start === null) start = t
+        const p = Math.min(1, (t - start) / dur)
+        setVal(Math.round(to * (1 - Math.pow(1 - p, 3))))
+        if (p < 1) requestAnimationFrame(step)
+      }
+      requestAnimationFrame(step)
+    }, { threshold: 0.6 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [to])
+  return <span ref={ref}>{val}{suffix}</span>
+}
+
+function InlineCta({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return <button className="lp-inline-cta" onClick={onClick}>{children} <span aria-hidden>→</span></button>
+}
+
 /* ---------------- building blocks ---------------- */
 
-function FeatureRow({ eyebrow, title, body, art, reverse }: {
-  eyebrow: string; title: string; body: string; art: React.ReactNode; reverse?: boolean
+function FeatureRow({ eyebrow, title, body, art, reverse, cta }: {
+  eyebrow: string; title: string; body: string; art: ReactNode; reverse?: boolean; cta?: ReactNode
 }) {
   return (
-    <div className={`lp-frow${reverse ? ' reverse' : ''}`}>
+    <Reveal className={`lp-frow${reverse ? ' reverse' : ''}`}>
       <div className="lp-frow-copy">
         <div className="lp-eyebrow"><span className="lp-dot" /> {eyebrow}</div>
         <h3 className="lp-h3">{title}</h3>
         <p className="lp-sub">{body}</p>
+        {cta}
       </div>
       <div className="lp-frow-art">
         <div className="lp-glow lp-glow-soft" />
         {art}
       </div>
-    </div>
+    </Reveal>
   )
 }
 
@@ -223,7 +343,8 @@ function Step({ n, title, body }: { n: string; title: string; body: string }) {
   )
 }
 
-function Value({ icon, t, s }: { icon: 'heart' | 'lock' | 'users' | 'growth'; t: string; s: string }) {
+type ValueIcon = 'heart' | 'lock' | 'users' | 'growth'
+function Value({ icon, t, s }: { icon: ValueIcon; t: string; s: string }) {
   return (
     <div className="lp-value">
       <div className="lp-value-ico"><Icon name={icon} size={20} /></div>
@@ -255,7 +376,7 @@ function PhoneMock() {
         </div>
         <div className="lp-app-card">
           <div className="lp-app-row">
-            <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#574a8e,#8b5e86)' }}>M</div>
+            <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#5e8c74,#7ba890)' }}>M</div>
             <div style={{ flex: 1 }}>
               <div className="lp-app-name">Maya</div>
               <div className="lp-app-muted">Wegovy</div>
@@ -270,7 +391,7 @@ function PhoneMock() {
         </div>
         <div className="lp-app-bubbles">
           <div className="lp-b them">How did the nausea week go?</div>
-          <div className="lp-b me">So much better. Your tip helped 💚</div>
+          <div className="lp-b me">So much better. Your tip really helped.</div>
         </div>
         <div className="lp-app-ms">
           <span className="lp-app-ms-ico"><Icon name="spark" size={14} /></span>
@@ -285,7 +406,7 @@ function MatchMock() {
   return (
     <div className="lp-mock" aria-hidden>
       <div className="lp-app-row">
-        <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#8b5e86,#cf8763)' }}>S</div>
+        <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#7ba890,#c2955f)' }}>S</div>
         <div style={{ flex: 1 }}>
           <div className="lp-app-name">Sofia</div>
           <div className="lp-mock-chips"><span className="lp-app-chip green">Ozempic</span><span className="lp-app-chip">3–6 months</span></div>
@@ -314,7 +435,7 @@ function ChatMock() {
         <div className="lp-b them">Took my first injection today — nervous but did it.</div>
         <div className="lp-b me">That's huge. Week one was the hardest for me.</div>
         <div className="lp-b them">Needed to hear that. Glad I'm not doing this alone.</div>
-        <div className="lp-b me">Always here. Message me on the rough days 💚</div>
+        <div className="lp-b me">Always here. Message me on the rough days.</div>
       </div>
     </div>
   )
