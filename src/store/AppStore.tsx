@@ -428,7 +428,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
             relationshipId: rel.id,
             type: 'moment',
             authorId: me,
-            text: `${draft.users[me].profile.nickname} and ${draft.users[otherId].profile.nickname} are now buddies! Say hi 👋`,
+            text: `${draft.users[me].profile.nickname} and ${draft.users[otherId].profile.nickname} are now buddies! Say hi`,
             reactions: [],
             createdAt: Date.now(),
           },
@@ -718,7 +718,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
               await api.relationships.setLevels(relationshipId, [...rel.levelKeys, ...newLevels])
               for (const key of newLevels) {
                 const lvl = BUDDY_LEVELS.find((l) => l.key === key)!
-                await api.timeline.addEvent(relationshipId, me, 'level', `Buddy level unlocked: ${lvl.emoji} ${lvl.label}`)
+                await api.timeline.addEvent(relationshipId, me, 'level', `Buddy level unlocked: ${lvl.label}`)
               }
             }
           }
@@ -790,7 +790,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
                   relationshipId,
                   type: 'level',
                   authorId: me,
-                  text: `Buddy level unlocked: ${lvl.emoji} ${lvl.label}`,
+                  text: `Buddy level unlocked: ${lvl.label}`,
                   reactions: [],
                   createdAt: Date.now(),
                 },
@@ -868,11 +868,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
-      'You\'ve got this 💪',
-      'Proud of you for showing up today 🌟',
-      'One day at a time — I\'m here with you 🤗',
-      'Sending you good energy today ❤️',
-      'However today goes, you\'re doing great 🎉',
+      'You\'ve got this.',
+      'Proud of you for showing up today.',
+      'One day at a time — I\'m here with you.',
+      'Sending you good energy today.',
+      'However today goes, you\'re doing great.',
     ]
     const text = messages[Math.floor(Math.random() * messages.length)]
     if (USE_SUPABASE) {

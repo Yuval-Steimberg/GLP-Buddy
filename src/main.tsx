@@ -6,6 +6,7 @@ import { App } from './App'
 import { InstallPrompt } from './components/InstallPrompt'
 import { initSentry } from './lib/sentry'
 import '@fontsource-variable/inter'
+import '@fontsource-variable/space-grotesk'
 import './index.css'
 
 initSentry()

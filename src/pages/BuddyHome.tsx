@@ -5,7 +5,6 @@ import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
 import { Icon } from '../components/Icon'
-import { MILESTONE_EMOJI } from '../constants'
 import { timeAgo } from '../utils/format'
 import type { BuddyRelationship } from '../types'
 
@@ -103,7 +102,7 @@ export function BuddyHome() {
                 <div className="stack" style={{ marginBottom: 6 }}>
                   {recentMs.map((m) => (
                     <div key={m.id} className="row" style={{ gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>{MILESTONE_EMOJI[m.type]}</span>
+                      <span className="ms-badge"><Icon name="spark" size={15} /></span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: 14 }}>{m.type}</div>
                         <div className="muted" style={{ fontSize: 12 }}>
@@ -118,7 +117,7 @@ export function BuddyHome() {
               {unlocked.length > 0 && (
                 <div className="chip-row" style={{ marginTop: 10 }}>
                   {unlocked.map((l) => (
-                    <span key={l.key} className="chip accent">{l.emoji} {l.label}</span>
+                    <span key={l.key} className="chip accent">{l.label}</span>
                   ))}
                 </div>
               )}

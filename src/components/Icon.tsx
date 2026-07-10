@@ -87,8 +87,9 @@ export function BrandMark({ size = 30 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="40" y2="40">
-          <stop stopColor="#13b890" />
-          <stop offset="1" stopColor="#0a7d6b" />
+          <stop stopColor="#8b5cf6" />
+          <stop offset="0.55" stopColor="#ff5a5f" />
+          <stop offset="1" stopColor="#ffb347" />
         </linearGradient>
       </defs>
       <rect width="40" height="40" rx="12" fill={`url(#${id})`} />

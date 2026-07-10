@@ -4,7 +4,7 @@ import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { Icon } from '../components/Icon'
-import { MILESTONE_EMOJI, REACTIONS, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
+import { REACTIONS, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
 import { clockTime, timeAgo } from '../utils/format'
 import type { Reaction } from '../types'
 
@@ -310,7 +310,7 @@ function TrioSpace({ trioId }: { trioId: string }) {
             <div className="stack">
               {sharedMilestones.map((m) => (
                 <div className="row" key={m.id} style={{ gap: 10 }}>
-                  <span style={{ fontSize: 20 }}>{MILESTONE_EMOJI[m.type]}</span>
+                  <span className="ms-badge"><Icon name="spark" size={15} /></span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{m.type}</div>
                     <div className="muted" style={{ fontSize: 12 }}>{nameFor(m.authorId)} · {timeAgo(m.createdAt)}</div>
