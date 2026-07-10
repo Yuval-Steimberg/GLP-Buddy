@@ -50,6 +50,35 @@ export async function enablePush(userId: string): Promise<boolean> {
   return true
 }
 
+/** True if this device currently has an active push subscription. */
+export async function pushEnabled(): Promise<boolean> {
+  if (!pushSupported() || Notification.permission !== 'granted') return false
+  try {
+    const reg = await navigator.serviceWorker.ready
+    return !!(await reg.pushManager.getSubscription())
+  } catch {
+    return false
+  }
+}
+
+/** Turn push off on this device: unsubscribe and remove the stored record. */
+export async function disablePush(userId: string): Promise<void> {
+  try {
+    const reg = await navigator.serviceWorker.ready
+    const sub = await reg.pushManager.getSubscription()
+    const endpoint = sub?.endpoint
+    if (sub) {
+      try { await sub.unsubscribe() } catch { /* ignore */ }
+    }
+    if (supabase) {
+      if (endpoint) await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
+      else await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Show an OS notification while the app is running (foreground or backgrounded
  * but still alive). This is what surfaces a new-message alert without the full

@@ -245,9 +245,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       })
       cleanupRealtime = () => { unsubNtf(); unsubMsg() }
     })
+    // When the app returns to the foreground (e.g. tapped a push notification),
+    // re-pull fresh data so new messages/notifications show up immediately.
+    // This does NOT re-subscribe, so it can't cause the earlier double-render.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && subscribedFor) {
+        void hydrateFor(subscribedFor)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       unsub()
       cleanupRealtime?.()
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [hydrateFor])
 

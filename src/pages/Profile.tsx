@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
@@ -5,14 +6,52 @@ import { Avatar } from '../components/Avatar'
 import { MAX_BUDDIES } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
 import { auth } from '../services/api'
-import { enablePush, pushSupported } from '../lib/push'
+import { enablePush, disablePush, pushEnabled, pushSupported } from '../lib/push'
 import { Icon } from '../components/Icon'
 
 export function Profile() {
   const navigate = useNavigate()
   const { currentUser, activeRelationships, buddyOf, resetApp, trioEligibility, activeTrio } = useStore()
+  const [pushOn, setPushOn] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
+
+  // Reflect whether this device currently has push turned on.
+  useEffect(() => {
+    let active = true
+    void pushEnabled().then((on) => { if (active) setPushOn(on) })
+    return () => { active = false }
+  }, [])
+
   if (!currentUser) return null
   const p = currentUser.profile
+
+  const togglePush = async () => {
+    if (pushBusy) return
+    setPushBusy(true)
+    try {
+      if (pushOn) {
+        await disablePush(currentUser.id)
+        setPushOn(false)
+        alert('Push notifications turned off on this device.')
+      } else {
+        if (!pushSupported()) {
+          alert('To get push notifications, install the app first: tap Share → Add to Home Screen, then open GLPenPal from your home screen and try again.')
+          return
+        }
+        if ('Notification' in window && Notification.permission === 'denied') {
+          alert('Notifications are blocked for GLPenPal. Turn them on in your device Settings → GLPenPal → Notifications, then try again.')
+          return
+        }
+        const ok = await enablePush(currentUser.id)
+        setPushOn(ok)
+        alert(ok ? 'Push notifications enabled! 🎉 You\'ll get alerts for new messages.' : 'Push was not enabled — make sure you tap Allow when prompted.')
+      }
+    } catch {
+      alert('Could not change push settings just now. Close and reopen the app, then try again.')
+    } finally {
+      setPushBusy(false)
+    }
+  }
   const rels = activeRelationships()
   const elig = trioEligibility()
 
@@ -125,34 +164,14 @@ export function Profile() {
           <button
             className="row list-tap"
             style={{ width: '100%', background: 'none' }}
-            onClick={async () => {
-              // Not installed / unsupported browser (e.g. iOS Safari) → guide them.
-              if (!pushSupported()) {
-                alert(
-                  'To get push notifications, first install the app: tap Share → Add to Home Screen, then open GLPenPal from your home screen and try again.',
-                )
-                return
-              }
-              // Previously blocked → the OS won\'t re-prompt; send them to Settings.
-              if ('Notification' in window && Notification.permission === 'denied') {
-                alert(
-                  'Notifications are blocked for GLPenPal. Turn them on in your device Settings → GLPenPal → Notifications, then try again.',
-                )
-                return
-              }
-              try {
-                const ok = await enablePush(currentUser.id)
-                alert(ok
-                  ? 'Push notifications enabled! 🎉 You\'ll get alerts for new messages.'
-                  : 'Push was not enabled — make sure you tap Allow when prompted.')
-              } catch {
-                alert('Could not enable push just now. Close and reopen the app, then try again.')
-              }
-            }}
+            onClick={togglePush}
+            disabled={pushBusy}
           >
             <span className="row-ico"><Icon name="bell" size={18} /></span>
-            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Enable push notifications</span>
-            <span className="muted">›</span>
+            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>
+              {pushOn ? 'Disable push notifications' : 'Enable push notifications'}
+            </span>
+            <span className="muted">{pushOn ? 'On' : '›'}</span>
           </button>
           <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/privacy')}>
             <span className="row-ico"><Icon name="lock" size={18} /></span>
