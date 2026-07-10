@@ -189,10 +189,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!USE_SUPABASE) return
     let cleanupRealtime: (() => void) | undefined
-    void refresh()
+    // Track who we're currently hydrated/subscribed for. supabase-js re-fires
+    // SIGNED_IN / TOKEN_REFRESHED / INITIAL_SESSION on tab focus and token
+    // refreshes; without this guard every one of those would trigger a full
+    // re-hydrate (state replace → the pages visibly re-render several times).
+    let subscribedFor: string | null = null
+    // No explicit refresh() here: supabase-js fires an INITIAL_SESSION event
+    // right after we attach below, which performs the first hydrate. Calling
+    // refresh() too would double-load on every mount.
     const unsub = api.auth.onAuthChange((userId) => {
+      // Same user as we're already set up for → ignore the repeat event.
+      if (userId === subscribedFor) return
       cleanupRealtime?.()
       cleanupRealtime = undefined
+      subscribedFor = userId
       if (!userId) {
         setState(buildEmptyState())
         return
@@ -226,7 +236,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       unsub()
       cleanupRealtime?.()
     }
-  }, [refresh, hydrateFor])
+  }, [hydrateFor])
 
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : null
 
