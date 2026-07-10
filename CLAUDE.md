@@ -32,9 +32,21 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `src/lib/database.types.ts`. Keep these in sync with migrations + mappers.
 - **Routing** in `src/App.tsx`. Authenticated pages are `React.lazy`-loaded via
   `lazyWithReload` (see gotchas). Guards enforce onboarding → safety → app.
+- **Profile editing**: `/edit-profile` (`src/pages/EditProfile.tsx`) is a
+  single-page editor — every field pre-filled, change just what you want. It
+  uses `updateProfile` (store) + `api.profiles.update` (writes only profile
+  fields, no onboarding/safety flags), optimistic in both modes. Do NOT route
+  "Edit profile" back through the onboarding wizard.
 - Styling is **hand-written CSS** in `src/index.css` (no Tailwind), driven by CSS
   variables. Line icons + `BrandMark` logo are inline SVG in
   `src/components/Icon.tsx` (never use emojis in UI — see Design).
+- **Marketing landing** (`src/pages/Landing.tsx`, `.lp-*` CSS): scoped design
+  system that re-declares palette vars on `.lp`. Motion primitives live in the
+  file: `Reveal` (IntersectionObserver scroll-reveal, one-shot, reduced-motion
+  safe), `Counter` (animated stat numbers). Sections: hero + floating phone,
+  stats band, problem, feature rows, how-it-works, community voices
+  (representative quotes, labelled not-medical-advice — never fabricate named
+  reviews for a health product), values, FAQ, final CTA.
 
 ## Supabase
 - Migrations in `supabase/migrations/000N_*.sql`. `ALL_MIGRATIONS.sql` is a
