@@ -46,6 +46,40 @@ export const auth = {
     if (error) throw error
   },
 
+  // Email a password-reset link that returns to this site (PASSWORD_RECOVERY).
+  async resetPassword(email: string) {
+    const sb = requireSupabase()
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    })
+    if (error) throw error
+  },
+
+  // Set a new password for the currently-authenticated (recovery) session.
+  async updatePassword(password: string) {
+    const sb = requireSupabase()
+    const { error } = await sb.auth.updateUser({ password })
+    if (error) throw error
+  },
+
+  // Fires when the user arrives via a password-reset link.
+  onPasswordRecovery(cb: () => void) {
+    if (!supabase) return () => {}
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') cb()
+    })
+    return () => data.subscription.unsubscribe()
+  },
+
+  // Permanently delete the user's account + all their data (RPC cascades via
+  // auth.users → profiles → everything). Requires migration 0006.
+  async deleteAccount() {
+    const sb = requireSupabase()
+    const { error } = await sb.rpc('delete_own_account')
+    if (error) throw error
+    try { await sb.auth.signOut() } catch { /* session already gone */ }
+  },
+
   async signOut() {
     await supabase?.auth.signOut()
   },

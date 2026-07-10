@@ -52,6 +52,20 @@ export function AuthScreen() {
     }
   }
 
+  const forgot = async () => {
+    if (!email) return setError('Enter your email above first, then tap reset.')
+    setBusy(true)
+    setError('')
+    try {
+      await auth.resetPassword(email)
+      setNotice(`We sent a password-reset link to ${email}. Open it to set a new password.`)
+    } catch (e) {
+      setError(friendlyAuthError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 40 }}>
       <a className="auth-back" onClick={() => navigate('/')}>← Back to home</a>
@@ -94,6 +108,13 @@ export function AuthScreen() {
             <button className="btn ghost" style={{ marginTop: 8 }} onClick={magic} disabled={busy}>
               Email me a magic link instead
             </button>
+            {mode === 'signin' && (
+              <p className="center" style={{ margin: '12px 0 0' }}>
+                <a onClick={forgot} style={{ fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Forgot password?
+                </a>
+              </p>
+            )}
           </>
         )}
       </div>

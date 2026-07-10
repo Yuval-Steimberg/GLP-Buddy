@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useStore } from './store/AppStore'
 import { BottomNav } from './components/BottomNav'
@@ -6,7 +6,9 @@ import { Landing } from './pages/Landing'
 import { Onboarding } from './pages/Onboarding'
 import { Safety } from './pages/Safety'
 import { AuthScreen } from './auth/AuthScreen'
+import { ResetPassword } from './auth/ResetPassword'
 import { useSession } from './auth/useSession'
+import { auth } from './services/api'
 import { BrandMark } from './components/Icon'
 import { USE_SUPABASE } from './lib/env'
 
@@ -40,6 +42,22 @@ export function App() {
   const { currentUser } = useStore()
   const location = useLocation()
   const session = useSession()
+  const [recovering, setRecovering] = useState(false)
+
+  // Password-reset links arrive as a PASSWORD_RECOVERY auth event — show the
+  // "set new password" screen over everything until it's done.
+  useEffect(() => {
+    if (!USE_SUPABASE) return
+    return auth.onPasswordRecovery(() => setRecovering(true))
+  }, [])
+
+  if (USE_SUPABASE && recovering) {
+    return (
+      <div className="app-shell">
+        <main className="app-main"><ResetPassword onDone={() => setRecovering(false)} /></main>
+      </div>
+    )
+  }
 
   // Supabase mode: require a real session before anything else.
   if (USE_SUPABASE) {

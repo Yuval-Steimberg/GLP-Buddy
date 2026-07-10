@@ -169,6 +169,23 @@ export function Profile() {
           Reset demo data
         </button>
       )}
+      {USE_SUPABASE && (
+        <button
+          className="btn ghost"
+          style={{ marginTop: 8, color: 'var(--danger)' }}
+          onClick={async () => {
+            if (!confirm('Permanently delete your account and ALL your data? This cannot be undone.')) return
+            try {
+              await auth.deleteAccount()
+              navigate('/')
+            } catch {
+              alert('Could not delete your account. Please try again in a moment.')
+            }
+          }}
+        >
+          Delete my account
+        </button>
+      )}
     </div>
   )
 }
