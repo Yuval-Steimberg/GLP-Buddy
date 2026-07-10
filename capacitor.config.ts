@@ -7,12 +7,12 @@ const config: CapacitorConfig = {
   appId: 'com.glpenpal.app',
   appName: 'GLPenPal',
   webDir: 'dist',
-  backgroundColor: '#f4f8f6',
+  backgroundColor: '#f6f4ee',
   ios: {
     contentInset: 'always',
   },
   android: {
-    backgroundColor: '#f4f8f6',
+    backgroundColor: '#f6f4ee',
   },
 }
 

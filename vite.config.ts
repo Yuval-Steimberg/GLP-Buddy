@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'],
       workbox: {
         // Offline app shell + our custom push/notification handlers.
         importScripts: ['/push-sw.js'],
@@ -19,8 +19,8 @@ export default defineConfig({
         name: 'GLPenPal',
         short_name: 'GLPenPal',
         description: 'A GLP pen pal who gets it. Get matched with someone on a similar GLP journey.',
-        theme_color: '#0e9f87',
-        background_color: '#f4f8f6',
+        theme_color: '#5e8c74',
+        background_color: '#f6f4ee',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
