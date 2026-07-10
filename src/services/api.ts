@@ -391,6 +391,18 @@ export const notifications = {
     if (error) throw error
   },
 
+  // Mark just the notifications pointing at a given link (e.g. one chat) read.
+  async markReadByLink(userId: string, link: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', userId)
+      .eq('link', link)
+      .eq('read', false)
+    if (error) throw error
+  },
+
   subscribe(userId: string, cb: (n: NotificationRow) => void) {
     const sb = requireSupabase()
     const channel = sb

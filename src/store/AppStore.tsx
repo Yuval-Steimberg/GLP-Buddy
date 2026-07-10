@@ -23,6 +23,7 @@ import { buildEmptyState, buildInitialState } from '../data/mockData'
 import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
+import { showLocalNotification } from '../lib/push'
 import { hydrate } from './hydrate'
 import { rowToMessage } from './mappers'
 
@@ -127,7 +128,9 @@ interface AppStoreValue {
   addReflection: (relationshipId: string, text: string) => void
   // notifications
   unreadCount: () => number
+  unreadMessages: () => number
   markAllRead: () => void
+  markChatRead: (relationshipId: string) => void
   // trust + safety
   reportUser: (userId: string, reason: string) => void
   blockUser: (userId: string) => void
@@ -199,14 +202,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       // Notifications drive a re-sync; messages stream in live (instant chat).
       const unsubNtf = api.notifications.subscribe(userId, () => void hydrateFor(userId))
       const unsubMsg = api.chat.subscribeAll((row) => {
+        let isNew = false
         setState((prev) => {
           const m = rowToMessage(row)
           const i = prev.messages.findIndex((x) => x.id === m.id)
-          if (i === -1) return { ...prev, messages: [...prev.messages, m] }
+          if (i === -1) {
+            isNew = true
+            return { ...prev, messages: [...prev.messages, m] }
+          }
           const messages = prev.messages.slice()
           messages[i] = m
           return { ...prev, messages }
         })
+        // A new message from the buddy that you're not currently looking at →
+        // pop an OS notification (works while the app is open/backgrounded).
+        if (isNew && row.sender_id !== userId && document.visibilityState !== 'visible') {
+          void showLocalNotification('New message', row.text, `/chat/${row.relationship_id}`)
+        }
       })
       cleanupRealtime = () => { unsubNtf(); unsubMsg() }
     })
@@ -244,11 +256,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   // ---- onboarding --------------------------------------------------------
   const completeOnboarding = useCallback((profile: Profile) => {
     if (USE_SUPABASE) {
+      // Flip local state immediately so the router advances to /safety instead
+      // of bouncing back to /onboarding while the save is still in flight.
+      setState((prev) => {
+        const id = prev.currentUserId
+        const u = id ? prev.users[id] : null
+        if (!id || !u) return prev
+        return { ...prev, users: { ...prev.users, [id]: { ...u, profile, onboardingComplete: true } } }
+      })
       void (async () => {
-        const me = await api.auth.currentUserId()
-        if (!me) return
-        await api.profiles.saveOnboarding(me, profile)
-        await refresh()
+        try {
+          const me = await api.auth.currentUserId()
+          if (!me) return
+          await api.profiles.saveOnboarding(me, profile)
+          await refresh()
+        } catch (e) {
+          console.error('saveOnboarding failed', e)
+        }
       })()
       return
     }
@@ -301,11 +325,22 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const acceptSafety = useCallback(() => {
     if (USE_SUPABASE) {
+      // Optimistic flip so /matches doesn't bounce back to /safety mid-save.
+      setState((prev) => {
+        const id = prev.currentUserId
+        const u = id ? prev.users[id] : null
+        if (!id || !u) return prev
+        return { ...prev, users: { ...prev.users, [id]: { ...u, acceptedSafety: true } } }
+      })
       void (async () => {
-        const me = await api.auth.currentUserId()
-        if (!me) return
-        await api.profiles.acceptSafety(me, TERMS_VERSION)
-        await refresh()
+        try {
+          const me = await api.auth.currentUserId()
+          if (!me) return
+          await api.profiles.acceptSafety(me, TERMS_VERSION)
+          await refresh()
+        } catch (e) {
+          console.error('acceptSafety failed', e)
+        }
       })()
       return
     }
@@ -579,14 +614,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const reactToMessage = useCallback((messageId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {
+      const msg = state.messages.find((m) => m.id === messageId)
+      if (!msg) return
+      const reactions = msg.reactions.includes(reaction)
+        ? msg.reactions.filter((r) => r !== reaction)
+        : [...msg.reactions, reaction]
+      // Optimistic: show the reaction immediately; realtime/refresh reconciles.
+      setState((prev) => ({
+        ...prev,
+        messages: prev.messages.map((m) => (m.id === messageId ? { ...m, reactions } : m)),
+      }))
       void (async () => {
-        const msg = state.messages.find((m) => m.id === messageId)
-        if (!msg) return
-        const reactions = msg.reactions.includes(reaction)
-          ? msg.reactions.filter((r) => r !== reaction)
-          : [...msg.reactions, reaction]
-        await api.chat.react(messageId, reactions)
-        await refresh()
+        try {
+          await api.chat.react(messageId, reactions)
+        } catch (e) {
+          console.error('react failed', e)
+          await refresh() // roll back to server truth on failure
+        }
       })()
       return
     }
@@ -860,6 +904,29 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       notifications: prev.notifications.map((n) => ({ ...n, read: true })),
     }))
   }, [refresh])
+
+  // Opening a chat clears its message notifications (so the Chat tab's unread
+  // dot goes away once you've actually read the messages).
+  const markChatRead = useCallback((relationshipId: string) => {
+    const link = `/chat/${relationshipId}`
+    setState((prev) => {
+      if (!prev.notifications.some((n) => n.link === link && !n.read)) return prev
+      return {
+        ...prev,
+        notifications: prev.notifications.map((n) => (n.link === link ? { ...n, read: true } : n)),
+      }
+    })
+    if (USE_SUPABASE) {
+      void (async () => {
+        try {
+          const me = await api.auth.currentUserId()
+          if (me) await api.notifications.markReadByLink(me, link)
+        } catch (e) {
+          console.error('markChatRead failed', e)
+        }
+      })()
+    }
+  }, [])
 
   // ---- trust + safety ----------------------------------------------------
   const reportUser = useCallback((userId: string, reason: string) => {
@@ -1225,6 +1292,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [state.notifications],
   )
 
+  // Unread message notifications only — drives the Chat tab's dot.
+  const unreadMessages = useCallback(
+    () => state.notifications.filter((n) => !n.read && n.type === 'message').length,
+    [state.notifications],
+  )
+
   const activeTrio = useCallback((): BuddyTrioGroup | null => {
     if (!currentUser) return null
     return (
@@ -1266,7 +1339,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       sendEncouragement,
       addReflection,
       unreadCount,
+      unreadMessages,
       markAllRead,
+      markChatRead,
       reportUser,
       blockUser,
       trioEligibility,
@@ -1303,7 +1378,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       sendEncouragement,
       addReflection,
       unreadCount,
+      unreadMessages,
       markAllRead,
+      markChatRead,
       reportUser,
       blockUser,
       trioEligibility,

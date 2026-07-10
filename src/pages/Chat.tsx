@@ -22,6 +22,7 @@ export function Chat() {
     reportUser,
     blockUser,
     endRelationship,
+    markChatRead,
   } = useStore()
 
   const rel = activeRelationships().find((r) => r.id === relId)
@@ -39,6 +40,11 @@ export function Chat() {
   useEffect(() => {
     bodyRef.current?.scrollTo(0, bodyRef.current.scrollHeight)
   }, [msgs.length])
+
+  // Opening (or receiving a message in) this chat clears its unread dot.
+  useEffect(() => {
+    if (relId) markChatRead(relId)
+  }, [relId, msgs.length, markChatRead])
 
   if (!rel) return <Navigate to="/chat" />
   const buddy = buddyOf(rel)

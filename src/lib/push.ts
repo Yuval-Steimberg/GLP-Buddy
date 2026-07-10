@@ -38,3 +38,35 @@ export async function enablePush(userId: string): Promise<boolean> {
   }
   return true
 }
+
+/**
+ * Show an OS notification while the app is running (foreground or backgrounded
+ * but still alive). This is what surfaces a new-message alert without the full
+ * server push pipeline. Note: once the PWA process is fully closed (common on
+ * iOS), only real Web Push via the send-push Edge Function + a DB webhook can
+ * wake it — see ACTIVATE-OPTIONAL.md.
+ */
+export async function showLocalNotification(title: string, body: string, link: string): Promise<void> {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return
+  const opts: NotificationOptions = {
+    body,
+    tag: link, // collapse repeats from the same chat
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    data: { link },
+  }
+  try {
+    const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.ready : null
+    if (reg) {
+      await reg.showNotification(title, opts)
+      return
+    }
+  } catch {
+    /* fall through to the basic Notification */
+  }
+  try {
+    new Notification(title, opts)
+  } catch {
+    /* ignore — some browsers only allow SW notifications */
+  }
+}

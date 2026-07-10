@@ -11,9 +11,9 @@ const ITEMS: { to: string; label: string; ico: IconName }[] = [
 ]
 
 export function BottomNav() {
-  const { incomingPending, activeRelationships } = useStore()
+  const { incomingPending, unreadMessages } = useStore()
   const incoming = incomingPending().length
-  const hasBuddy = activeRelationships().length > 0
+  const unreadMsgs = unreadMessages()
 
   return (
     <nav className="bottom-nav">
@@ -32,7 +32,9 @@ export function BottomNav() {
           {it.to === '/matches' && incoming > 0 && (
             <span className="nav-badge">{incoming}</span>
           )}
-          {it.to === '/chat' && hasBuddy && <span className="nav-badge">•</span>}
+          {it.to === '/chat' && unreadMsgs > 0 && (
+            <span className="nav-badge">{unreadMsgs}</span>
+          )}
         </NavLink>
       ))}
     </nav>
