@@ -94,13 +94,18 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
 
-## Design system ("Dusk" — Electric Sunset, toned down)
-- Palette in `src/index.css` `:root`: primary `#574a8e` (muted indigo-plum),
-  accent `#cf8763` (clay), amber `#e0a45e`, ink `#221b26`, bg `#f6f3f0` (warm
-  ivory). Signature gradient `--grad` (indigo→mauve→clay) runs through the logo,
-  primary buttons (animated `gradientdrift`), gradient headline words, and
-  milestone/stat accents. `--green`/`--green-soft` are repurposed as warm bronze
-  (NO teal/green — the user rejected it).
+## Design system ("Sage" — calm wellness; app + landing unified)
+- Palette in `src/index.css` `:root`: primary `#5e8c74` (muted eucalyptus sage),
+  accent `#c2955f` (warm sand), ink `#1e2a25` (green-charcoal), bg `#f6f4ee`
+  (warm off-white). `--green`/`--green-soft` are repurposed as a **soft sky-blue**
+  (`#5f8497`) used for buddy/milestone chips (sage + blue two-tone). Signature
+  gradient `--grad` (sage→soft-green→pale) runs through the logo, primary buttons
+  (animated `gradientdrift`), gradient headline words, and milestone/stat accents.
+  Avatar initials palette (`src/utils/format.ts`) is sage/blue/sand family.
+- History: was teal (rejected as "vibe-coding"), then bright violet (too bright),
+  then dusk indigo, now unified **sage wellness** (Oura/Headspace feel) after the
+  landing redesign. If changing palette, do it via `:root` + the hardcoded rgba
+  glows/shadows; the landing's `.lp` block also re-declares palette vars.
 - Fonts: **Space Grotesk** (`--font-display`) for headings, **Inter**
   (`--font-body`) for body. Both self-hosted via `@fontsource-variable/*`
   (imported in `main.tsx`) — never link Google Fonts (CSP/offline).
