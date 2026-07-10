@@ -14,18 +14,43 @@ import { USE_SUPABASE } from './lib/env'
 
 // Code-split the authenticated app + secondary screens so the landing/auth
 // path ships a smaller initial bundle.
-const Matches = lazy(() => import('./pages/Matches').then((m) => ({ default: m.Matches })))
-const Pending = lazy(() => import('./pages/Pending').then((m) => ({ default: m.Pending })))
-const BuddyHome = lazy(() => import('./pages/BuddyHome').then((m) => ({ default: m.BuddyHome })))
-const ChatList = lazy(() => import('./pages/ChatList').then((m) => ({ default: m.ChatList })))
-const Chat = lazy(() => import('./pages/Chat').then((m) => ({ default: m.Chat })))
-const Timeline = lazy(() => import('./pages/Timeline').then((m) => ({ default: m.Timeline })))
-const Notifications = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.Notifications })))
-const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
-const Trio = lazy(() => import('./pages/Trio').then((m) => ({ default: m.Trio })))
-const Moderation = lazy(() => import('./pages/Moderation').then((m) => ({ default: m.Moderation })))
-const Privacy = lazy(() => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })))
-const Terms = lazy(() => import('./pages/legal/Terms').then((m) => ({ default: m.Terms })))
+//
+// After a new deploy, an old cached shell may try to load a chunk whose hashed
+// filename no longer exists; the server returns index.html and the browser
+// throws "'text/html' is not a valid JavaScript MIME type". When that happens
+// we reload once to pull the fresh build (guarded so we never loop).
+function lazyWithReload<T extends React.ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>,
+) {
+  return lazy(async () => {
+    try {
+      return await factory()
+    } catch (err) {
+      const key = 'glp-chunk-reload'
+      const last = Number(sessionStorage.getItem(key) || 0)
+      // Only auto-reload once per 10s to recover from a stale chunk.
+      if (Date.now() - last > 10000) {
+        sessionStorage.setItem(key, String(Date.now()))
+        window.location.reload()
+        return { default: (() => null) as unknown as T }
+      }
+      throw err
+    }
+  })
+}
+
+const Matches = lazyWithReload(() => import('./pages/Matches').then((m) => ({ default: m.Matches })))
+const Pending = lazyWithReload(() => import('./pages/Pending').then((m) => ({ default: m.Pending })))
+const BuddyHome = lazyWithReload(() => import('./pages/BuddyHome').then((m) => ({ default: m.BuddyHome })))
+const ChatList = lazyWithReload(() => import('./pages/ChatList').then((m) => ({ default: m.ChatList })))
+const Chat = lazyWithReload(() => import('./pages/Chat').then((m) => ({ default: m.Chat })))
+const Timeline = lazyWithReload(() => import('./pages/Timeline').then((m) => ({ default: m.Timeline })))
+const Notifications = lazyWithReload(() => import('./pages/Notifications').then((m) => ({ default: m.Notifications })))
+const Profile = lazyWithReload(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
+const Trio = lazyWithReload(() => import('./pages/Trio').then((m) => ({ default: m.Trio })))
+const Moderation = lazyWithReload(() => import('./pages/Moderation').then((m) => ({ default: m.Moderation })))
+const Privacy = lazyWithReload(() => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })))
+const Terms = lazyWithReload(() => import('./pages/legal/Terms').then((m) => ({ default: m.Terms })))
 
 const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pending', '/trio', '/notifications']
 

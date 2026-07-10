@@ -507,7 +507,7 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
   --shadow-sm: 0 2px 8px rgba(16, 70, 60, 0.06);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --sidebar-w: 264px;
-  --content-w: 760px;
+  --content-w: 1180px;
 }
 
 html { scroll-behavior: smooth; }
@@ -698,10 +698,11 @@ select.input:focus-visible,
   }
   @media (hover: hover) { .nav-item:hover { background: var(--surface-2); color: var(--ink); } }
 
-  /* Main content column */
+  /* Main content column — fills the area beside the sidebar. */
   .app-main { flex: 1; min-width: 0; display: flex; justify-content: center; }
-  .screen { width: 100%; max-width: var(--content-w); padding: 36px 32px 56px; }
-  .screen.no-nav { padding-bottom: 56px; }
+  .screen { width: 100%; max-width: var(--content-w); padding: 40px clamp(32px, 5vw, 72px) 64px; }
+  .screen.no-nav { padding-bottom: 56px; max-width: 640px; }
+  .topbar { max-width: 900px; }
   .topbar .title { font-size: 27px; }
 
   /* Chat detail spans the centered column comfortably */
