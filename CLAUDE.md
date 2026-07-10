@@ -62,7 +62,29 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
 - Migration list: 0001 schema+RLS, 0002 `approve_buddy` RPC, 0003 notify
   triggers, 0004 compliance/staff, 0005 realtime, 0006 `delete_own_account`,
   0007 message/trio reaction RLS fix, 0008 `profiles.avatar_url`, 0009
-  `messages.image_url` (+ text nullable).
+  `messages.image_url` (+ text nullable), 0010 **security hardening** (see below).
+- **Migration 0010 (security model — do NOT regress):**
+  - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
+    editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
+    `accepted_safety`, `age_confirmed`, `terms_version`) are writable ONLY via
+    `SECURITY DEFINER` RPCs. The client MUST call `mark_onboarding_complete()`
+    and `accept_safety(p_terms_version)` — never write those columns directly.
+  - `messages`/`trio_messages`/`timeline_events` UPDATE is column-scoped to
+    `reactions` only. Reactions toggle atomically via
+    `toggle_message_reaction` / `toggle_timeline_reaction` /
+    `toggle_trio_reaction` (pass the single reaction, not the whole array).
+  - `profiles` SELECT is restricted to `can_view_profile(id)` (self + buddies +
+    pending approvals + trio co-members). Match discovery goes through the
+    bounded `discover_candidates(p_limit)` RPC (minimized columns, no
+    staff/compliance fields). `hydrate.ts` fetches connected profiles via
+    `api.profiles.related(ids)`; there is NO more `select * from profiles`.
+  - Relationships can't be client-inserted (only `approve_buddy` creates them);
+    `trio_members` inserts are self/creator-only; `approve_trio_membership(trio)`
+    approves + activates. All definer funcs pin `search_path=''`. Size CHECKs on
+    data-URL columns; push endpoint host allow-list.
+  - **Client↔DB contract:** the frontend calls these RPCs, so migration 0010 and
+    the current frontend MUST be deployed together. Old frontend + 0010 = onboarding
+    loop (denied column writes) + empty matches (restricted reads).
 - `supabase/maintenance/reset_all_data.sql` wipes all users/data (deletes
   `auth.users`, cascades everywhere).
 
@@ -105,6 +127,20 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   image bubble → full-screen lightbox.
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
+- **Service-worker cache = the deploy footgun.** After ANY deploy, existing
+  clients keep running the OLD JS until the SW updates. Symptoms of a
+  frontend/DB mismatch (onboarding loops back to step 1, matches empty) are
+  almost always this. To verify a deploy actually reached the browser: test in
+  an **Incognito window** (no SW). To fix a stuck client: DevTools → Application
+  → Service Workers → Unregister → Clear site data → hard refresh; iPhone:
+  delete + re-add the PWA. Confirm the truth server-side with
+  `select onboarding_complete, accepted_safety from profiles order by created_at desc`
+  — if those are `true`, the backend is fine and it's purely the cached client.
+- **send-push auth:** the edge function requires a shared secret. Set
+  `SEND_PUSH_SECRET` (supabase secret) AND add it as the `x-webhook-secret`
+  header on the `notifications` INSERT Database Webhook, or push 401s. The
+  function re-reads the notification row by id and sends a GENERIC lock-screen
+  body (no message/health content); the in-app bell keeps the full text.
 
 ## Design system ("Sage" — calm wellness; app + landing unified)
 - Palette in `src/index.css` `:root`: primary `#5e8c74` (muted eucalyptus sage),
@@ -137,12 +173,25 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
 `pkill -f "vite preview"` often exits 144 (harmless).
 
 ## Deploy / ops the user must do (no access from here)
-- Netlify: set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_BACKEND=supabase`
-  (+ optional VAPID/Sentry/Plausible) and redeploy with cache cleared.
-- Supabase: run migrations (`supabase db push` or paste `ALL_MIGRATIONS.sql`),
-  deploy `send-push`, create the notifications Insert webhook.
-- Git: develop on `claude/glp-buddy-mvp-c0ante`, then fast-forward `main` and
-  push both (Netlify deploys `main`). Do not create PRs unless asked.
+- **Netlify production branch is `claude/glp-buddy-mvp-c0ante`** (site name
+  `buddyglp`, domain glpenpal.com) — NOT `main`, despite older notes. A push to
+  `main` alone does NOT deploy. Verify the published deploy's commit in
+  Netlify → Deploys (`@<sha>`) matches what you pushed.
+- Netlify env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+  `VITE_BACKEND=supabase` (+ optional VAPID/Sentry/Plausible). Redeploy with
+  **"Deploy without cache"** so the SW updates.
+- Supabase: run migrations (`supabase db push` or paste ONLY the new file into
+  the SQL Editor — `ALL_MIGRATIONS.sql` is for a fresh DB), deploy `send-push`
+  (`--no-verify-jwt`; the `x-webhook-secret` is the gate), set the
+  `SEND_PUSH_SECRET` secret + webhook header.
+- **Deploy order for a release that touches both:** apply the DB migration
+  first, THEN push the frontend to the Netlify branch — the frontend depends on
+  the new RPCs (see migration 0010 notes). Ship them close together.
+- Git: develop on the designated branch, then fast-forward and push
+  `claude/glp-buddy-mvp-c0ante` (keep `main` in sync too). Do not create PRs
+  unless asked.
+- Wipe all data to test from scratch: `supabase/maintenance/reset_all_data.sql`
+  (SQL Editor). Re-grant staff after: `update profiles set is_staff=true where id='…'`.
 
 ## Guide docs (repo root)
 `GETTING-STARTED-PWA.md` (go-live + install + smoke test), `STORE-SETUP.md` /
