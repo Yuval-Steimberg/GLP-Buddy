@@ -35,7 +35,19 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('user_id', n.user_id)
 
-    const payload = JSON.stringify({ title: n.title, body: n.body, link: n.link ?? '/' })
+    // Current unread count → drives the home-screen app-icon badge.
+    const { count: unread } = await admin
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', n.user_id)
+      .eq('read', false)
+
+    const payload = JSON.stringify({
+      title: n.title,
+      body: n.body,
+      link: n.link ?? '/',
+      badge: unread ?? 1,
+    })
 
     await Promise.all(
       (subs ?? []).map(async (s) => {

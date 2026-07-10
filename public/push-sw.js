@@ -11,11 +11,16 @@ self.addEventListener('push', (event) => {
     data = { title: 'GLPenPal', body: event.data ? event.data.text() : '' }
   }
   const title = data.title || 'GLPenPal'
+  // Update the home-screen icon badge if the server sent an unread count.
+  if (typeof data.badge === 'number' && self.navigator && self.navigator.setAppBadge) {
+    self.navigator.setAppBadge(data.badge).catch(() => {})
+  }
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
+      tag: data.link || '/', // so reading that chat can dismiss it
       data: { link: data.link || '/' },
     }),
   )

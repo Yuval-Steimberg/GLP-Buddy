@@ -160,6 +160,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state])
 
+  // Mirror the unread count onto the installed app's home-screen icon badge
+  // (App Badging API — supported by installed PWAs incl. iOS 16.4+).
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      setAppBadge?: (n?: number) => Promise<void>
+      clearAppBadge?: () => Promise<void>
+    }
+    if (!nav.setAppBadge) return
+    const unread = state.notifications.filter((n) => !n.read).length
+    if (unread > 0) nav.setAppBadge(unread).catch(() => {})
+    else nav.clearAppBadge?.().catch(() => {})
+  }, [state.notifications])
+
   // Supabase mode: pull a fresh snapshot for the signed-in user. Called on
   // load, on auth change, and after every mutating action (refetch semantics).
   // Hydrate for a known user id. IMPORTANT: this does only REST calls — it must
@@ -932,6 +945,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         notifications: prev.notifications.map((n) => (n.link === link ? { ...n, read: true } : n)),
       }
     })
+    // Dismiss any OS notifications already shown for this chat (tag = link).
+    if ('serviceWorker' in navigator) {
+      void navigator.serviceWorker.ready
+        .then((reg) => reg.getNotifications({ tag: link }))
+        .then((ns) => ns.forEach((n) => n.close()))
+        .catch(() => {})
+    }
     if (USE_SUPABASE) {
       void (async () => {
         try {
