@@ -84,7 +84,13 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   site data on desktop, delete+re-add to Home Screen on iOS.
 - **Images/avatars** are stored as compressed JPEG **data URLs** on the row
   (`fileToAvatarDataUrl`, `fileToChatImage` in `src/lib/image.ts`) — no Storage
-  bucket to configure; protected by the row's own RLS.
+  bucket to configure; protected by the row's own RLS. `messages.image_url`
+  (migration 0009) holds chat photos and `text` is nullable (image-only msgs).
+  Chat compose (`src/pages/Chat.tsx`): attach sheet offers camera
+  (`capture="environment"`) or gallery (`multiple`); picked photos queue in a
+  compose tray (removable thumbnails), the input becomes a caption field, and
+  `send()` posts each photo in order with the caption on the last one. Tap an
+  image bubble → full-screen lightbox.
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
 
