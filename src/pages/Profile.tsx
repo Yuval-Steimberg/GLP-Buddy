@@ -122,20 +122,38 @@ export function Profile() {
       <div className="card">
         <h3 style={{ marginBottom: 8 }}>Notifications &amp; legal</h3>
         <div className="stack">
-          {pushSupported() && (
-            <button
-              className="row list-tap"
-              style={{ width: '100%', background: 'none' }}
-              onClick={async () => {
+          <button
+            className="row list-tap"
+            style={{ width: '100%', background: 'none' }}
+            onClick={async () => {
+              // Not installed / unsupported browser (e.g. iOS Safari) → guide them.
+              if (!pushSupported()) {
+                alert(
+                  'To get push notifications, first install the app: tap Share → Add to Home Screen, then open GLPenPal from your home screen and try again.',
+                )
+                return
+              }
+              // Previously blocked → the OS won\'t re-prompt; send them to Settings.
+              if ('Notification' in window && Notification.permission === 'denied') {
+                alert(
+                  'Notifications are blocked for GLPenPal. Turn them on in your device Settings → GLPenPal → Notifications, then try again.',
+                )
+                return
+              }
+              try {
                 const ok = await enablePush(currentUser.id)
-                alert(ok ? 'Push notifications enabled.' : 'Push was not enabled.')
-              }}
-            >
-              <span className="row-ico"><Icon name="bell" size={18} /></span>
-              <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Enable push notifications</span>
-              <span className="muted">›</span>
-            </button>
-          )}
+                alert(ok
+                  ? 'Push notifications enabled! 🎉 You\'ll get alerts for new messages.'
+                  : 'Push was not enabled — make sure you tap Allow when prompted.')
+              } catch {
+                alert('Could not enable push just now. Close and reopen the app, then try again.')
+              }
+            }}
+          >
+            <span className="row-ico"><Icon name="bell" size={18} /></span>
+            <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Enable push notifications</span>
+            <span className="muted">›</span>
+          </button>
           <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/privacy')}>
             <span className="row-ico"><Icon name="lock" size={18} /></span>
             <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Privacy Policy</span>

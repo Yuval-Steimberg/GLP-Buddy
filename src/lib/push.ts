@@ -22,9 +22,20 @@ export async function enablePush(userId: string): Promise<boolean> {
   if (permission !== 'granted') return false
 
   const reg = await navigator.serviceWorker.ready
+  const appServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+
+  // If a subscription already exists (e.g. from an earlier VAPID key), the
+  // browser rejects re-subscribing with a different key
+  // ("InvalidStateError: applicationServerKey does not match..."). Drop the
+  // stale one first so we always end up subscribed with the CURRENT key.
+  const existing = await reg.pushManager.getSubscription()
+  if (existing) {
+    try { await existing.unsubscribe() } catch { /* ignore */ }
+  }
+
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    applicationServerKey: appServerKey,
   })
 
   const json = sub.toJSON()
