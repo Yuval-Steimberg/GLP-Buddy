@@ -19,46 +19,72 @@ export async function hydrate(userId: string): Promise<AppState> {
   const state = buildEmptyState()
   state.currentUserId = userId
 
-  // Users: me + the candidate pool (includes current buddies).
+  // Fetch the independent top-level collections in parallel.
+  const [me, candidates, approvals, rels, notifs, trioRows] = await Promise.all([
+    api.profiles.get(userId),
+    api.profiles.candidates(userId),
+    api.matching.allForUser(userId),
+    api.relationships.active(userId),
+    api.notifications.list(userId),
+    api.trios.mine(userId),
+  ])
+
+  // Users: the (bounded, minimized) discovery pool, then the signed-in user.
   const users: Record<string, User> = {}
-  const me = await api.profiles.get(userId)
+  candidates.forEach((c) => { users[c.id] = rowToUser(c) })
   if (me) users[me.id] = rowToUser(me)
-  const candidates = await api.profiles.candidates(userId)
-  candidates.forEach((c) => {
-    users[c.id] = rowToUser(c)
-  })
+
+  // Fetch full profiles for everyone the user is connected to (buddies, pending
+  // approvals, trio co-members). Profile reads are now scoped to connections
+  // (RLS), and these carry authoritative data the minimized discovery rows omit.
+  const relatedIds = new Set<string>()
+  approvals.forEach((a) => { relatedIds.add(a.from_user); relatedIds.add(a.to_user) })
+  rels.forEach((r) => { relatedIds.add(r.user_a); relatedIds.add(r.user_b) })
+  trioRows.forEach(({ members }) => members.forEach((m) => relatedIds.add(m.user_id)))
+  relatedIds.delete(userId)
+  const missing = [...relatedIds].filter((id) => !users[id])
+  // Always refresh connected profiles with the fuller row; also pull any not in
+  // the discovery pool (e.g. a blocked ex-buddy excluded from discovery).
+  const related = await api.profiles.related([...relatedIds])
+  related.forEach((r) => { users[r.id] = rowToUser(r) })
+  // Anything still missing (shouldn't happen) is simply absent; selectors guard.
+  void missing
   state.users = users
 
   // Approvals → incoming/outgoing/passed all derive from this in selectors.
-  const approvals = await api.matching.allForUser(userId)
   state.approvals = approvals.map(rowToApproval)
   state.passedUserIds = approvals
     .filter((a) => a.from_user === userId && a.status === 'passed')
     .map((a) => a.to_user)
 
-  // Relationships and their nested data.
-  const rels = await api.relationships.active(userId)
+  // Relationships and their nested data (fetched in parallel across relationships).
   state.relationships = rels.map(rowToRelationship)
-  for (const rel of rels) {
-    const [msgs, miles, tl] = await Promise.all([
-      api.chat.list(rel.id),
-      api.milestones.list(rel.id),
-      api.timeline.list(rel.id),
-    ])
+  const relData = await Promise.all(
+    rels.map(async (rel) => {
+      const [msgs, miles, tl] = await Promise.all([
+        api.chat.list(rel.id),
+        api.milestones.list(rel.id),
+        api.timeline.list(rel.id),
+      ])
+      return { msgs, miles, tl }
+    }),
+  )
+  relData.forEach(({ msgs, miles, tl }) => {
     state.messages.push(...msgs.map(rowToMessage))
     state.milestones.push(...miles.map(rowToMilestone))
     state.timeline.push(...tl.map(rowToTimeline))
-  }
+  })
 
   // Notifications.
-  const notifs = await api.notifications.list(userId)
   state.notifications = notifs.map(rowToNotification)
 
-  // Trios (active + pending) and their messages.
-  const trioRows = await api.trios.mine(userId)
+  // Trios (active + pending) and their messages (fetched in parallel).
   const trios: BuddyTrioGroup[] = []
   const trioMessages: TrioMessage[] = []
-  for (const { trio, members } of trioRows) {
+  const trioMsgLists = await Promise.all(
+    trioRows.map(({ trio }) => api.trios.messages(trio.id)),
+  )
+  trioRows.forEach(({ trio, members }, i) => {
     trios.push({
       id: trio.id,
       createdAt: Date.parse(trio.created_at),
@@ -66,9 +92,8 @@ export async function hydrate(userId: string): Promise<AppState> {
       memberIds: members.filter((m) => m.approved).map((m) => m.user_id),
       pendingMemberIds: members.filter((m) => !m.approved).map((m) => m.user_id),
     })
-    const tmsgs = await api.trios.messages(trio.id)
-    trioMessages.push(...tmsgs.map(rowToTrioMessage))
-  }
+    trioMessages.push(...trioMsgLists[i].map(rowToTrioMessage))
+  })
   state.trios = trios
   state.trioMessages = trioMessages
 

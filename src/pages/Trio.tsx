@@ -43,7 +43,7 @@ export function Trio() {
       {trio ? (
         <TrioSpace trioId={trio.id} />
       ) : pending ? (
-        <PendingTrio members={pending.memberIds} pending={pending.pendingMemberIds} />
+        <PendingTrio trioId={pending.id} members={pending.memberIds} pending={pending.pendingMemberIds} />
       ) : elig.eligible ? (
         <CreateTrio
           buddies={activeRelationships().map((r) => buddyOf(r))}
@@ -173,12 +173,13 @@ function CreateTrio({
   )
 }
 
-function PendingTrio({ members, pending }: { members: string[]; pending: string[] }) {
-  const { state } = useStore()
+function PendingTrio({ trioId, members, pending }: { trioId: string; members: string[]; pending: string[] }) {
+  const { state, currentUser, approveTrio } = useStore()
+  const myApprovalPending = !!currentUser && pending.includes(currentUser.id)
   return (
     <div className="card center">
       <div className="empty-ico" style={{ margin: '0 auto 8px' }}><Icon name="clock" size={28} /></div>
-      <h3>Waiting for approvals</h3>
+      <h3>{myApprovalPending ? 'You have a Trio invite' : 'Waiting for approvals'}</h3>
       <p>Your Trio is created once all three members approve. Hang tight!</p>
       <div className="stack" style={{ marginTop: 10, textAlign: 'left' }}>
         {members.map((id) => (
@@ -191,11 +192,18 @@ function PendingTrio({ members, pending }: { members: string[]; pending: string[
         {pending.map((id) => (
           <div className="row" key={id}>
             <Avatar name={state.users[id]?.profile.nickname ?? '?'} size={34} />
-            <span style={{ flex: 1, fontWeight: 700 }}>{state.users[id]?.profile.nickname}</span>
+            <span style={{ flex: 1, fontWeight: 700 }}>
+              {currentUser?.id === id ? 'You' : state.users[id]?.profile.nickname}
+            </span>
             <span className="chip accent">Pending</span>
           </div>
         ))}
       </div>
+      {myApprovalPending && (
+        <button className="btn" style={{ marginTop: 14 }} onClick={() => approveTrio(trioId)}>
+          Approve & join Trio
+        </button>
+      )}
     </div>
   )
 }

@@ -30,7 +30,11 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const link = (event.notification.data && event.notification.data.link) || '/'
+  const raw = (event.notification.data && event.notification.data.link) || '/'
+  // Only navigate to same-origin relative paths — never an absolute URL from the
+  // push payload (would let a forged/crafted push open a phishing page inside the
+  // installed app's chrome, which has no URL bar).
+  const link = typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
       for (const w of wins) {

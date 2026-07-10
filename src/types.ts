@@ -104,6 +104,7 @@ export interface ChatMessage {
   imageUrl?: string
   createdAt: number
   reactions: Reaction[]
+  failed?: boolean // optimistic send that didn't reach the server
 }
 
 export type MilestoneType =

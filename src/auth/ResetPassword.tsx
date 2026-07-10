@@ -34,6 +34,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
           <input
             className="input"
             type="password"
+            autoComplete="new-password"
             value={password}
             placeholder="••••••••"
             onChange={(e) => setPassword(e.target.value)}

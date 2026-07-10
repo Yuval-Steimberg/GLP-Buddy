@@ -138,31 +138,49 @@ export const profiles = {
 
   async saveOnboarding(id: string, p: Profile): Promise<void> {
     const sb = requireSupabase()
-    const { error } = await sb
-      .from('profiles')
-      .update({ ...profileToRow(p), onboarding_complete: true })
-      .eq('id', id)
+    // Editable profile columns are writable directly; onboarding_complete is a
+    // privileged flag set only via the SECURITY DEFINER RPC (migration 0010).
+    const { error } = await sb.from('profiles').update(profileToRow(p)).eq('id', id)
+    if (error) throw error
+    const { error: rpcErr } = await sb.rpc('mark_onboarding_complete')
+    if (rpcErr) throw rpcErr
+  },
+
+  async acceptSafety(_id: string, termsVersion: string): Promise<void> {
+    const sb = requireSupabase()
+    // accepted_safety / age_confirmed / terms_version are privileged compliance
+    // flags — set only through the RPC, never a client column write.
+    const { error } = await sb.rpc('accept_safety', { p_terms_version: termsVersion })
     if (error) throw error
   },
 
-  async acceptSafety(id: string, termsVersion: string): Promise<void> {
+  // Bounded, minimized match-discovery pool (SECURITY DEFINER RPC — excludes
+  // staff/compliance columns and users you've passed/blocked). Ranking is
+  // computed client-side in scoreMatch.
+  async candidates(_excludeId: string): Promise<ProfileRow[]> {
     const sb = requireSupabase()
-    const { error } = await sb
-      .from('profiles')
-      .update({ accepted_safety: true, age_confirmed: true, terms_version: termsVersion })
-      .eq('id', id)
+    const { data, error } = await sb.rpc('discover_candidates', { p_limit: 200 })
     if (error) throw error
+    // The RPC omits compliance/staff columns; fill neutral defaults so the row
+    // still satisfies ProfileRow for the mappers (these fields are unused for
+    // other users in the UI).
+    return (data ?? []).map((r: Record<string, unknown>) => ({
+      accepted_safety: true,
+      age_confirmed: true,
+      terms_version: null,
+      is_staff: false,
+      ended_relationship_count: 0,
+      updated_at: (r.created_at as string) ?? new Date(0).toISOString(),
+      ...r,
+    })) as ProfileRow[]
   },
 
-  // Candidate pool for match discovery (RLS lets authenticated users read all
-  // profiles; ranking/highlights are computed client-side in scoreMatch).
-  async candidates(excludeId: string): Promise<ProfileRow[]> {
+  // Full profiles for people the caller is connected to (buddies, pending
+  // approvals, trio co-members) — allowed by the can_view_profile RLS policy.
+  async related(ids: string[]): Promise<ProfileRow[]> {
+    if (ids.length === 0) return []
     const sb = requireSupabase()
-    const { data, error } = await sb
-      .from('profiles')
-      .select('*')
-      .neq('id', excludeId)
-      .eq('onboarding_complete', true)
+    const { data, error } = await sb.from('profiles').select('*').in('id', ids)
     if (error) throw error
     return data ?? []
   },
@@ -256,13 +274,17 @@ export const relationships = {
 export const chat = {
   async list(relationshipId: string): Promise<MessageRow[]> {
     const sb = requireSupabase()
+    // Most-recent window, returned in ascending order for the chat view. Avoids
+    // re-downloading an unbounded photo history (images are inline data URLs)
+    // on every hydrate.
     const { data, error } = await sb
       .from('messages')
       .select('*')
       .eq('relationship_id', relationshipId)
-      .order('created_at')
+      .order('created_at', { ascending: false })
+      .limit(300)
     if (error) throw error
-    return data ?? []
+    return (data ?? []).reverse()
   },
 
   async send(relationshipId: string, senderId: string, text: string, imageUrl?: string): Promise<void> {
@@ -273,9 +295,14 @@ export const chat = {
     if (error) throw error
   },
 
-  async react(messageId: string, reactions: string[]): Promise<void> {
+  // Atomic toggle server-side (migration 0010) so concurrent reactors can't
+  // clobber each other's reactions with a read-modify-write of the whole array.
+  async toggleReaction(messageId: string, reaction: string): Promise<void> {
     const sb = requireSupabase()
-    const { error } = await sb.from('messages').update({ reactions }).eq('id', messageId)
+    const { error } = await sb.rpc('toggle_message_reaction', {
+      p_message: messageId,
+      p_reaction: reaction,
+    })
     if (error) throw error
   },
 
@@ -370,9 +397,12 @@ export const timeline = {
     if (error) throw error
   },
 
-  async react(eventId: string, reactions: string[]): Promise<void> {
+  async toggleReaction(eventId: string, reaction: string): Promise<void> {
     const sb = requireSupabase()
-    const { error } = await sb.from('timeline_events').update({ reactions }).eq('id', eventId)
+    const { error } = await sb.rpc('toggle_timeline_reaction', {
+      p_event: eventId,
+      p_reaction: reaction,
+    })
     if (error) throw error
   },
 }
@@ -386,6 +416,7 @@ export const notifications = {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .limit(100)
     if (error) throw error
     return data ?? []
   },
@@ -490,25 +521,22 @@ export const trios = {
     return out
   },
 
-  async reactToMessage(messageId: string, reactions: string[]): Promise<void> {
+  async reactToMessage(messageId: string, reaction: string): Promise<void> {
     const sb = requireSupabase()
-    const { error } = await sb.from('trio_messages').update({ reactions }).eq('id', messageId)
+    const { error } = await sb.rpc('toggle_trio_reaction', {
+      p_message: messageId,
+      p_reaction: reaction,
+    })
     if (error) throw error
   },
 
-  async approve(trioId: string, userId: string): Promise<void> {
+  // Approve the caller's own membership; the RPC activates the trio once every
+  // member has approved (activation is server-side so a non-creator's final
+  // approval doesn't fail the trios UPDATE policy).
+  async approve(trioId: string): Promise<void> {
     const sb = requireSupabase()
-    const { error } = await sb
-      .from('trio_members')
-      .update({ approved: true })
-      .eq('trio_id', trioId)
-      .eq('user_id', userId)
+    const { error } = await sb.rpc('approve_trio_membership', { p_trio: trioId })
     if (error) throw error
-    // Activate once everyone has approved.
-    const all = await this.members(trioId)
-    if (all.length > 0 && all.every((m) => m.approved)) {
-      await sb.from('trios').update({ active: true }).eq('id', trioId)
-    }
   },
 
   async messages(trioId: string): Promise<TrioMessageRow[]> {

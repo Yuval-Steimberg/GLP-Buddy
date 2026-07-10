@@ -178,10 +178,13 @@ export function App() {
                 : <Landing />
             }
           />
-          <Route path="/onboarding" element={<Onboarding />} />
+          <Route
+            path="/onboarding"
+            element={onboarded ? <Navigate to={safe ? '/home' : '/safety'} /> : <Onboarding />}
+          />
           <Route
             path="/safety"
-            element={onboarded ? <Safety /> : <Navigate to="/onboarding" />}
+            element={!onboarded ? <Navigate to="/onboarding" /> : safe ? <Navigate to="/home" /> : <Safety />}
           />
 
           {/* Authenticated app */}

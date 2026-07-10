@@ -13,17 +13,37 @@
   to = "/index.html"
   status = 200
 
-# Sensible security headers.
+# Security headers.
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(self)"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    # Content-Security-Policy: default-deny, then allow exactly what the app uses.
+    #  - connect-src: Supabase REST + realtime (wss), Sentry ingest, Plausible.
+    #  - img-src data:/blob: — avatars & chat photos are inline data-URL images.
+    #  - style-src 'unsafe-inline' — runtime-injected <style> (fonts); React inline
+    #    styles set element.style directly and don't need it, fonts do.
+    #  Update the *.supabase.co host if you use a custom Supabase domain.
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://plausible.io; worker-src 'self'; manifest-src 'self'"
 
-# Never cache the service worker.
+# Never cache the service workers (must always fetch the newest to pick up
+# a fresh build; stale SWs are the #1 cause of "app won't update").
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/push-sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Fingerprinted build assets are immutable — cache them hard.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

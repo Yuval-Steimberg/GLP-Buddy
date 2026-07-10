@@ -138,6 +138,7 @@ interface AppStoreValue {
   // buddy trio
   trioEligibility: () => TrioEligibility
   createTrio: (buddyUserIds: string[]) => void
+  approveTrio: (trioId: string) => void
   activeTrio: () => BuddyTrioGroup | null
   pendingTrio: () => BuddyTrioGroup | null
   sendTrioMessage: (trioId: string, text: string) => void
@@ -198,6 +199,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     await hydrateFor(me)
   }, [hydrateFor])
 
+  // Run a fire-and-forget Supabase mutation without letting a rejection become
+  // an unhandled promise rejection (which showed up in Sentry). On failure we
+  // log and re-sync from the server so the optimistic UI can't drift silently.
+  const runWrite = useCallback((label: string, fn: () => Promise<void>) => {
+    void (async () => {
+      try {
+        await fn()
+      } catch (e) {
+        console.error(`${label} failed`, e)
+        try { await refresh() } catch { /* offline; next focus refresh retries */ }
+      }
+    })()
+  }, [refresh])
+
   // Supabase mode: hydrate on auth changes and subscribe to realtime so a
   // buddy's messages / notifications appear without a manual refresh.
   useEffect(() => {
@@ -249,7 +264,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         // A new message from the buddy that you're not currently looking at →
         // pop an OS notification (works while the app is open/backgrounded).
         if (isNew && row.sender_id !== userId && document.visibilityState !== 'visible') {
-          void showLocalNotification('New message', row.text || 'Sent a photo', `/chat/${row.relationship_id}`)
+          // Keep the message content off the lock screen (health-app privacy).
+          void showLocalNotification('New message', 'Tap to open your chat.', `/chat/${row.relationship_id}`)
         }
       })
       cleanupRealtime = () => { unsubNtf(); unsubMsg() }
@@ -609,11 +625,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const declineIncoming = useCallback((userId: string) => {
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('pass', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.matching.pass(me, userId)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -633,11 +649,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const passUser = useCallback((userId: string) => {
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('pass', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.matching.pass(me, userId)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => ({
@@ -651,12 +667,34 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const trimmed = text.trim()
     if (!trimmed && !imageUrl) return
     if (USE_SUPABASE) {
+      // Optimistic: show the message immediately with a client id. The realtime
+      // insert echoes back the server row; we de-dupe on send-and-echo below.
+      const tempId = genId('msg')
+      const meId = state.currentUserId
+      if (meId) {
+        setState((prev) => ({
+          ...prev,
+          messages: [
+            ...prev.messages,
+            { id: tempId, relationshipId, senderId: meId, text: trimmed, imageUrl, createdAt: Date.now(), reactions: [] },
+          ],
+        }))
+      }
       void (async () => {
         try {
           const me = await api.auth.currentUserId()
           if (me) await api.chat.send(relationshipId, me, trimmed, imageUrl)
+          // Drop the optimistic placeholder once the authoritative row will
+          // arrive via realtime / next refresh.
+          setState((prev) => ({ ...prev, messages: prev.messages.filter((m) => m.id !== tempId) }))
+          await refresh()
         } catch (e) {
           console.error('sendMessage failed', e)
+          // Mark the placeholder as failed so it doesn't silently vanish.
+          setState((prev) => ({
+            ...prev,
+            messages: prev.messages.map((m) => (m.id === tempId ? { ...m, failed: true } : m)),
+          }))
         }
       })()
       return
@@ -679,7 +717,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [])
+  }, [refresh, state.currentUserId])
 
   const reactToMessage = useCallback((messageId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {
@@ -695,7 +733,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       }))
       void (async () => {
         try {
-          await api.chat.react(messageId, reactions)
+          await api.chat.toggleReaction(messageId, reaction)
         } catch (e) {
           console.error('react failed', e)
           await refresh() // roll back to server truth on failure
@@ -722,7 +760,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const addMilestone = useCallback(
     (relationshipId: string, type: MilestoneType, note: string) => {
       if (USE_SUPABASE) {
-        void (async () => {
+        runWrite('addMilestone', async () => {
           const me = await api.auth.currentUserId()
           if (!me) return
           await api.milestones.add(relationshipId, me, type, note)
@@ -748,7 +786,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
             }
           }
           await refresh()
-        })()
+        })
         return
       }
       setState((prev) => {
@@ -834,14 +872,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const reactToTimeline = useCallback((eventId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {
+      const ev = state.timeline.find((e) => e.id === eventId)
+      if (!ev) return
+      const reactions = ev.reactions.includes(reaction)
+        ? ev.reactions.filter((r) => r !== reaction)
+        : [...ev.reactions, reaction]
+      // Optimistic; atomic toggle server-side reconciles on refresh.
+      setState((prev) => ({
+        ...prev,
+        timeline: prev.timeline.map((e) => (e.id === eventId ? { ...e, reactions } : e)),
+      }))
       void (async () => {
-        const ev = state.timeline.find((e) => e.id === eventId)
-        if (!ev) return
-        const reactions = ev.reactions.includes(reaction)
-          ? ev.reactions.filter((r) => r !== reaction)
-          : [...ev.reactions, reaction]
-        await api.timeline.react(eventId, reactions)
-        await refresh()
+        try {
+          await api.timeline.toggleReaction(eventId, reaction)
+        } catch (e) {
+          console.error('timeline react failed', e)
+          await refresh()
+        }
       })()
       return
     }
@@ -864,11 +911,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const trimmed = text.trim()
     if (!trimmed) return
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('commentOnTimeline', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.timeline.addEvent(relationshipId, me, 'comment', trimmed)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -937,11 +984,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const trimmed = text.trim()
     if (!trimmed) return
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('addReflection', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.timeline.addEvent(relationshipId, me, 'reflection', trimmed)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -967,11 +1014,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   // ---- notifications -----------------------------------------------------
   const markAllRead = useCallback(() => {
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('markAllRead', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.notifications.markAllRead(me)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => ({
@@ -1013,11 +1060,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   // ---- trust + safety ----------------------------------------------------
   const reportUser = useCallback((userId: string, reason: string) => {
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('reportUser', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.safety.report(me, userId, reason)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -1041,7 +1088,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const blockUser = useCallback((userId: string) => {
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('blockUser', async () => {
         const me = await api.auth.currentUserId()
         if (!me) return
         await api.safety.block(me, userId)
@@ -1051,7 +1098,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         )
         if (rel) await api.relationships.end(rel.id, 'Blocked')
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -1083,10 +1130,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const endRelationship = useCallback((relationshipId: string, reason: string) => {
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('endRelationship', async () => {
         await api.relationships.end(relationshipId, reason)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -1140,11 +1187,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     (buddyUserIds: string[]) => {
       if (buddyUserIds.length !== 2) return
       if (USE_SUPABASE) {
-        void (async () => {
+        runWrite('createTrio', async () => {
           const me = await api.auth.currentUserId()
           if (me) await api.trios.create(me, buddyUserIds)
           await refresh()
-        })()
+        })
         return
       }
       setState((prev) => {
@@ -1193,15 +1240,46 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [pushNotification, refresh],
   )
 
+  // A pending member accepts a Trio invite. Server activates the trio once all
+  // three have approved (migration 0010 RPC). Demo mode flips locally.
+  const approveTrio = useCallback((trioId: string) => {
+    if (USE_SUPABASE) {
+      void (async () => {
+        try {
+          await api.trios.approve(trioId)
+          await refresh()
+        } catch (e) {
+          console.error('approveTrio failed', e)
+        }
+      })()
+      return
+    }
+    setState((prev) => {
+      const me = prev.currentUserId
+      if (!me) return prev
+      const trios = prev.trios.map((t) => {
+        if (t.id !== trioId || !t.pendingMemberIds.includes(me)) return t
+        const pendingMemberIds = t.pendingMemberIds.filter((id) => id !== me)
+        return {
+          ...t,
+          memberIds: [...t.memberIds, me],
+          pendingMemberIds,
+          active: pendingMemberIds.length === 0,
+        }
+      })
+      return { ...prev, trios }
+    })
+  }, [refresh])
+
   const sendTrioMessage = useCallback((trioId: string, text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
     if (USE_SUPABASE) {
-      void (async () => {
+      runWrite('sendTrioMessage', async () => {
         const me = await api.auth.currentUserId()
         if (me) await api.trios.send(trioId, me, trimmed)
         await refresh()
-      })()
+      })
       return
     }
     setState((prev) => {
@@ -1225,14 +1303,22 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const reactToTrioMessage = useCallback((messageId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {
+      const msg = state.trioMessages.find((m) => m.id === messageId)
+      if (!msg) return
+      const reactions = msg.reactions.includes(reaction)
+        ? msg.reactions.filter((r) => r !== reaction)
+        : [...msg.reactions, reaction]
+      setState((prev) => ({
+        ...prev,
+        trioMessages: prev.trioMessages.map((m) => (m.id === messageId ? { ...m, reactions } : m)),
+      }))
       void (async () => {
-        const msg = state.trioMessages.find((m) => m.id === messageId)
-        if (!msg) return
-        const reactions = msg.reactions.includes(reaction)
-          ? msg.reactions.filter((r) => r !== reaction)
-          : [...msg.reactions, reaction]
-        await api.trios.reactToMessage(messageId, reactions)
-        await refresh()
+        try {
+          await api.trios.reactToMessage(messageId, reaction)
+        } catch (e) {
+          console.error('trio react failed', e)
+          await refresh()
+        }
       })()
       return
     }
@@ -1429,6 +1515,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       blockUser,
       trioEligibility,
       createTrio,
+      approveTrio,
       activeTrio,
       pendingTrio,
       sendTrioMessage,
@@ -1469,6 +1556,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       blockUser,
       trioEligibility,
       createTrio,
+      approveTrio,
       activeTrio,
       pendingTrio,
       sendTrioMessage,

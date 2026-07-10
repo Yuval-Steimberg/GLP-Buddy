@@ -7,7 +7,7 @@ import { Sheet } from '../components/Sheet'
 import { REACTIONS, END_REASONS } from '../constants'
 import { clockTime } from '../utils/format'
 import { looksLikeMedicalAdvice } from '../utils/safety'
-import { fileToChatImage } from '../lib/image'
+import { fileToChatImage, safeImageSrc } from '../lib/image'
 import type { Reaction } from '../types'
 
 export function Chat() {
@@ -48,10 +48,16 @@ export function Chat() {
     bodyRef.current?.scrollTo(0, bodyRef.current.scrollHeight)
   }, [msgs.length])
 
-  // Opening (or receiving a message in) this chat clears its unread dot.
+  // Opening (or receiving a message in) this chat clears its unread dot. Also
+  // re-run when a message notification for this chat arrives on its own realtime
+  // channel (which isn't ordered relative to the message), so the dot can't
+  // linger while you're staring at the chat.
+  const unreadForChat = state.notifications.filter(
+    (n) => n.link === `/chat/${relId}` && !n.read,
+  ).length
   useEffect(() => {
     if (relId) markChatRead(relId)
-  }, [relId, msgs.length, markChatRead])
+  }, [relId, msgs.length, unreadForChat, markChatRead])
 
   if (!rel) return <Navigate to="/chat" />
   const buddy = buddyOf(rel)
@@ -117,18 +123,19 @@ export function Chat() {
 
         {msgs.map((m) => {
           const mine = m.senderId === currentUser?.id
+          const imgSrc = safeImageSrc(m.imageUrl)
           return (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
               <div
-                className={`bubble ${mine ? 'mine' : 'theirs'}${m.imageUrl ? ' has-img' : ''}`}
+                className={`bubble ${mine ? 'mine' : 'theirs'}${imgSrc ? ' has-img' : ''}`}
                 onClick={() => setReactFor(reactFor === m.id ? null : m.id)}
               >
-                {m.imageUrl && (
+                {imgSrc && (
                   <img
                     className="bubble-img"
-                    src={m.imageUrl}
+                    src={imgSrc}
                     alt="Shared"
-                    onClick={(e) => { e.stopPropagation(); setLightbox(m.imageUrl!) }}
+                    onClick={(e) => { e.stopPropagation(); setLightbox(imgSrc) }}
                   />
                 )}
                 {m.text}

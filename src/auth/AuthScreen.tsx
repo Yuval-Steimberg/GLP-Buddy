@@ -95,11 +95,11 @@ export function AuthScreen() {
             )}
             <div className="field">
               <label>Email</label>
-              <input className="input" type="email" value={email} placeholder="you@example.com" onChange={(e) => setEmail(e.target.value)} />
+              <input className="input" type="email" autoComplete="email" value={email} placeholder="you@example.com" onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="field">
               <label>Password</label>
-              <input className="input" type="password" value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} />
+              <input className="input" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} />
             </div>
             {error && <div className="banner warn" style={{ marginBottom: 12 }}>{error}</div>}
             <button className="btn" disabled={busy || !email || !password} onClick={submit}>
