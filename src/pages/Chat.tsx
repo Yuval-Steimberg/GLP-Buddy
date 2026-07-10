@@ -33,6 +33,7 @@ export function Chat() {
   const [endOpen, setEndOpen] = useState(false)
   const [reactFor, setReactFor] = useState<string | null>(null)
   const [sendingImg, setSendingImg] = useState(false)
+  const [pending, setPending] = useState<string[]>([]) // compressed images awaiting send
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [attachOpen, setAttachOpen] = useState(false)
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -55,23 +56,40 @@ export function Chat() {
   if (!rel) return <Navigate to="/chat" />
   const buddy = buddyOf(rel)
 
+  // Send: any queued photos go first (caption rides on the last one), then any
+  // remaining plain text.
   const send = () => {
-    sendMessage(rel.id, text)
+    if (!rel) return
+    const caption = text.trim()
+    if (pending.length > 0) {
+      pending.forEach((img, i) => {
+        const isLast = i === pending.length - 1
+        sendMessage(rel.id, isLast ? caption : '', img)
+      })
+      setPending([])
+      setText('')
+      return
+    }
+    if (!caption) return
+    sendMessage(rel.id, caption)
     setText('')
   }
 
-  const pickImage = async (file?: File) => {
-    if (!file || !rel) return
+  // Compress the chosen photo(s) and queue them for review + caption.
+  const addImages = async (files?: FileList | null) => {
+    if (!files || files.length === 0) return
     setSendingImg(true)
     try {
-      const dataUrl = await fileToChatImage(file)
-      sendMessage(rel.id, '', dataUrl)
+      const imgs = await Promise.all(Array.from(files).slice(0, 10).map((f) => fileToChatImage(f)))
+      setPending((prev) => [...prev, ...imgs])
     } catch {
-      alert('Sorry, that image could not be sent. Try another photo.')
+      alert('Sorry, that image could not be added. Try another photo.')
     } finally {
       setSendingImg(false)
     }
   }
+
+  const canSend = pending.length > 0 || !!text.trim()
 
   return (
     <div className="chat-wrap">
@@ -148,12 +166,33 @@ export function Chat() {
           for medication questions, point your buddy to their clinician.
         </div>
       )}
+      {/* Photo compose tray: thumbnails of queued images, each removable. */}
+      {pending.length > 0 && (
+        <div className="compose-tray">
+          {pending.map((img, i) => (
+            <div className="compose-thumb" key={i}>
+              <img src={img} alt="To send" />
+              <button
+                className="compose-rm"
+                aria-label="Remove photo"
+                onClick={() => setPending((prev) => prev.filter((_, j) => j !== i))}
+              >
+                <Icon name="close" size={13} />
+              </button>
+            </div>
+          ))}
+          <button className="compose-add" onClick={() => setAttachOpen(true)} aria-label="Add another photo">
+            <Icon name="plus" size={20} />
+          </button>
+        </div>
+      )}
+
       <div className="chat-input">
         <button
           className="attach"
           onClick={() => setAttachOpen(true)}
           disabled={sendingImg}
-          aria-label="Send a photo"
+          aria-label="Add a photo"
         >
           <Icon name={sendingImg ? 'clock' : 'plus'} size={20} />
         </button>
@@ -163,23 +202,24 @@ export function Chat() {
           accept="image/*"
           capture="environment"
           hidden
-          onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = '' }}
+          onChange={(e) => { addImages(e.target.files); e.target.value = '' }}
         />
         <input
           ref={galleryRef}
           type="file"
           accept="image/*"
+          multiple
           hidden
-          onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = '' }}
+          onChange={(e) => { addImages(e.target.files); e.target.value = '' }}
         />
         <input
           className="input"
-          placeholder={`Message ${buddy.profile.nickname}…`}
+          placeholder={pending.length > 0 ? 'Add a caption…' : `Message ${buddy.profile.nickname}…`}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
         />
-        <button className="send" onClick={send} disabled={!text.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
+        <button className="send" onClick={send} disabled={!canSend} aria-label="Send"><Icon name="send" size={18} /></button>
       </div>
 
       {lightbox && (

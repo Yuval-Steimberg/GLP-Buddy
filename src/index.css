@@ -438,6 +438,51 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 }
 .chat-input .attach:disabled { opacity: 0.5; }
 
+/* Photo compose tray (queued images awaiting send + caption) */
+.compose-tray {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.compose-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+}
+.compose-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.compose-rm {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.compose-add {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--line);
+  color: var(--primary-ink);
+  display: grid;
+  place-items: center;
+}
+
 /* Image messages */
 .bubble.has-img { padding: 5px 5px 8px; }
 .bubble-img {
