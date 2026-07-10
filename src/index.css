@@ -3,31 +3,33 @@
 /* Bold violet → coral → amber, big display type, moving gradients, motion. */
 /* ----------------------------------------------------------------------- */
 :root {
-  --bg: #f6f3f0;             /* warm ivory */
+  /* Unified "Sage" wellness palette (app + marketing site) — muted eucalyptus
+     sage + warm sand + a soft sky-blue accent on a warm off-white canvas. */
+  --bg: #f6f4ee;             /* warm off-white */
   --surface: #ffffff;
-  --surface-2: #efeaf2;      /* soft mauve-grey */
-  --ink: #221b26;            /* deep plum-charcoal */
-  --ink-soft: #5d5566;
-  --ink-faint: #9b93a2;
-  --primary: #574a8e;        /* muted indigo-plum (calm, not neon) */
-  --primary-soft: #e9e4f2;
-  --primary-ink: #473c78;
-  --accent: #cf8763;         /* warm clay / terracotta */
-  --accent-soft: #f6e7dc;
-  --amber: #e0a45e;          /* soft amber */
-  --amber-soft: #f8ecd9;
-  /* "green" slot repurposed as warm achievement bronze (no teal). */
-  --green: #9a6a3c;
-  --green-soft: #f4e8da;
-  --gold: #d99a3f;
+  --surface-2: #eaefe9;      /* soft sage tint */
+  --ink: #1e2a25;            /* deep green-charcoal */
+  --ink-soft: #56635c;
+  --ink-faint: #98a29b;
+  --primary: #5e8c74;        /* muted eucalyptus sage */
+  --primary-soft: #e4eee7;
+  --primary-ink: #436b57;
+  --accent: #c2955f;         /* warm sand / ochre — small accents */
+  --accent-soft: #f4ecdc;
+  --amber: #d9a441;          /* soft amber */
+  --amber-soft: #f7ecd4;
+  /* "green" slot repurposed as a soft sky-blue accent (buddy/milestone chips). */
+  --green: #5f8497;
+  --green-soft: #e6eef2;
+  --gold: #c99a3f;
   --danger: #c2405a;
   --danger-soft: #f8e2e6;
-  --line: #e9e3ee;
-  --shadow: 0 8px 30px rgba(50, 35, 80, 0.09);
-  --shadow-lg: 0 20px 52px rgba(50, 35, 80, 0.16);
-  --glow: 0 10px 30px rgba(87, 74, 142, 0.32);
-  --grad: linear-gradient(120deg, #574a8e 0%, #8b5e86 52%, #cf8763 100%);
-  --grad-soft: linear-gradient(120deg, #e9e4f2 0%, #f2e3ea 52%, #f6e7dc 100%);
+  --line: #e7e3d8;
+  --shadow: 0 8px 30px rgba(30, 50, 42, 0.08);
+  --shadow-lg: 0 20px 52px rgba(30, 50, 42, 0.15);
+  --glow: 0 12px 34px rgba(94, 140, 116, 0.28);
+  --grad: linear-gradient(120deg, #5e8c74 0%, #7ba890 48%, #a7c6bd 100%);
+  --grad-soft: linear-gradient(120deg, #e4eee7 0%, #eef1ea 52%, #f4ecdc 100%);
   --font-display: 'Space Grotesk Variable', 'Space Grotesk', var(--font-body);
   --font-body: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --radius: 22px;
@@ -620,7 +622,7 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 /* ======================================================================= */
 :root {
   --ring: 0 0 0 4px rgba(124, 58, 237, 0.20);
-  --shadow-sm: 0 2px 8px rgba(88, 40, 160, 0.06);
+  --shadow-sm: 0 2px 8px rgba(30, 50, 42, 0.06);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --sidebar-w: 264px;
   --content-w: 1180px;
@@ -663,7 +665,7 @@ html { scroll-behavior: smooth; }
 @media (hover: hover) {
   .btn:hover { transform: translateY(-2px); }
   .btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.sm):hover {
-    box-shadow: 0 16px 40px rgba(87, 74, 142, 0.42);
+    box-shadow: 0 16px 40px rgba(94, 140, 116, 0.42);
     background-position: 100% 0;
   }
   .btn:hover::after { animation: sheen 0.9s var(--ease); }
@@ -743,9 +745,9 @@ select.input:focus-visible,
 @media (min-width: 980px) {
   body {
     background:
-      radial-gradient(1200px 620px at 100% -10%, rgba(207, 135, 99, 0.12), transparent 60%),
-      radial-gradient(1000px 560px at -8% 8%, rgba(87, 74, 142, 0.14), transparent 55%),
-      radial-gradient(900px 520px at 50% 120%, rgba(224, 164, 94, 0.10), transparent 55%),
+      radial-gradient(1200px 620px at 100% -10%, rgba(194, 149, 95, 0.12), transparent 60%),
+      radial-gradient(1000px 560px at -8% 8%, rgba(94, 140, 116, 0.14), transparent 55%),
+      radial-gradient(900px 520px at 50% 120%, rgba(95, 132, 151, 0.10), transparent 55%),
       var(--bg);
     background-attachment: fixed;
   }
@@ -1031,9 +1033,9 @@ select.input:focus-visible,
 :root {
   --radius: 16px;
   --radius-sm: 12px;
-  --shadow: 0 4px 16px rgba(88, 40, 160, 0.06);
-  --shadow-lg: 0 16px 44px rgba(88, 40, 160, 0.12);
-  --shadow-sm: 0 1px 3px rgba(88, 40, 160, 0.06);
+  --shadow: 0 4px 16px rgba(30, 50, 42, 0.06);
+  --shadow-lg: 0 16px 44px rgba(30, 50, 42, 0.12);
+  --shadow-sm: 0 1px 3px rgba(30, 50, 42, 0.06);
 }
 
 body {
@@ -1048,9 +1050,9 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
 .btn { font-weight: 600; letter-spacing: 0; }
 .btn:not(.secondary):not(.outline):not(.ghost):not(.danger):not(.success) {
   background: var(--primary);
-  box-shadow: 0 1px 2px rgba(88, 40, 160, 0.12);
+  box-shadow: 0 1px 2px rgba(30, 50, 42, 0.12);
 }
-.btn.success { box-shadow: 0 1px 2px rgba(88, 40, 160, 0.12); }
+.btn.success { box-shadow: 0 1px 2px rgba(30, 50, 42, 0.12); }
 .btn::after { content: none; }
 @media (hover: hover) {
   .btn:hover { transform: translateY(-1px); }
@@ -1115,7 +1117,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
   flex-shrink: 0;
   background: var(--grad);
   color: #fff;
-  box-shadow: 0 4px 12px -4px rgba(87, 74, 142, 0.42);
+  box-shadow: 0 4px 12px -4px rgba(94, 140, 116, 0.42);
 }
 
 /* Animated ambient gradient glows for the app background (desktop). */
@@ -1170,7 +1172,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
 .lp-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   border-radius: 999px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
-  padding: 12px 20px; background: var(--grad); color: #fff; white-space: nowrap; box-shadow: 0 10px 26px -8px rgba(87,74,142,.42);
+  padding: 12px 20px; background: var(--grad); color: #fff; white-space: nowrap; box-shadow: 0 10px 26px -8px rgba(94,140,116,.42);
   box-shadow: 0 1px 2px rgba(16,70,60,.14);
   transition: transform .16s var(--ease), box-shadow .2s var(--ease), background .2s ease;
 }
@@ -1189,7 +1191,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
   background: var(--primary-soft); padding: 7px 13px 7px 11px; border-radius: 999px;
 }
 .lp-eyebrow.center { margin: 0 auto; }
-.lp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(87,74,142,.16); }
+.lp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(94,140,116,.16); }
 
 /* ---- Type ---- */
 .lp-h1 { font-size: clamp(40px, 5.6vw, 74px); font-weight: 800; line-height: 1.02; letter-spacing: -0.035em; margin: 18px 0 0; color: var(--lp-ink); }
@@ -1368,13 +1370,13 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
   border-radius: 18px;
   padding: 20px;
   border: 1px solid #eaf1ee;
-  box-shadow: 0 1px 2px rgba(88, 40, 160, 0.04), 0 16px 36px -22px rgba(88, 40, 160, 0.22);
+  box-shadow: 0 1px 2px rgba(30, 50, 42, 0.04), 0 16px 36px -22px rgba(30, 50, 42, 0.22);
 }
 .card.flat { box-shadow: none; }
 
 /* Avatars get a subtle lift; icon buttons feel tactile */
-.avatar { box-shadow: 0 3px 10px rgba(88, 40, 160, 0.18); }
-.icon-btn { border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(88, 40, 160, 0.05); }
+.avatar { box-shadow: 0 3px 10px rgba(30, 50, 42, 0.18); }
+.icon-btn { border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(30, 50, 42, 0.05); }
 
 /* Premium stat tiles (white + hairline instead of flat fill) */
 .stat { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 13px 6px; box-shadow: var(--shadow-sm); }
@@ -1417,7 +1419,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: 0 10px 34px rgba(88, 40, 160, 0.18);
+  box-shadow: 0 10px 34px rgba(30, 50, 42, 0.18);
   padding: 14px 16px;
   z-index: 60;
   animation: install-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;

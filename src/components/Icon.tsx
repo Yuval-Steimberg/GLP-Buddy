@@ -93,9 +93,9 @@ export function BrandMark({ size = 30 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#574a8e" />
-          <stop offset="0.52" stopColor="#8b5e86" />
-          <stop offset="1" stopColor="#cf8763" />
+          <stop stopColor="#5e8c74" />
+          <stop offset="0.52" stopColor="#7ba890" />
+          <stop offset="1" stopColor="#a7c6bd" />
         </linearGradient>
       </defs>
       <rect width="40" height="40" rx="12.5" fill={`url(#${id})`} />
@@ -105,9 +105,9 @@ export function BrandMark({ size = 30 }: { size?: number }) {
         fill="#fff"
       />
       {/* Two linked pen-pal dots */}
-      <circle cx="17.2" cy="17.6" r="2.05" fill="#574a8e" />
-      <circle cx="23.2" cy="17.6" r="2.05" fill="#cf8763" />
-      <rect x="18.9" y="16.85" width="3.6" height="1.5" rx="0.75" fill="#8b5e86" />
+      <circle cx="17.2" cy="17.6" r="2.05" fill="#5e8c74" />
+      <circle cx="23.2" cy="17.6" r="2.05" fill="#c2955f" />
+      <rect x="18.9" y="16.85" width="3.6" height="1.5" rx="0.75" fill="#7ba890" />
     </svg>
   )
 }
