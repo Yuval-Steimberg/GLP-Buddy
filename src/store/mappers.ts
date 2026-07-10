@@ -85,6 +85,7 @@ export function rowToMessage(r: MessageRow): ChatMessage {
     imageUrl: r.image_url ?? undefined,
     createdAt: ms(r.created_at),
     reactions: (r.reactions ?? []) as Reaction[],
+    replyTo: r.reply_to ?? undefined,
   }
 }
 

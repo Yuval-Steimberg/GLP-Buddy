@@ -53,6 +53,7 @@ export interface MessageRow {
   text: string | null
   image_url: string | null
   reactions: string[]
+  reply_to: string | null
   created_at: string
 }
 

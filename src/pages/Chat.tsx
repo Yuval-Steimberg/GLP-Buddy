@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties, TouchEvent as RTouchEvent } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { Avatar } from '../components/Avatar'
@@ -8,7 +9,7 @@ import { REACTIONS, END_REASONS } from '../constants'
 import { clockTime } from '../utils/format'
 import { looksLikeMedicalAdvice } from '../utils/safety'
 import { fileToChatImage, safeImageSrc } from '../lib/image'
-import type { Reaction } from '../types'
+import type { ChatMessage, Reaction } from '../types'
 
 export function Chat() {
   const { relId } = useParams()
@@ -36,9 +37,12 @@ export function Chat() {
   const [pending, setPending] = useState<string[]>([]) // compressed images awaiting send
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [attachOpen, setAttachOpen] = useState(false)
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
+  const [swipe, setSwipe] = useState<{ id: string; dx: number } | null>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
+  const touchStart = useRef<{ x: number; y: number; id: string } | null>(null)
 
   const msgs = state.messages
     .filter((m) => m.relationshipId === relId)
@@ -62,23 +66,66 @@ export function Chat() {
   if (!rel) return <Navigate to="/chat" />
   const buddy = buddyOf(rel)
 
-  // Send: any queued photos go first (caption rides on the last one), then any
-  // remaining plain text.
+  // A message can quote another (reply). Look up the quoted message + build a
+  // short preview; author label; jump-to-original helper.
+  const quotedOf = (m: ChatMessage) =>
+    m.replyTo ? state.messages.find((x) => x.id === m.replyTo) : undefined
+  const snippet = (m?: ChatMessage) =>
+    !m ? 'Original message unavailable' : (m.text?.trim() || (m.imageUrl ? 'Photo' : ''))
+  const authorOf = (senderId: string) => (senderId === currentUser?.id ? 'You' : buddy.profile.nickname)
+  const scrollToMsg = (id: string) => {
+    const el = document.getElementById(`msg-${id}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('msg-flash')
+    setTimeout(() => el.classList.remove('msg-flash'), 1100)
+  }
+
+  // Swipe a bubble sideways to reply (WhatsApp-style). Only engages on a mostly
+  // horizontal drag so it doesn't fight vertical scrolling.
+  const onTouchStart = (e: RTouchEvent, id: string) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY, id }
+  }
+  const onTouchMove = (e: RTouchEvent) => {
+    const s = touchStart.current
+    if (!s) return
+    const t = e.touches[0]
+    const dx = t.clientX - s.x
+    const dy = t.clientY - s.y
+    if (Math.abs(dx) < Math.abs(dy) || dx < 0) return // vertical scroll / wrong way
+    setSwipe({ id: s.id, dx: Math.min(72, dx) })
+  }
+  const onTouchEnd = () => {
+    const s = touchStart.current
+    if (s && swipe && swipe.id === s.id && swipe.dx > 48) {
+      const m = msgs.find((x) => x.id === s.id)
+      if (m) setReplyTo(m)
+    }
+    touchStart.current = null
+    setSwipe(null)
+  }
+
+  // Send: any queued photos go first (caption + reply ride on the last one),
+  // then any remaining plain text.
   const send = () => {
     if (!rel) return
     const caption = text.trim()
+    const rt = replyTo?.id
     if (pending.length > 0) {
       pending.forEach((img, i) => {
         const isLast = i === pending.length - 1
-        sendMessage(rel.id, isLast ? caption : '', img)
+        sendMessage(rel.id, isLast ? caption : '', img, isLast ? rt : undefined)
       })
       setPending([])
       setText('')
+      setReplyTo(null)
       return
     }
     if (!caption) return
-    sendMessage(rel.id, caption)
+    sendMessage(rel.id, caption, undefined, rt)
     setText('')
+    setReplyTo(null)
   }
 
   // Compress the chosen photo(s) and queue them for review + caption.
@@ -124,12 +171,38 @@ export function Chat() {
         {msgs.map((m) => {
           const mine = m.senderId === currentUser?.id
           const imgSrc = safeImageSrc(m.imageUrl)
+          const quoted = quotedOf(m)
+          const swiping = swipe?.id === m.id
           return (
-            <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
+            <div
+              key={m.id}
+              id={`msg-${m.id}`}
+              className="msg-row"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: mine ? 'flex-end' : 'flex-start',
+                transform: swiping ? `translateX(${swipe!.dx}px)` : undefined,
+                transition: swiping ? 'none' : 'transform .18s ease',
+              }}
+              onTouchStart={(e) => onTouchStart(e, m.id)}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              {swiping && <span className="swipe-reply-hint" style={{ [mine ? 'right' : 'left']: -34 } as CSSProperties}><Icon name="reply" size={16} /></span>}
               <div
                 className={`bubble ${mine ? 'mine' : 'theirs'}${imgSrc ? ' has-img' : ''}`}
                 onClick={() => setReactFor(reactFor === m.id ? null : m.id)}
               >
+                {m.replyTo && (
+                  <div
+                    className="bubble-quote"
+                    onClick={(e) => { e.stopPropagation(); scrollToMsg(m.replyTo!) }}
+                  >
+                    <span className="bubble-quote-name">{quoted ? authorOf(quoted.senderId) : ''}</span>
+                    <span className="bubble-quote-text">{snippet(quoted)}</span>
+                  </div>
+                )}
                 {imgSrc && (
                   <img
                     className="bubble-img"
@@ -139,7 +212,7 @@ export function Chat() {
                   />
                 )}
                 {m.text}
-                <div className="time">{clockTime(m.createdAt)}</div>
+                <div className="time">{clockTime(m.createdAt)}{m.failed && <span className="msg-failed"> · not sent</span>}</div>
                 {m.reactions.length > 0 && (
                   <div className="bubble-reactions">
                     {m.reactions.map((r, i) => (
@@ -150,6 +223,13 @@ export function Chat() {
               </div>
               {reactFor === m.id && (
                 <div className="react-bar">
+                  <button
+                    className="react-btn react-reply"
+                    onClick={() => { setReplyTo(m); setReactFor(null) }}
+                    aria-label="Reply to this message"
+                  >
+                    <Icon name="reply" size={16} />
+                  </button>
                   {REACTIONS.map((r) => (
                     <button
                       key={r}
@@ -190,6 +270,19 @@ export function Chat() {
           ))}
           <button className="compose-add" onClick={() => setAttachOpen(true)} aria-label="Add another photo">
             <Icon name="plus" size={20} />
+          </button>
+        </div>
+      )}
+
+      {replyTo && (
+        <div className="reply-preview">
+          <span className="reply-preview-bar" />
+          <div className="reply-preview-body">
+            <span className="reply-preview-name">Replying to {authorOf(replyTo.senderId)}</span>
+            <span className="reply-preview-text">{snippet(replyTo)}</span>
+          </div>
+          <button className="reply-preview-x" onClick={() => setReplyTo(null)} aria-label="Cancel reply">
+            <Icon name="close" size={14} />
           </button>
         </div>
       )}

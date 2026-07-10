@@ -287,11 +287,17 @@ export const chat = {
     return (data ?? []).reverse()
   },
 
-  async send(relationshipId: string, senderId: string, text: string, imageUrl?: string): Promise<void> {
+  async send(relationshipId: string, senderId: string, text: string, imageUrl?: string, replyTo?: string): Promise<void> {
     const sb = requireSupabase()
     const { error } = await sb
       .from('messages')
-      .insert({ relationship_id: relationshipId, sender_id: senderId, text: text || null, image_url: imageUrl ?? null })
+      .insert({
+        relationship_id: relationshipId,
+        sender_id: senderId,
+        text: text || null,
+        image_url: imageUrl ?? null,
+        reply_to: replyTo ?? null,
+      })
     if (error) throw error
   },
 

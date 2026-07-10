@@ -104,6 +104,7 @@ export interface ChatMessage {
   imageUrl?: string
   createdAt: number
   reactions: Reaction[]
+  replyTo?: string // id of the message this one is replying to
   failed?: boolean // optimistic send that didn't reach the server
 }
 

@@ -119,7 +119,7 @@ interface AppStoreValue {
   buddyLevels: (rel: BuddyRelationship) => BuddyLevelStatus[]
   endRelationship: (relationshipId: string, reason: string) => void
   // chat
-  sendMessage: (relationshipId: string, text: string, imageUrl?: string) => void
+  sendMessage: (relationshipId: string, text: string, imageUrl?: string, replyTo?: string) => void
   reactToMessage: (messageId: string, reaction: Reaction) => void
   // milestones + timeline
   addMilestone: (relationshipId: string, type: MilestoneType, note: string) => void
@@ -675,7 +675,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   // ---- chat --------------------------------------------------------------
-  const sendMessage = useCallback((relationshipId: string, text: string, imageUrl?: string) => {
+  const sendMessage = useCallback((relationshipId: string, text: string, imageUrl?: string, replyTo?: string) => {
     const trimmed = text.trim()
     if (!trimmed && !imageUrl) return
     if (USE_SUPABASE) {
@@ -688,14 +688,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           ...prev,
           messages: [
             ...prev.messages,
-            { id: tempId, relationshipId, senderId: meId, text: trimmed, imageUrl, createdAt: Date.now(), reactions: [] },
+            { id: tempId, relationshipId, senderId: meId, text: trimmed, imageUrl, createdAt: Date.now(), reactions: [], replyTo },
           ],
         }))
       }
       void (async () => {
         try {
           const me = await api.auth.currentUserId()
-          if (me) await api.chat.send(relationshipId, me, trimmed, imageUrl)
+          if (me) await api.chat.send(relationshipId, me, trimmed, imageUrl, replyTo)
           // Drop the optimistic placeholder once the authoritative row will
           // arrive via realtime / next refresh.
           setState((prev) => ({ ...prev, messages: prev.messages.filter((m) => m.id !== tempId) }))
@@ -725,6 +725,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
             imageUrl,
             createdAt: Date.now(),
             reactions: [],
+            replyTo,
           },
         ],
       }
