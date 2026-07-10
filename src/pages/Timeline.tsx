@@ -91,7 +91,7 @@ export function Timeline() {
       )}
 
       <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Avatar name={buddy.profile.nickname} size={44} />
+        <Avatar name={buddy.profile.nickname} size={44} src={buddy.profile.avatarUrl} />
         <div style={{ flex: 1 }}>
           <strong>You &amp; {buddy.profile.nickname}</strong>
           <div className="muted" style={{ fontSize: 13 }}>Your shared journey</div>

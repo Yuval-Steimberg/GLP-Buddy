@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
+import { Avatar } from '../components/Avatar'
+import { Icon } from '../components/Icon'
+import { fileToAvatarDataUrl } from '../lib/image'
 import type { Profile } from '../types'
 import {
   AGE_RANGES,
@@ -45,9 +48,19 @@ export function Onboarding() {
   const { completeOnboarding } = useStore()
   const [step, setStep] = useState(0)
   const [p, setP] = useState<Profile>(emptyProfile)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const set = <K extends keyof Profile>(k: K, v: Profile[K]) =>
     setP((prev) => ({ ...prev, [k]: v }))
+
+  const pickPhoto = async (file?: File) => {
+    if (!file) return
+    try {
+      set('avatarUrl', await fileToAvatarDataUrl(file))
+    } catch {
+      alert('Sorry, that image could not be used. Try another photo.')
+    }
+  }
 
   const toggleInterest = (i: string) =>
     setP((prev) => ({
@@ -131,6 +144,32 @@ export function Onboarding() {
         <div>
           <h1>Let's get to know you</h1>
           <p>This helps us find someone who really gets your journey.</p>
+          <div className="field" style={{ textAlign: 'center' }}>
+            <label style={{ display: 'block' }}>Profile photo <span className="muted" style={{ fontWeight: 600 }}>(optional)</span></label>
+            <button
+              type="button"
+              className="avatar-picker"
+              onClick={() => fileRef.current?.click()}
+              aria-label="Add profile photo"
+            >
+              <Avatar name={p.nickname || 'You'} size={96} src={p.avatarUrl} />
+              <span className="avatar-picker-badge"><Icon name="plus" size={16} /></span>
+            </button>
+            {p.avatarUrl && (
+              <div>
+                <button type="button" className="btn ghost" style={{ marginTop: 6 }} onClick={() => set('avatarUrl', undefined)}>
+                  Remove photo
+                </button>
+              </div>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => pickPhoto(e.target.files?.[0])}
+            />
+          </div>
           <div className="field">
             <label>First name or nickname</label>
             <input

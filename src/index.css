@@ -250,6 +250,32 @@ textarea.input { min-height: 110px; resize: vertical; }
   color: #fff;
   flex-shrink: 0;
 }
+img.avatar { object-fit: cover; background: var(--surface-2); }
+
+/* Tappable avatar with a + badge, used to add/change a profile photo. */
+.avatar-picker {
+  position: relative;
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin: 6px auto 0;
+}
+.avatar-picker-badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--bg);
+  box-shadow: var(--shadow-sm);
+}
 
 /* ----- Bottom nav ------------------------------------------------------ */
 .bottom-nav {

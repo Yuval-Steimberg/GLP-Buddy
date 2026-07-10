@@ -49,6 +49,7 @@ export function rowToProfile(r: ProfileRow): Profile {
       (r.communication_preference as CommunicationPreference) ?? 'Few times a week',
     bio: r.bio ?? '',
     interests: r.interests ?? [],
+    avatarUrl: r.avatar_url ?? undefined,
   }
 }
 

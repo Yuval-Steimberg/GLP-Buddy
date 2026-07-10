@@ -58,7 +58,7 @@ export function Chat() {
     <div className="chat-wrap">
       <div className="chat-header">
         <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Back">‹</button>
-        <Avatar name={buddy.profile.nickname} size={40} />
+        <Avatar name={buddy.profile.nickname} size={40} src={buddy.profile.avatarUrl} />
         <div style={{ flex: 1 }}>
           <strong>{buddy.profile.nickname}</strong>
           <div className="muted" style={{ fontSize: 12 }}>{buddy.profile.medication} · {buddy.profile.treatmentStage}</div>

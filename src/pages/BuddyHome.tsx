@@ -61,7 +61,7 @@ export function BuddyHome() {
           return (
             <div className="card" key={rel.id}>
               <div className="row" style={{ marginBottom: 14 }}>
-                <Avatar name={buddy.profile.nickname} size={56} />
+                <Avatar name={buddy.profile.nickname} size={56} src={buddy.profile.avatarUrl} />
                 <div style={{ flex: 1 }}>
                   <h3>{buddy.profile.nickname}</h3>
                   <div className="muted" style={{ fontSize: 13 }}>

@@ -24,7 +24,7 @@ export function Pending() {
         incoming.map((u) => (
           <div className="card" key={u.id}>
             <div className="row">
-              <Avatar name={u.profile.nickname} size={48} />
+              <Avatar name={u.profile.nickname} size={48} src={u.profile.avatarUrl} />
               <div style={{ flex: 1 }}>
                 <strong>{u.profile.nickname}</strong>
                 <div className="muted" style={{ fontSize: 13 }}>
@@ -58,7 +58,7 @@ export function Pending() {
         outgoing.map((u) => (
           <div className="card" key={u.id}>
             <div className="row">
-              <Avatar name={u.profile.nickname} size={44} />
+              <Avatar name={u.profile.nickname} size={44} src={u.profile.avatarUrl} />
               <div style={{ flex: 1 }}>
                 <strong>{u.profile.nickname}</strong>
                 <div className="muted" style={{ fontSize: 13 }}>Awaiting their reply…</div>

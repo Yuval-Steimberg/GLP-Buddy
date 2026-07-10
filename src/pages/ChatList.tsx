@@ -39,7 +39,7 @@ export function ChatList() {
                 style={{ display: 'flex', gap: 12, alignItems: 'center' }}
                 onClick={() => navigate(`/chat/${rel.id}`)}
               >
-                <Avatar name={buddy.profile.nickname} size={50} />
+                <Avatar name={buddy.profile.nickname} size={50} src={buddy.profile.avatarUrl} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="row between">
                     <strong>{buddy.profile.nickname}</strong>

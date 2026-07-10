@@ -17,6 +17,7 @@ export interface ProfileRow {
   communication_preference: string | null
   bio: string | null
   interests: string[]
+  avatar_url: string | null
   accepted_safety: boolean
   age_confirmed: boolean
   terms_version: string | null

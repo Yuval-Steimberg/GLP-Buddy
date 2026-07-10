@@ -116,6 +116,7 @@ function profileToRow(p: Profile): Partial<ProfileRow> {
     communication_preference: p.communicationPreference,
     bio: p.bio,
     interests: p.interests,
+    avatar_url: p.avatarUrl ?? null,
   }
 }
 

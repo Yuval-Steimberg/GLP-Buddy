@@ -14,7 +14,7 @@ export function ProfileCard({
   return (
     <div className="card">
       <div className="row" style={{ alignItems: 'flex-start' }}>
-        <Avatar name={p.nickname} size={54} />
+        <Avatar name={p.nickname} size={54} src={p.avatarUrl} />
         <div style={{ flex: 1 }}>
           <div className="row between">
             <h3>{p.nickname}</h3>

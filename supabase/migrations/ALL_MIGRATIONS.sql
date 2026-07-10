@@ -1,5 +1,5 @@
 -- ###########################################################################
--- GLPenPal — ALL MIGRATIONS (0001-0007), combined in order.
+-- GLPenPal — ALL MIGRATIONS (0001-0008), combined in order.
 -- Paste into Supabase -> SQL Editor -> New query -> Run. Idempotent & safe.
 -- ###########################################################################
 
@@ -588,5 +588,14 @@ create policy tmsg_update on public.trio_messages
 create policy tmsg_delete on public.trio_messages
   for delete to authenticated
   using (public.is_trio_member(trio_id) and sender_id = auth.uid());
+
+
+-- ===========================================================================
+-- Profile pictures. Stored as a small compressed data URL directly on the
+-- profile row (no Storage bucket / extra RLS to configure). The client resizes
+-- images to a thumbnail before saving, so rows stay small.
+-- ===========================================================================
+alter table public.profiles
+  add column if not exists avatar_url text;
 
 

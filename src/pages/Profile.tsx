@@ -48,7 +48,7 @@ export function Profile() {
 
       <div className="card center">
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-          <Avatar name={p.nickname} size={80} />
+          <Avatar name={p.nickname} size={80} src={p.avatarUrl} />
         </div>
         <h2>{p.nickname}</h2>
         <div className="chip-row" style={{ justifyContent: 'center', marginTop: 8 }}>
@@ -77,7 +77,7 @@ export function Profile() {
               const b = buddyOf(r)
               return (
                 <div key={r.id} className="row list-tap" onClick={() => navigate(`/chat/${r.id}`)}>
-                  <Avatar name={b.profile.nickname} size={38} />
+                  <Avatar name={b.profile.nickname} size={38} src={b.profile.avatarUrl} />
                   <span style={{ fontWeight: 700, flex: 1 }}>{b.profile.nickname}</span>
                   <span className="muted">›</span>
                 </div>

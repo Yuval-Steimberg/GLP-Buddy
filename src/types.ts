@@ -53,6 +53,7 @@ export interface Profile {
   communicationPreference: CommunicationPreference
   bio: string
   interests: string[]
+  avatarUrl?: string // small compressed data URL, optional
 }
 
 export interface User {
