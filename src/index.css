@@ -1200,3 +1200,47 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
 /* Checklist marker (replaces ✅/⬜ emoji) */
 .lp-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; color: #fff; flex-shrink: 0; }
 .lp-check[data-met="true"] { background: var(--green); border-color: var(--green); }
+
+/* ---------------------------------------------------------------------------
+   Install-app banner (PWA). Fixed above the bottom nav; slides up on show.
+   --------------------------------------------------------------------------- */
+.install-banner {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);
+  width: calc(100% - 24px);
+  max-width: calc(var(--maxw) - 24px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 34px rgba(16, 70, 60, 0.18);
+  padding: 14px 16px;
+  z-index: 60;
+  animation: install-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+@keyframes install-in {
+  from { opacity: 0; transform: translate(-50%, 14px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.install-row { display: flex; align-items: center; gap: 12px; padding-right: 22px; }
+.install-mark { flex-shrink: 0; display: grid; place-items: center; }
+.install-copy { display: flex; flex-direction: column; gap: 2px; }
+.install-copy strong { font-size: 15px; color: var(--ink); }
+.install-copy span { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+.install-cta { margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.install-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  border: none;
+  cursor: pointer;
+}
+.install-close:hover { color: var(--ink); }

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AppStoreProvider } from './store/AppStore'
 import { App } from './App'
+import { InstallPrompt } from './components/InstallPrompt'
 import { initSentry } from './lib/sentry'
 import '@fontsource-variable/inter'
 import './index.css'
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <AppStoreProvider>
         <App />
+        <InstallPrompt />
       </AppStoreProvider>
     </BrowserRouter>
   </React.StrictMode>,
