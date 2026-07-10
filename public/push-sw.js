@@ -11,11 +11,7 @@ self.addEventListener('push', (event) => {
     data = { title: 'GLPenPal', body: event.data ? event.data.text() : '' }
   }
   const title = data.title || 'GLPenPal'
-  // Update the home-screen icon badge if the server sent an unread count.
-  if (typeof data.badge === 'number' && self.navigator && self.navigator.setAppBadge) {
-    self.navigator.setAppBadge(data.badge).catch(() => {})
-  }
-  event.waitUntil(
+  const ops = [
     self.registration.showNotification(title, {
       body: data.body || '',
       icon: '/icons/icon-192.png',
@@ -23,7 +19,13 @@ self.addEventListener('push', (event) => {
       tag: data.link || '/', // so reading that chat can dismiss it
       data: { link: data.link || '/' },
     }),
-  )
+  ]
+  // Update the home-screen icon badge (kept inside waitUntil so iOS doesn't
+  // terminate the worker before it applies).
+  if (typeof data.badge === 'number' && self.navigator && self.navigator.setAppBadge) {
+    ops.push(self.navigator.setAppBadge(data.badge).catch(() => {}))
+  }
+  event.waitUntil(Promise.all(ops))
 })
 
 self.addEventListener('notificationclick', (event) => {

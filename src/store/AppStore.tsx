@@ -25,7 +25,7 @@ import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { showLocalNotification } from '../lib/push'
 import { hydrate } from './hydrate'
-import { rowToMessage } from './mappers'
+import { rowToMessage, rowToNotification } from './mappers'
 
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -222,8 +222,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       }
       // Use the id the event already gives us — never getUser() here.
       void hydrateFor(userId)
-      // Notifications drive a re-sync; messages stream in live (instant chat).
-      const unsubNtf = api.notifications.subscribe(userId, () => void hydrateFor(userId))
+      // New notifications stream in incrementally (bell + badge update with no
+      // full reload/flicker). Structural changes (a new match) are picked up by
+      // the throttled focus refresh below.
+      const unsubNtf = api.notifications.subscribe(userId, (row) => {
+        setState((prev) => {
+          const n = rowToNotification(row)
+          if (prev.notifications.some((x) => x.id === n.id)) return prev
+          return { ...prev, notifications: [n, ...prev.notifications] }
+        })
+      })
       const unsubMsg = api.chat.subscribeAll((row) => {
         let isNew = false
         setState((prev) => {
@@ -246,12 +254,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       cleanupRealtime = () => { unsubNtf(); unsubMsg() }
     })
     // When the app returns to the foreground (e.g. tapped a push notification),
-    // re-pull fresh data so new messages/notifications show up immediately.
-    // This does NOT re-subscribe, so it can't cause the earlier double-render.
+    // quietly re-pull fresh data in the background. Throttled so rapid focus/
+    // blur events (common on mobile) can't trigger a burst of reloads.
+    let lastHydrate = 0
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && subscribedFor) {
-        void hydrateFor(subscribedFor)
-      }
+      if (document.visibilityState !== 'visible' || !subscribedFor) return
+      const now = Date.now()
+      if (now - lastHydrate < 8000) return
+      lastHydrate = now
+      void hydrateFor(subscribedFor)
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
