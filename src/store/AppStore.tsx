@@ -25,7 +25,7 @@ import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { showLocalNotification } from '../lib/push'
 import { hydrate } from './hydrate'
-import { rowToMessage, rowToNotification } from './mappers'
+import { rowToMessage, rowToNotification, rowToTimeline } from './mappers'
 
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -268,7 +268,19 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           void showLocalNotification('New message', 'Tap to open your chat.', `/chat/${row.relationship_id}`)
         }
       })
-      cleanupRealtime = () => { unsubNtf(); unsubMsg() }
+      // Live timeline: buddy's new posts/milestones and reaction toggles appear
+      // without a refresh (mirrors chat; RLS scopes delivery to your own rels).
+      const unsubTl = api.timeline.subscribeAll((row) => {
+        setState((prev) => {
+          const e = rowToTimeline(row)
+          const i = prev.timeline.findIndex((x) => x.id === e.id)
+          if (i === -1) return { ...prev, timeline: [...prev.timeline, e] }
+          const timeline = prev.timeline.slice()
+          timeline[i] = e
+          return { ...prev, timeline }
+        })
+      })
+      cleanupRealtime = () => { unsubNtf(); unsubMsg(); unsubTl() }
     })
     // When the app returns to the foreground (e.g. tapped a push notification),
     // quietly re-pull fresh data in the background. Throttled so rapid focus/

@@ -405,6 +405,26 @@ export const timeline = {
     })
     if (error) throw error
   },
+
+  // Realtime across all of the user's timelines: fires on new events AND on
+  // reaction updates (RLS limits delivery to the user's own relationships), so
+  // a buddy's reaction/post shows live without a refresh — like chat.
+  subscribeAll(cb: (e: TimelineEventRow) => void) {
+    const sb = requireSupabase()
+    const channel = sb
+      .channel('timeline-all')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'timeline_events' },
+        (payload) => {
+          if (payload.new && (payload.new as TimelineEventRow).id) cb(payload.new as TimelineEventRow)
+        },
+      )
+      .subscribe()
+    return () => {
+      void sb.removeChannel(channel)
+    }
+  },
 }
 
 // ---- Notifications --------------------------------------------------------
