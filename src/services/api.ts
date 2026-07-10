@@ -128,6 +128,14 @@ export const profiles = {
     return data
   },
 
+  // Update profile fields without touching onboarding/safety flags — used by
+  // the single-page profile editor.
+  async update(id: string, p: Profile): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('profiles').update(profileToRow(p)).eq('id', id)
+    if (error) throw error
+  },
+
   async saveOnboarding(id: string, p: Profile): Promise<void> {
     const sb = requireSupabase()
     const { error } = await sb

@@ -47,6 +47,7 @@ const Chat = lazyWithReload(() => import('./pages/Chat').then((m) => ({ default:
 const Timeline = lazyWithReload(() => import('./pages/Timeline').then((m) => ({ default: m.Timeline })))
 const Notifications = lazyWithReload(() => import('./pages/Notifications').then((m) => ({ default: m.Notifications })))
 const Profile = lazyWithReload(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
+const EditProfile = lazyWithReload(() => import('./pages/EditProfile').then((m) => ({ default: m.EditProfile })))
 const Trio = lazyWithReload(() => import('./pages/Trio').then((m) => ({ default: m.Trio })))
 const Moderation = lazyWithReload(() => import('./pages/Moderation').then((m) => ({ default: m.Moderation })))
 const Privacy = lazyWithReload(() => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })))
@@ -160,6 +161,7 @@ export function App() {
           <Route path="/chat/:relId" element={<Guard><Chat /></Guard>} />
           <Route path="/notifications" element={<Guard><Notifications /></Guard>} />
           <Route path="/profile" element={<Guard><Profile /></Guard>} />
+          <Route path="/edit-profile" element={<Guard><EditProfile /></Guard>} />
           <Route path="/trio" element={<Guard><Trio /></Guard>} />
           <Route path="/moderation" element={<Guard staff><Moderation /></Guard>} />
 

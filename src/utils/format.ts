@@ -1,12 +1,14 @@
+// On-brand "dusk" avatar palette — varied for distinguishing people, but warm
+// indigo/plum/clay tones (no teal/green).
 const AVATAR_COLORS = [
-  '#0e9f87',
-  '#ff8a65',
-  '#4caf82',
-  '#f0b429',
-  '#e0567e',
-  '#42a5cf',
-  '#9575cd',
-  '#ef7d54',
+  '#574a8e', // indigo
+  '#8b5e86', // mauve
+  '#cf8763', // clay
+  '#b0577a', // dusty rose
+  '#7c6bb0', // periwinkle
+  '#c77d54', // terracotta
+  '#9a6a9c', // orchid
+  '#d99a3f', // amber
 ]
 
 export function avatarColor(seed: string): string {

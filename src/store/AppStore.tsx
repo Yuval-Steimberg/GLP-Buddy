@@ -101,6 +101,7 @@ interface AppStoreValue {
   currentUser: User | null
   // onboarding / safety
   completeOnboarding: (profile: Profile) => void
+  updateProfile: (profile: Profile) => void
   acceptSafety: () => void
   resetApp: () => void
   // matching
@@ -366,6 +367,26 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       return next
     })
   }, [pushNotification, refresh])
+
+  // Edit any profile field(s) from the single-page editor (no onboarding flow).
+  const updateProfile = useCallback((profile: Profile) => {
+    setState((prev) => {
+      const id = prev.currentUserId
+      const u = id ? prev.users[id] : null
+      if (!id || !u) return prev
+      return { ...prev, users: { ...prev.users, [id]: { ...u, profile } } }
+    })
+    if (USE_SUPABASE) {
+      void (async () => {
+        try {
+          const me = await api.auth.currentUserId()
+          if (me) await api.profiles.update(me, profile)
+        } catch (e) {
+          console.error('updateProfile failed', e)
+        }
+      })()
+    }
+  }, [])
 
   const acceptSafety = useCallback(() => {
     if (USE_SUPABASE) {
@@ -1378,6 +1399,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       completeOnboarding,
+      updateProfile,
       acceptSafety,
       resetApp,
       suggestions,
@@ -1417,6 +1439,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       completeOnboarding,
+      updateProfile,
       acceptSafety,
       resetApp,
       suggestions,

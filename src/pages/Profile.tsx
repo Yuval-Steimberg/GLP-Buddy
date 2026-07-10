@@ -193,7 +193,7 @@ export function Profile() {
         </div>
       </div>
 
-      <button className="btn outline" onClick={() => navigate('/onboarding')}>Edit profile</button>
+      <button className="btn outline" onClick={() => navigate('/edit-profile')}>Edit profile</button>
       <button className="btn secondary" style={{ marginTop: 8 }} onClick={logout}>
         <Icon name="logout" size={18} /> Log out
       </button>
