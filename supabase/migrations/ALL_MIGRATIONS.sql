@@ -1,5 +1,5 @@
 -- ###########################################################################
--- GLPenPal — ALL MIGRATIONS (0001-0008), combined in order.
+-- GLPenPal — ALL MIGRATIONS (0001-0009), combined in order.
 -- Paste into Supabase -> SQL Editor -> New query -> Run. Idempotent & safe.
 -- ###########################################################################
 
@@ -597,5 +597,17 @@ create policy tmsg_delete on public.trio_messages
 -- ===========================================================================
 alter table public.profiles
   add column if not exists avatar_url text;
+
+
+-- ===========================================================================
+-- Image messages in chat. The (compressed) image is stored as a data URL on
+-- the message row — protected by the same relationship RLS as the text, and
+-- no Storage bucket to configure. `text` is now optional (image-only messages).
+-- ===========================================================================
+alter table public.messages
+  add column if not exists image_url text;
+
+alter table public.messages
+  alter column text drop not null;
 
 

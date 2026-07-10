@@ -50,7 +50,8 @@ export interface MessageRow {
   id: string
   relationship_id: string
   sender_id: string
-  text: string
+  text: string | null
+  image_url: string | null
   reactions: string[]
   created_at: string
 }

@@ -118,7 +118,7 @@ interface AppStoreValue {
   buddyLevels: (rel: BuddyRelationship) => BuddyLevelStatus[]
   endRelationship: (relationshipId: string, reason: string) => void
   // chat
-  sendMessage: (relationshipId: string, text: string) => void
+  sendMessage: (relationshipId: string, text: string, imageUrl?: string) => void
   reactToMessage: (messageId: string, reaction: Reaction) => void
   // milestones + timeline
   addMilestone: (relationshipId: string, type: MilestoneType, note: string) => void
@@ -248,7 +248,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         // A new message from the buddy that you're not currently looking at →
         // pop an OS notification (works while the app is open/backgrounded).
         if (isNew && row.sender_id !== userId && document.visibilityState !== 'visible') {
-          void showLocalNotification('New message', row.text, `/chat/${row.relationship_id}`)
+          void showLocalNotification('New message', row.text || 'Sent a photo', `/chat/${row.relationship_id}`)
         }
       })
       cleanupRealtime = () => { unsubNtf(); unsubMsg() }
@@ -626,14 +626,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   // ---- chat --------------------------------------------------------------
-  const sendMessage = useCallback((relationshipId: string, text: string) => {
+  const sendMessage = useCallback((relationshipId: string, text: string, imageUrl?: string) => {
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed && !imageUrl) return
     if (USE_SUPABASE) {
       void (async () => {
-        const me = await api.auth.currentUserId()
-        if (me) await api.chat.send(relationshipId, me, trimmed)
-        await refresh()
+        try {
+          const me = await api.auth.currentUserId()
+          if (me) await api.chat.send(relationshipId, me, trimmed, imageUrl)
+        } catch (e) {
+          console.error('sendMessage failed', e)
+        }
       })()
       return
     }
@@ -648,13 +651,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
             relationshipId,
             senderId: prev.currentUserId,
             text: trimmed,
+            imageUrl,
             createdAt: Date.now(),
             reactions: [],
           },
         ],
       }
     })
-  }, [refresh])
+  }, [])
 
   const reactToMessage = useCallback((messageId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {

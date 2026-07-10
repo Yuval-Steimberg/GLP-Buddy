@@ -81,7 +81,8 @@ export function rowToMessage(r: MessageRow): ChatMessage {
     id: r.id,
     relationshipId: r.relationship_id,
     senderId: r.sender_id,
-    text: r.text,
+    text: r.text ?? '',
+    imageUrl: r.image_url ?? undefined,
     createdAt: ms(r.created_at),
     reactions: (r.reactions ?? []) as Reaction[],
   }

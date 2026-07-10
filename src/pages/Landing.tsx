@@ -255,7 +255,7 @@ function PhoneMock() {
         </div>
         <div className="lp-app-card">
           <div className="lp-app-row">
-            <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#8b5cf6,#ff5a5f)' }}>M</div>
+            <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#574a8e,#8b5e86)' }}>M</div>
             <div style={{ flex: 1 }}>
               <div className="lp-app-name">Maya</div>
               <div className="lp-app-muted">Wegovy</div>
@@ -285,7 +285,7 @@ function MatchMock() {
   return (
     <div className="lp-mock" aria-hidden>
       <div className="lp-app-row">
-        <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#ff5a5f,#ffb347)' }}>S</div>
+        <div className="lp-ava" style={{ background: 'linear-gradient(135deg,#8b5e86,#cf8763)' }}>S</div>
         <div style={{ flex: 1 }}>
           <div className="lp-app-name">Sofia</div>
           <div className="lp-mock-chips"><span className="lp-app-chip green">Ozempic</span><span className="lp-app-chip">3–6 months</span></div>

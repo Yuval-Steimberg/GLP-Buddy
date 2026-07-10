@@ -7,6 +7,7 @@ import { Sheet } from '../components/Sheet'
 import { REACTIONS, END_REASONS } from '../constants'
 import { clockTime } from '../utils/format'
 import { looksLikeMedicalAdvice } from '../utils/safety'
+import { fileToChatImage } from '../lib/image'
 import type { Reaction } from '../types'
 
 export function Chat() {
@@ -31,6 +32,9 @@ export function Chat() {
   const [reportOpen, setReportOpen] = useState(false)
   const [endOpen, setEndOpen] = useState(false)
   const [reactFor, setReactFor] = useState<string | null>(null)
+  const [sendingImg, setSendingImg] = useState(false)
+  const [lightbox, setLightbox] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const msgs = state.messages
@@ -52,6 +56,19 @@ export function Chat() {
   const send = () => {
     sendMessage(rel.id, text)
     setText('')
+  }
+
+  const pickImage = async (file?: File) => {
+    if (!file || !rel) return
+    setSendingImg(true)
+    try {
+      const dataUrl = await fileToChatImage(file)
+      sendMessage(rel.id, '', dataUrl)
+    } catch {
+      alert('Sorry, that image could not be sent. Try another photo.')
+    } finally {
+      setSendingImg(false)
+    }
   }
 
   return (
@@ -83,9 +100,17 @@ export function Chat() {
           return (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
               <div
-                className={`bubble ${mine ? 'mine' : 'theirs'}`}
+                className={`bubble ${mine ? 'mine' : 'theirs'}${m.imageUrl ? ' has-img' : ''}`}
                 onClick={() => setReactFor(reactFor === m.id ? null : m.id)}
               >
+                {m.imageUrl && (
+                  <img
+                    className="bubble-img"
+                    src={m.imageUrl}
+                    alt="Shared"
+                    onClick={(e) => { e.stopPropagation(); setLightbox(m.imageUrl!) }}
+                  />
+                )}
                 {m.text}
                 <div className="time">{clockTime(m.createdAt)}</div>
                 {m.reactions.length > 0 && (
@@ -122,6 +147,21 @@ export function Chat() {
         </div>
       )}
       <div className="chat-input">
+        <button
+          className="attach"
+          onClick={() => fileRef.current?.click()}
+          disabled={sendingImg}
+          aria-label="Send a photo"
+        >
+          <Icon name={sendingImg ? 'clock' : 'plus'} size={20} />
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = '' }}
+        />
         <input
           className="input"
           placeholder={`Message ${buddy.profile.nickname}…`}
@@ -131,6 +171,12 @@ export function Chat() {
         />
         <button className="send" onClick={send} disabled={!text.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
       </div>
+
+      {lightbox && (
+        <div className="lightbox" onClick={() => setLightbox(null)}>
+          <img src={lightbox} alt="Shared" />
+        </div>
+      )}
 
       {/* Options menu */}
       <Sheet open={menuOpen} onClose={() => setMenuOpen(false)}>

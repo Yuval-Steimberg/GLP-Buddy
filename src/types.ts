@@ -101,6 +101,7 @@ export interface ChatMessage {
   relationshipId: string
   senderId: string
   text: string
+  imageUrl?: string
   createdAt: number
   reactions: Reaction[]
 }

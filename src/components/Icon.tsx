@@ -80,23 +80,29 @@ export function Icon({ name, size = 22, style }: { name: IconName; size?: number
   }
 }
 
-// App logo: rounded teal badge with a supportive heart mark.
+// App logo: a rounded "dusk" gradient badge holding a chat bubble with two
+// linked dots — two pen pals in conversation.
 export function BrandMark({ size = 30 }: { size?: number }) {
   const id = useId()
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="40" y2="40">
-          <stop stopColor="#8b5cf6" />
-          <stop offset="0.55" stopColor="#ff5a5f" />
-          <stop offset="1" stopColor="#ffb347" />
+        <linearGradient id={id} x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#574a8e" />
+          <stop offset="0.52" stopColor="#8b5e86" />
+          <stop offset="1" stopColor="#cf8763" />
         </linearGradient>
       </defs>
-      <rect width="40" height="40" rx="12" fill={`url(#${id})`} />
+      <rect width="40" height="40" rx="12.5" fill={`url(#${id})`} />
+      {/* Speech bubble */}
       <path
-        d="M20 29.5s-7.6-4.3-7.6-9.9c0-2.6 2-4.7 4.6-4.7 1.5 0 2.7.7 3 1.7.3-1 1.5-1.7 3-1.7 2.6 0 4.6 2.1 4.6 4.7 0 5.6-7.6 9.9-7.6 9.9z"
+        d="M11 13.6c0-1.5 1.2-2.7 2.7-2.7h12.6c1.5 0 2.7 1.2 2.7 2.7v8c0 1.5-1.2 2.7-2.7 2.7H19l-4.9 4.1c-.7.6-1.7.1-1.7-.8v-3.3h.3c-.9 0-1.7-.8-1.7-1.9z"
         fill="#fff"
       />
+      {/* Two linked pen-pal dots */}
+      <circle cx="17.2" cy="17.6" r="2.05" fill="#574a8e" />
+      <circle cx="23.2" cy="17.6" r="2.05" fill="#cf8763" />
+      <rect x="18.9" y="16.85" width="3.6" height="1.5" rx="0.75" fill="#8b5e86" />
     </svg>
   )
 }
