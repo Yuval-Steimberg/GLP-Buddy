@@ -34,7 +34,9 @@ export function Chat() {
   const [reactFor, setReactFor] = useState<string | null>(null)
   const [sendingImg, setSendingImg] = useState(false)
   const [lightbox, setLightbox] = useState<string | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [attachOpen, setAttachOpen] = useState(false)
+  const cameraRef = useRef<HTMLInputElement>(null)
+  const galleryRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const msgs = state.messages
@@ -149,14 +151,22 @@ export function Chat() {
       <div className="chat-input">
         <button
           className="attach"
-          onClick={() => fileRef.current?.click()}
+          onClick={() => setAttachOpen(true)}
           disabled={sendingImg}
           aria-label="Send a photo"
         >
           <Icon name={sendingImg ? 'clock' : 'plus'} size={20} />
         </button>
         <input
-          ref={fileRef}
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = '' }}
+        />
+        <input
+          ref={galleryRef}
           type="file"
           accept="image/*"
           hidden
@@ -177,6 +187,20 @@ export function Chat() {
           <img src={lightbox} alt="Shared" />
         </div>
       )}
+
+      {/* Add a photo: camera or gallery */}
+      <Sheet open={attachOpen} onClose={() => setAttachOpen(false)}>
+        <h2>Add a photo</h2>
+        <p style={{ marginTop: 4 }}>Share a moment with {buddy.profile.nickname}.</p>
+        <div className="stack" style={{ marginTop: 12 }}>
+          <button className="btn" onClick={() => { setAttachOpen(false); cameraRef.current?.click() }}>
+            <Icon name="camera" size={18} /> Take a photo
+          </button>
+          <button className="btn secondary" onClick={() => { setAttachOpen(false); galleryRef.current?.click() }}>
+            <Icon name="image" size={18} /> Choose from gallery
+          </button>
+        </div>
+      </Sheet>
 
       {/* Options menu */}
       <Sheet open={menuOpen} onClose={() => setMenuOpen(false)}>
