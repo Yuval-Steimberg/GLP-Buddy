@@ -22,7 +22,7 @@ npx cap add android
 ## 2) Generate app icons + splash (from the ready-made source art)
 Source images are in `resources/` (`icon.png` 1024×1024, `splash.png` 2732×2732).
 ```bash
-npx @capacitor/assets generate --iconBackgroundColor '#0e9f87' --splashBackgroundColor '#f4f8f6'
+npx @capacitor/assets generate --iconBackgroundColor '#5e8c74' --splashBackgroundColor '#f6f4ee'
 ```
 This creates every required icon/splash size for both platforms.
 
