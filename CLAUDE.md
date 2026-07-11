@@ -58,11 +58,15 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `is_staff`.
 - Realtime (migration 0005) powers live chat/notifications. Edge function
   `supabase/functions/send-push` + a Database Webhook on `notifications` INSERT
-  deliver Web Push.
+  deliver Web Push. The store subscribes to `messages`, `notifications` AND
+  `timeline_events` (via `api.timeline.subscribeAll`) so a buddy's timeline
+  posts/reactions appear live — mirror this pattern for any new realtime table
+  (add it to the publication, then subscribe + incrementally patch state).
 - Migration list: 0001 schema+RLS, 0002 `approve_buddy` RPC, 0003 notify
   triggers, 0004 compliance/staff, 0005 realtime, 0006 `delete_own_account`,
   0007 message/trio reaction RLS fix, 0008 `profiles.avatar_url`, 0009
-  `messages.image_url` (+ text nullable), 0010 **security hardening** (see below).
+  `messages.image_url` (+ text nullable), 0010 **security hardening** (see below),
+  0011 `messages.reply_to` (quoted replies).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -85,6 +89,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   - **Client↔DB contract:** the frontend calls these RPCs, so migration 0010 and
     the current frontend MUST be deployed together. Old frontend + 0010 = onboarding
     loop (denied column writes) + empty matches (restricted reads).
+- Migration 0011: `messages.reply_to` (FK → messages, `on delete set null`) powers
+  quoted replies in chat. Rides the existing realtime publication.
 - `supabase/maintenance/reset_all_data.sql` wipes all users/data (deletes
   `auth.users`, cascades everywhere).
 
@@ -125,6 +131,12 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   compose tray (removable thumbnails), the input becomes a caption field, and
   `send()` posts each photo in order with the caption on the last one. Tap an
   image bubble → full-screen lightbox.
+- **Quoted replies** (migration 0011): swipe a bubble sideways (or tap → Reply in
+  the action bar) sets `replyTo`; a reply preview shows above the composer;
+  `sendMessage(relId, text, imageUrl?, replyTo?)` threads the id (last photo in a
+  batch carries it). Reply bubbles render a `.bubble-quote` that scrolls to +
+  flashes the original (`#msg-<id>` + `.msg-flash`). Reactions/replies/timeline
+  all sync live via realtime.
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
 - **Service-worker cache = the deploy footgun.** After ANY deploy, existing
