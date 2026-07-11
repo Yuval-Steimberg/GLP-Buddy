@@ -133,7 +133,7 @@ interface AppStoreValue {
   requestSupport: () => void
   latestCheckin: (userId: string) => Checkin | null
   buddyMemories: (rel: BuddyRelationship) => string[]
-  journeyCapsule: (rel: BuddyRelationship) => JourneyCapsule
+  journeyCapsule: (rel: BuddyRelationship, monthsAgo?: number) => JourneyCapsule
   sendEncouragement: (relationshipId: string) => void
   addReflection: (relationshipId: string, text: string) => void
   // notifications
@@ -1080,11 +1080,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     return out
   }, [state.currentUserId, state.users, state.milestones])
 
-  // (15) Journey Capsule — an auto-generated recap of the current month.
-  const journeyCapsule = useCallback((rel: BuddyRelationship): JourneyCapsule => {
-    const now = new Date()
-    const y = now.getFullYear()
-    const mo = now.getMonth()
+  // (15) Journey Capsule — an auto-generated recap for a given month
+  // (monthsAgo: 0 = this month, 1 = last month, …).
+  const journeyCapsule = useCallback((rel: BuddyRelationship, monthsAgo = 0): JourneyCapsule => {
+    const base = new Date()
+    const target = new Date(base.getFullYear(), base.getMonth() - monthsAgo, 1)
+    const y = target.getFullYear()
+    const mo = target.getMonth()
     const inMonth = (ts: number) => {
       const d = new Date(ts)
       return d.getFullYear() === y && d.getMonth() === mo
@@ -1102,7 +1104,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       ms[0]
     const favorite = reflections[0] ?? tl.find((e) => e.type === 'comment' && inMonth(e.createdAt))
     return {
-      label: now.toLocaleString('en', { month: 'long', year: 'numeric' }),
+      label: target.toLocaleString('en', { month: 'long', year: 'numeric' }),
       monthsTogether,
       milestones: ms.length,
       messages,

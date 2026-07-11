@@ -113,3 +113,15 @@ export function BrandMark({ size = 30 }: { size?: number }) {
     </svg>
   )
 }
+
+// Full brand lockup: the heart mark + "GLPenPal" wordmark + tagline (the
+// complete logo artwork). Used on the auth screen and marketing landing.
+export function BrandLogo({ width = 220, style }: { width?: number; style?: CSSProperties }) {
+  return (
+    <img
+      src="/brand/logo-full.jpg"
+      alt="GLPenPal — a GLP buddy who gets it"
+      style={{ width, maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto', ...style }}
+    />
+  )
+}

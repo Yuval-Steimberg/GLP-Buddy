@@ -174,9 +174,10 @@ export function BuddyHome() {
                 </div>
               </div>
 
-              <div className="card flat capsule" style={{ marginBottom: 14 }}>
+              <div className="card flat capsule list-tap" style={{ marginBottom: 14 }} onClick={() => navigate('/capsule')}>
                 <div className="row between">
                   <div className="muted" style={{ fontSize: 12, fontWeight: 800 }}>JOURNEY CAPSULE · {capsule.label.toUpperCase()}</div>
+                  <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
                 </div>
                 <div className="capsule-grid" style={{ marginTop: 8 }}>
                   <div><strong>{capsule.monthsTogether}</strong><span>months together</span></div>
