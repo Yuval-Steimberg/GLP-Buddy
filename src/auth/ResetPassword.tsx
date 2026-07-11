@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { auth } from '../services/api'
-import { BrandMark } from '../components/Icon'
+import { BrandLogo } from '../components/Icon'
 
 // Shown when the user arrives via a password-reset link (PASSWORD_RECOVERY).
 // They set a new password; the recovery session then becomes a normal login.
@@ -24,7 +24,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 48 }}>
-      <div className="logo"><BrandMark size={56} /></div>
+      <BrandLogo width={220} />
       <h1 style={{ fontSize: 30 }}>Set a new password</h1>
       <div className="tag" style={{ fontSize: 15 }}>Almost there — choose a new password.</div>
 

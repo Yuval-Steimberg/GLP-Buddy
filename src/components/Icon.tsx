@@ -136,14 +136,17 @@ export function BrandLockup({ height = 32, style }: { height?: number; style?: C
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...style }}>
         <BrandMark size={height} />
-        <BrandWordmark size={Math.round(height * 0.72)} />
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <BrandWordmark size={Math.round(height * 0.5)} />
+          <span className="muted" style={{ fontSize: Math.round(height * 0.19), fontWeight: 600 }}>a GLP buddy who gets it</span>
+        </span>
       </span>
     )
   }
   return (
     <img
       src="/brand/logo-horizontal.png"
-      alt="GLPenPal"
+      alt="GLPenPal — a GLP buddy who gets it"
       onError={() => setFailed(true)}
       style={{ height, width: 'auto', display: 'block', ...style }}
     />

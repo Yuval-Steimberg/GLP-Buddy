@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
-import { Icon, BrandMark, type IconName } from './Icon'
+import { Icon, BrandLockup, type IconName } from './Icon'
 
 const ITEMS: { to: string; label: string; ico: IconName }[] = [
   { to: '/home', label: 'Home', ico: 'home' },
@@ -18,8 +18,7 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav">
       <div className="nav-brand">
-        <span className="nb-logo"><BrandMark size={26} /></span>
-        <span className="nb-name">GLPenPal</span>
+        <BrandLockup height={40} />
       </div>
       {ITEMS.map((it) => (
         <NavLink
