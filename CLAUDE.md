@@ -162,11 +162,60 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   Buddy Memories (`buddyMemories(rel)`, client-derived anniversaries); Journey
   Capsule (`journeyCapsule(rel, monthsAgo)`) — its own screen `/capsule` with
   month browsing + canvas PNG export via Web Share (`Capsule.tsx`).
-- **Brand logo:** `BrandMark` = SVG heart mark (app icon, nav, small spots).
-  `BrandLogo` = full lockup artwork `public/brand/logo-full.png` (heart + wordmark
-  + tagline) on auth + landing hero/CTA. The source was a JPEG with a baked-in
-  cream box — made background-transparent + tight-cropped via PIL (floodfill from
-  corner bg color). If re-supplying the logo, use a transparent PNG.
+- **AI Coach** (`src/pages/Coach.tsx`, `/coach`, entry card on BuddyHome): a
+  wellness/habits companion, **never medical advice**. Backed by the
+  `supabase/functions/ask-coach` edge function (Deno + Anthropic SDK,
+  `MODEL=claude-opus-4-8`, over/ridable via `COACH_MODEL` secret). The
+  no-medical-advice rules live in the function's **server-side system prompt**
+  (can't be prompt-injected away); it also handles `stop_reason==='refusal'` with
+  a safe fallback, sanitizes history (last 12 turns), and keeps **verify_jwt ON**
+  (signed-in users only — do NOT deploy with `--no-verify-jwt`). Client calls
+  `api.coach.ask(messages)` → `functions.invoke('ask-coach')`. Conversation is
+  ephemeral (React state, never stored). Demo mode returns a canned safe reply.
+  Activation = set `ANTHROPIC_API_KEY` supabase secret + `supabase functions
+  deploy ask-coach`; **no migration/SQL**. Coach replies are markdown — rendered
+  by a tiny in-file `CoachText` formatter (paragraphs + `-`/`*` bullets +
+  `**bold**`, no library); the chat is capped to a centred `.chat-wrap.coach`
+  760px column (buddy chat still goes full-width ≥640px).
+- **Brand logo system** (all in `src/components/Icon.tsx`; assets in
+  `public/brand/`):
+  - `BrandMark` = inline-SVG heart mark (small spots, in-app tab bar, install
+    prompt, capsule export).
+  - `BrandWordmark` = CSS multi-colour "GLPenPal" text (GLP=primary, en=ink,
+    Pal=green) — crisp fallback text, can't fail to load.
+  - `BrandLogo` = **full** artwork `public/brand/logo-full.png` (mark + wordmark +
+    tagline) on auth + reset-password + landing CTA. On the dark landing CTA it
+    sits on a light `.lp-logo-badge` card (the artwork is drawn for light bg — its
+    dark wordmark/pen vanish on dark).
+  - `BrandLockup` = **horizontal** artwork `public/brand/logo-lockup.png` (mark +
+    wordmark + tagline, side-by-side) for the landing nav + footer + desktop
+    sidebar.
+  - Every raster logo has an **onError fallback** to the inline mark+wordmark so a
+    load failure never shows a broken-image box.
+  - **App icons** (`public/icons/*`, referenced in `vite.config.ts` manifest +
+    `index.html`) are generated from `logo-full.png` centred on cream.
+  - **Cropping gotcha (this bit us hard):** the horizontal/app-icon rasters are
+    cropped from `logo-full.png` with PIL. The wordmark band's "G" starts at
+    **x=12** — cropping the wordmark from x>12 **slices the left off the G** and it
+    reads as cut/unreadable. Always crop the wordmark at **full width** (x=0..W)
+    and `trim()` to bbox. Y-bands in `logo-full.png` (1077×1082): mark ≈ 8–676,
+    wordmark ≈ 678–905, divider heart ≈ 926–979, tagline ≈ 982–1078.
+  - **Static-filename cache trap:** logo/icon files are in `public/` (served as-is,
+    no content hash). Re-saving the SAME filename after an edit → clients keep the
+    cached old image. When an artwork asset materially changes, ship it under a
+    **new filename** (that's why the nav lockup is `logo-lockup.png`, not the old
+    `logo-horizontal.png`) or it won't refresh without a full SW clear.
+  - Source artwork was a JPEG with a baked-in cream box → made transparent +
+    tight-cropped via PIL floodfill. If re-supplying, use a transparent PNG.
+- **Landing nav** (`.lp-nav`): background is **near-opaque** (`rgba(...,.97)`) — a
+  translucent sticky nav let hero text ghost through it while scrolling ("covering
+  content"). Keep it opaque. On mobile `.lp-nav-in .lp-brand` is `flex:1` so the
+  sign-in button sits at the right edge.
+- **Data-density collapses** (scannability): BuddyHome buddy card collapses to a
+  header (avatar+name+medication+caret), auto-open when there's a single buddy;
+  `ProfileCard` (Matches) leads with essentials + a "More about…" toggle for
+  bio/secondary chips; Profile "Your details" (11-field list) collapses behind a
+  tappable header. Shared `.expand-caret` (rotates) + `.more-toggle` styles.
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
 - **Service-worker cache = the deploy footgun.** After ANY deploy, existing
@@ -226,6 +275,11 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   the SQL Editor — `ALL_MIGRATIONS.sql` is for a fresh DB), deploy `send-push`
   (`--no-verify-jwt`; the `x-webhook-secret` is the gate), set the
   `SEND_PUSH_SECRET` secret + webhook header.
+- **AI Coach:** `supabase secrets set ANTHROPIC_API_KEY=sk-ant-…` then
+  `supabase functions deploy ask-coach` (**keep verify_jwt ON** — no
+  `--no-verify-jwt`). No SQL/migration. "Couldn't reach the Coach" = key not set,
+  function not deployed, or no Anthropic credit (check Edge Function logs).
+  Deploying `ask-coach` needs the file locally — `git pull` first if it's missing.
 - **Deploy order for a release that touches both:** apply the DB migration
   first, THEN push the frontend to the Netlify branch — the frontend depends on
   the new RPCs (see migration 0010 notes). Ship them close together.
