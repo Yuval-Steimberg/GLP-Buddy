@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { Icon } from '../components/Icon'
 import { looksLikeMedicalAdvice } from '../utils/safety'
@@ -50,6 +51,7 @@ const GREETING =
 // The Coach: a wellness/habits companion. Peer-support only — never medical
 // advice. Conversation is private to you and not stored.
 export function Coach() {
+  const navigate = useNavigate()
   const { currentUser } = useStore()
   const [turns, setTurns] = useState<Turn[]>([{ role: 'assistant', content: GREETING }])
   const [text, setText] = useState('')
@@ -88,6 +90,7 @@ export function Coach() {
   return (
     <div className="chat-wrap coach">
       <div className="chat-header">
+        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <span className="row-ico" style={{ width: 40, height: 40 }}><Icon name="spark" size={20} /></span>
         <div style={{ flex: 1 }}>
           <strong>The Coach</strong>

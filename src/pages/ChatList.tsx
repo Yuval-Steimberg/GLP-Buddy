@@ -15,6 +15,20 @@ export function ChatList() {
     <div className="screen">
       <TopBar title="Chat" />
 
+      {/* The Coach is always available — a wellness companion, not a buddy. */}
+      <div
+        className="card list-tap"
+        style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--surface-2)' }}
+        onClick={() => navigate('/coach')}
+      >
+        <div className="avatar" style={{ width: 50, height: 50, background: 'var(--primary)' }}><Icon name="spark" size={22} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <strong>The Coach</strong>
+          <div className="muted" style={{ fontSize: 13 }}>Wellness &amp; motivation · not medical advice</div>
+        </div>
+        <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+      </div>
+
       {rels.length === 0 && !trio ? (
         <div className="empty">
           <div className="empty-ico"><Icon name="chat" size={30} /></div>
