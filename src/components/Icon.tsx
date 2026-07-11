@@ -127,6 +127,29 @@ export function BrandWordmark({ size = 22, style }: { size?: number; style?: CSS
   )
 }
 
+// Horizontal brand lockup (heart mark + "GLPenPal" wordmark, no tagline),
+// cropped from the logo artwork — for nav bars and other tight, wide spots.
+// Falls back to the inline mark + wordmark if the image can't load.
+export function BrandLockup({ height = 32, style }: { height?: number; style?: CSSProperties }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...style }}>
+        <BrandMark size={height} />
+        <BrandWordmark size={Math.round(height * 0.72)} />
+      </span>
+    )
+  }
+  return (
+    <img
+      src="/brand/logo-horizontal.png"
+      alt="GLPenPal"
+      onError={() => setFailed(true)}
+      style={{ height, width: 'auto', display: 'block', ...style }}
+    />
+  )
+}
+
 // Full brand lockup: the heart mark + "GLPenPal" wordmark + tagline (the
 // complete logo artwork). Used on the auth screen and marketing landing.
 // If the raster ever fails to load (stale cache, offline), it degrades to the
