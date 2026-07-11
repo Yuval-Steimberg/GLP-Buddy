@@ -87,29 +87,29 @@ export function Icon({ name, size = 22, style }: { name: IconName; size?: number
   }
 }
 
-// App logo: a rounded "dusk" gradient badge holding a chat bubble with two
-// linked dots — two pen pals in conversation.
+// App logo: two people (sage + blue) forming a heart around a GLP-1 injection
+// pen, with a small coral heart — "a GLP buddy who gets it."
 export function BrandMark({ size = 30 }: { size?: number }) {
-  const id = useId()
+  const clipL = useId()
+  const clipR = useId()
+  const OUTER = 'M50,83 C50,83 15,57 15,39 C15,29 24,24 31,24 C39,24 46,30 50,38 C54,30 61,24 69,24 C76,24 85,29 85,39 C85,57 50,83 50,83 Z'
+  const INNER = 'M50,71 C50,71 28,53 28,42 C28,35 33,32 38,32 C43,32 47,36 50,41 C53,36 57,32 62,32 C67,32 72,35 72,42 C72,53 50,71 50,71 Z'
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id={id} x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#5e8c74" />
-          <stop offset="0.52" stopColor="#7ba890" />
-          <stop offset="1" stopColor="#a7c6bd" />
-        </linearGradient>
+        <clipPath id={clipL}><rect x="-2" y="-2" width="52" height="104" /></clipPath>
+        <clipPath id={clipR}><rect x="50" y="-2" width="52" height="104" /></clipPath>
       </defs>
-      <rect width="40" height="40" rx="12.5" fill={`url(#${id})`} />
-      {/* Speech bubble */}
-      <path
-        d="M11 13.6c0-1.5 1.2-2.7 2.7-2.7h12.6c1.5 0 2.7 1.2 2.7 2.7v8c0 1.5-1.2 2.7-2.7 2.7H19l-4.9 4.1c-.7.6-1.7.1-1.7-.8v-3.3h.3c-.9 0-1.7-.8-1.7-1.9z"
-        fill="#fff"
-      />
-      {/* Two linked pen-pal dots */}
-      <circle cx="17.2" cy="17.6" r="2.05" fill="#5e8c74" />
-      <circle cx="23.2" cy="17.6" r="2.05" fill="#c2955f" />
-      <rect x="18.9" y="16.85" width="3.6" height="1.5" rx="0.75" fill="#7ba890" />
+      <path d={`${OUTER} ${INNER}`} fillRule="evenodd" fill="#5e8c74" clipPath={`url(#${clipL})`} />
+      <path d={`${OUTER} ${INNER}`} fillRule="evenodd" fill="#5f8497" clipPath={`url(#${clipR})`} />
+      <circle cx="31.5" cy="19" r="9" fill="#5e8c74" />
+      <circle cx="68.5" cy="19" r="9" fill="#5f8497" />
+      <g transform="rotate(-30 51 50)">
+        <rect x="44.5" y="33" width="13" height="30" rx="6" fill="#2f3b34" />
+        <rect x="48.8" y="44" width="4.6" height="4.6" rx="1.3" fill="#cdd6d0" />
+        <rect x="49.4" y="63" width="3.2" height="6" rx="1" fill="#2f3b34" />
+      </g>
+      <path d="M63.5,55 c1.4,-2.4 5,-1.4 5,1.3 c0,2.4 -3.4,4.4 -5,5.7 c-1.6,-1.3 -5,-3.3 -5,-5.7 c0,-2.7 3.6,-3.7 5,-1.3 Z" fill="#e8897a" />
     </svg>
   )
 }
