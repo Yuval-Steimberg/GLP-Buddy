@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
@@ -8,6 +8,7 @@ import { Sheet } from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icon'
 import { REACTIONS } from '../constants'
 import { timeAgo } from '../utils/format'
+import { fileToChatImage, safeImageSrc } from '../lib/image'
 import type { Reaction, TimelineEventType } from '../types'
 
 const TYPE_ICON: Record<TimelineEventType, IconName> = {
@@ -17,6 +18,7 @@ const TYPE_ICON: Record<TimelineEventType, IconName> = {
   moment: 'spark',
   reflection: 'doc',
   level: 'spark',
+  photo: 'image',
 }
 
 export function Timeline() {
@@ -28,6 +30,7 @@ export function Timeline() {
     state,
     reactToTimeline,
     commentOnTimeline,
+    addTimelinePhoto,
     addReflection,
   } = useStore()
   const rels = activeRelationships()
@@ -36,6 +39,9 @@ export function Timeline() {
   const [reflectionOpen, setReflectionOpen] = useState(false)
   const [reflectionText, setReflectionText] = useState('')
   const [comment, setComment] = useState('')
+  const [lightbox, setLightbox] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const photoRef = useRef<HTMLInputElement>(null)
 
   if (rels.length === 0) {
     return (
@@ -68,6 +74,22 @@ export function Timeline() {
   const submitComment = () => {
     commentOnTimeline(rel.id, comment)
     setComment('')
+  }
+
+  // Compress the chosen photo and post it (with the current comment as caption).
+  const addPhoto = async (files?: FileList | null) => {
+    const file = files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const dataUrl = await fileToChatImage(file)
+      addTimelinePhoto(rel.id, dataUrl, comment)
+      setComment('')
+    } catch {
+      alert('Sorry, that image could not be added. Try another photo.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const nameFor = (id: string) => (id === currentUser?.id ? 'You' : buddy.profile.nickname)
@@ -119,10 +141,20 @@ export function Timeline() {
                   <strong style={{ fontSize: 14 }}>{nameFor(e.authorId)}</strong>
                   <span className="muted" style={{ fontSize: 11 }}>{timeAgo(e.createdAt)}</span>
                 </div>
-                <p style={{ margin: '6px 0 0', color: 'var(--ink)', fontSize: 14 }}>
-                  {e.type === 'reflection' && <span className="chip" style={{ marginRight: 6 }}>Monthly reflection</span>}
-                  {e.text}
-                </p>
+                {safeImageSrc(e.imageUrl) && (
+                  <img
+                    className="tl-img"
+                    src={safeImageSrc(e.imageUrl)}
+                    alt="Timeline photo"
+                    onClick={() => setLightbox(safeImageSrc(e.imageUrl)!)}
+                  />
+                )}
+                {(e.text || e.type !== 'photo') && (
+                  <p style={{ margin: '6px 0 0', color: 'var(--ink)', fontSize: 14 }}>
+                    {e.type === 'reflection' && <span className="chip" style={{ marginRight: 6 }}>Monthly reflection</span>}
+                    {e.text}
+                  </p>
+                )}
                 {e.reactions.length > 0 && (
                   <div className="chip-row" style={{ marginTop: 8 }}>
                     {e.reactions.map((r, i) => (
@@ -150,9 +182,24 @@ export function Timeline() {
 
       <div className="card" style={{ marginTop: 8 }}>
         <div className="row" style={{ gap: 8 }}>
+          <button
+            className="attach"
+            onClick={() => photoRef.current?.click()}
+            disabled={uploading}
+            aria-label="Add a photo to the timeline"
+          >
+            <Icon name={uploading ? 'clock' : 'image'} size={20} />
+          </button>
+          <input
+            ref={photoRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => { addPhoto(e.target.files); e.target.value = '' }}
+          />
           <input
             className="input"
-            placeholder="Add a comment to the timeline…"
+            placeholder={uploading ? 'Adding photo…' : 'Add a comment or photo…'}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submitComment()}
@@ -160,6 +207,12 @@ export function Timeline() {
           <button className="btn sm" disabled={!comment.trim()} onClick={submitComment}>Post</button>
         </div>
       </div>
+
+      {lightbox && (
+        <div className="lightbox" onClick={() => setLightbox(null)}>
+          <img src={lightbox} alt="Shared" />
+        </div>
+      )}
 
       <MilestoneSheet open={milestoneOpen} onClose={() => setMilestoneOpen(false)} relationshipId={rel.id} />
 

@@ -107,6 +107,7 @@ export function rowToTimeline(r: TimelineEventRow): TimelineEvent {
     type: r.type as TimelineEventType,
     authorId: r.author_id,
     text: r.text,
+    imageUrl: r.image_url ?? undefined,
     refId: r.ref_id ?? undefined,
     reactions: (r.reactions ?? []) as Reaction[],
     createdAt: ms(r.created_at),

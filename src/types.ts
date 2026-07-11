@@ -136,6 +136,7 @@ export type TimelineEventType =
   | 'moment'
   | 'reflection'
   | 'level'
+  | 'photo'
 
 export interface TimelineEvent {
   id: string
@@ -143,6 +144,7 @@ export interface TimelineEvent {
   type: TimelineEventType
   authorId: string
   text: string
+  imageUrl?: string // compressed data URL for photo posts
   refId?: string // e.g. milestone id this event refers to
   reactions: Reaction[]
   createdAt: number

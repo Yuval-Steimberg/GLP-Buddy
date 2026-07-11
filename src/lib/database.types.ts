@@ -72,6 +72,7 @@ export interface TimelineEventRow {
   author_id: string
   type: string
   text: string
+  image_url: string | null
   ref_id: string | null
   reactions: string[]
   created_at: string

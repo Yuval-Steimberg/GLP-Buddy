@@ -391,6 +391,7 @@ export const timeline = {
     type: string,
     text: string,
     refId?: string,
+    imageUrl?: string,
   ): Promise<void> {
     const sb = requireSupabase()
     const { error } = await sb.from('timeline_events').insert({
@@ -399,6 +400,7 @@ export const timeline = {
       type,
       text,
       ref_id: refId ?? null,
+      image_url: imageUrl ?? null,
     })
     if (error) throw error
   },

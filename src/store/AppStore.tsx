@@ -125,6 +125,7 @@ interface AppStoreValue {
   addMilestone: (relationshipId: string, type: MilestoneType, note: string) => void
   reactToTimeline: (eventId: string, reaction: Reaction) => void
   commentOnTimeline: (relationshipId: string, text: string) => void
+  addTimelinePhoto: (relationshipId: string, imageUrl: string, caption?: string) => void
   sendEncouragement: (relationshipId: string) => void
   addReflection: (relationshipId: string, text: string) => void
   // notifications
@@ -951,6 +952,39 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     })
   }, [refresh])
 
+  // Post a photo (with an optional caption) to the shared timeline.
+  const addTimelinePhoto = useCallback((relationshipId: string, imageUrl: string, caption = '') => {
+    const cap = caption.trim()
+    if (!imageUrl) return
+    if (USE_SUPABASE) {
+      runWrite('addTimelinePhoto', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.timeline.addEvent(relationshipId, me, 'photo', cap, undefined, imageUrl)
+        await refresh()
+      })
+      return
+    }
+    setState((prev) => {
+      if (!prev.currentUserId) return prev
+      return {
+        ...prev,
+        timeline: [
+          {
+            id: genId('tl'),
+            relationshipId,
+            type: 'photo',
+            authorId: prev.currentUserId,
+            text: cap,
+            imageUrl,
+            reactions: [],
+            createdAt: Date.now(),
+          },
+          ...prev.timeline,
+        ],
+      }
+    })
+  }, [refresh])
+
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
       'You\'ve got this.',
@@ -1518,6 +1552,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       addMilestone,
       reactToTimeline,
       commentOnTimeline,
+      addTimelinePhoto,
       sendEncouragement,
       addReflection,
       unreadCount,
@@ -1559,6 +1594,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       addMilestone,
       reactToTimeline,
       commentOnTimeline,
+      addTimelinePhoto,
       sendEncouragement,
       addReflection,
       unreadCount,
