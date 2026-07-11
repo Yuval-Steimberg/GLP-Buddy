@@ -1354,7 +1354,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
 .lp-glow-c { width: 400px; height: 400px; background: rgba(255,255,255,.5); top: -120px; left: 50%; transform: translateX(-50%); }
 
 /* ---- Nav ---- */
-.lp-nav { position: sticky; top: 0; z-index: 40; background: rgba(247,245,239,.82); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(231,227,216,.7); }
+.lp-nav { position: sticky; top: 0; z-index: 40; background: rgba(247,245,239,.97); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(231,227,216,.9); }
 .lp-nav-in { max-width: 1160px; margin: 0 auto; padding: 24px 24px; padding-top: calc(24px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 28px; }
 .lp-nav-in .lp-brand img { max-width: 100%; height: auto; }
 .lp-brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
