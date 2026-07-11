@@ -34,7 +34,7 @@ export function BuddyHome() {
   // Buddy cards start collapsed — just name + medication — so the page is easy
   // to scan. Tap the header (or the caret) to reveal the full space.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const toggle = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }))
+  const toggle = (id: string, cur: boolean) => setExpanded((e) => ({ ...e, [id]: !cur }))
 
   const greet = `Hi ${currentUser?.profile.nickname}`
   const todayWeekday = new Date().getDay()
@@ -114,13 +114,15 @@ export function BuddyHome() {
           const injectionToday = buddy.profile.injectionWeekday === todayWeekday
           const memories = buddyMemories(rel)
           const capsule = journeyCapsule(rel)
-          const isOpen = !!expanded[rel.id]
+          // With a single buddy the card defaults open (nothing to hide); with
+          // several, they default collapsed so the list stays scannable.
+          const isOpen = expanded[rel.id] ?? rels.length === 1
 
           return (
             <div className="card" key={rel.id}>
               <button
                 className="buddy-head"
-                onClick={() => toggle(rel.id)}
+                onClick={() => toggle(rel.id, isOpen)}
                 aria-expanded={isOpen}
                 aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${buddy.profile.nickname}'s space`}
               >

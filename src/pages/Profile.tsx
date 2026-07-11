@@ -14,6 +14,9 @@ export function Profile() {
   const { currentUser, activeRelationships, buddyOf, resetApp, trioEligibility, activeTrio } = useStore()
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
+  // The full profile field list is rarely needed at a glance — keep it tucked
+  // away behind a tap so the page reads cleanly.
+  const [showDetails, setShowDetails] = useState(false)
 
   // Reflect whether this device currently has push turned on.
   useEffect(() => {
@@ -138,15 +141,24 @@ export function Profile() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: 10 }}>Your details</h3>
-        <div className="stack">
-          {info.map(([k, v]) => (
-            <div className="row between" key={k} style={{ fontSize: 14 }}>
-              <span className="muted">{k}</span>
-              <span style={{ fontWeight: 700 }}>{v}</span>
-            </div>
-          ))}
-        </div>
+        <button
+          className="buddy-head"
+          onClick={() => setShowDetails((s) => !s)}
+          aria-expanded={showDetails}
+        >
+          <h3 style={{ flex: 1, margin: 0 }}>Your details</h3>
+          <span className={`expand-caret${showDetails ? ' open' : ''}`} aria-hidden>›</span>
+        </button>
+        {showDetails && (
+          <div className="stack" style={{ marginTop: 12 }}>
+            {info.map(([k, v]) => (
+              <div className="row between" key={k} style={{ fontSize: 14 }}>
+                <span className="muted">{k}</span>
+                <span style={{ fontWeight: 700 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card" style={{ background: 'var(--surface-2)' }}>

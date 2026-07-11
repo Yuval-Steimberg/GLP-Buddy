@@ -700,6 +700,23 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 .expand-caret.open { transform: rotate(-90deg); }
 @media (prefers-reduced-motion: reduce) { .expand-caret { transition: none; } }
 
+/* Inline "show more / less" toggle used on suggestion + detail cards. */
+.more-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-ink);
+  cursor: pointer;
+}
+.more-toggle .expand-caret { font-size: 16px; }
+
 /* ----- Landing --------------------------------------------------------- */
 .landing {
   min-height: 100vh;
