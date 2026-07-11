@@ -183,16 +183,28 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `**bold**`, no library — extracted to `src/components/CoachText.tsx`, shared
   with the in-chat Coach); the chat is capped to a centred `.chat-wrap.coach`
   760px column (buddy chat still goes full-width ≥640px).
-- **"Hey Coach" in the buddy chat** (migration 0014 `messages.from_coach`): typing
-  `Hey Coach …` / `Coach: …` in a 1:1 chat (`COACH_TRIGGER` in AppStore) summons
-  the Coach; the **asker's client** calls `api.coach.ask` and posts the reply as a
-  normal message with `from_coach=true`, so it syncs to **both** buddies over the
-  existing realtime publication (only the sender calls the AI → no double
-  answers). `Chat.tsx` renders `fromCoach` messages as a distinct non-attributed
-  Coach bubble (`.coach-bubble`, `CoachText` markdown, "not medical advice"
-  label); a `.coach-hint` above the composer advertises it until first use.
-  `from_coach` is cosmetic (immutable — NOT in the 0010 reactions-only UPDATE
-  grant); guardrail unchanged (server-side).
+- **"Hey Coach" in the buddy chat** (migration 0014 `messages.from_coach`,
+  **server-authored + privacy-first**): typing `Hey Coach …` / `Coach: …` in a 1:1
+  chat (`COACH_TRIGGER` in AppStore) summons the Coach. The client calls
+  `api.coach.askInChat(relId, question)` → `ask-coach` in **in-chat mode**: the
+  Edge Function verifies the caller's relationship membership (user-scoped client
+  + RLS), asks Claude with **only the typed question** (no names, history, or
+  profile/health data leave the app), then **inserts the reply itself via the
+  service role** with `from_coach=true`. It syncs to **both** buddies over the
+  existing realtime publication; the asker just `refresh()`es. `Chat.tsx` renders
+  `fromCoach` messages as a distinct non-attributed Coach bubble (`.coach-bubble`,
+  `CoachText` markdown, "not medical advice" label); a `.coach-hint` above the
+  composer advertises it until first use.
+  - **Hardening:** 0014 does `revoke insert on messages from authenticated; grant
+    insert (relationship_id, sender_id, text, image_url, reply_to) …` — clients
+    CANNOT set `from_coach` (column-scoped INSERT, same trick as 0010's
+    reactions-only UPDATE), so only the service-role function can author a Coach
+    bubble. `api.chat.send` therefore must NOT reference `from_coach`.
+  - The privacy clause lives in the function's SYSTEM prompt (never ask
+    for/repeat personal or health specifics). Guardrail unchanged (server-side).
+  - Uses the auto-injected `SUPABASE_URL` / `SUPABASE_ANON_KEY` /
+    `SUPABASE_SERVICE_ROLE_KEY` edge secrets — no new secret to set. Redeploy
+    `ask-coach` when shipping this (the in-chat branch is new).
 - **Brand logo system** (all in `src/components/Icon.tsx`; assets in
   `public/brand/`):
   - `BrandMark` = inline-SVG heart mark (small spots, in-app tab bar, install

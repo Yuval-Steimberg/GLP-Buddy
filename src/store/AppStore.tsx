@@ -711,23 +711,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           } : prev))
           return
         }
-        const recent = state.messages
-          .filter((m) => m.relationshipId === relationshipId)
-          .slice(-6)
-          .map((m) => `${m.fromCoach ? 'Coach' : (state.users[m.senderId]?.profile.nickname ?? 'Buddy')}: ${m.text}`)
-          .join('\n')
-        const prompt =
-          `You've been asked inside a shared chat between two GLP-1 pen pals. Answer warmly for both of them, and keep to wellness/habits — never medical advice.\n\nQuestion: ${q}` +
-          (recent ? `\n\nRecent chat for context:\n${recent}` : '')
-        const reply = await api.coach.ask([{ role: 'user', content: prompt }])
-        const me = await api.auth.currentUserId()
-        if (me) await api.chat.send(relationshipId, me, reply, undefined, undefined, true)
+        // Send ONLY the question — the Edge Function verifies membership and
+        // posts the reply into the shared chat (both buddies see it). No names,
+        // history, or profile data leave the app.
+        await api.coach.askInChat(relationshipId, q)
         await refresh()
       } catch (e) {
         console.error('coach-in-chat failed', e)
       }
     })()
-  }, [refresh, state.messages, state.users])
+  }, [refresh])
 
   const sendMessage = useCallback((relationshipId: string, text: string, imageUrl?: string, replyTo?: string) => {
     const trimmed = text.trim()

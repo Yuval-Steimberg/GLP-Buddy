@@ -289,7 +289,7 @@ export const chat = {
     return (data ?? []).reverse()
   },
 
-  async send(relationshipId: string, senderId: string, text: string, imageUrl?: string, replyTo?: string, fromCoach?: boolean): Promise<void> {
+  async send(relationshipId: string, senderId: string, text: string, imageUrl?: string, replyTo?: string): Promise<void> {
     const sb = requireSupabase()
     const { error } = await sb
       .from('messages')
@@ -299,7 +299,9 @@ export const chat = {
         text: text || null,
         image_url: imageUrl ?? null,
         reply_to: replyTo ?? null,
-        from_coach: fromCoach ?? false,
+        // NOTE: from_coach is intentionally NOT set here — clients are revoked
+        // that column (migration 0014). Coach messages are written only by the
+        // ask-coach Edge Function (service role). See coach.askInChat.
       })
     if (error) throw error
   },
@@ -522,6 +524,17 @@ export const coach = {
     const reply = (data as { reply?: string; error?: string })?.reply
     if (!reply) throw new Error((data as { error?: string })?.error || 'coach unavailable')
     return reply
+  },
+
+  // "Hey Coach …" inside a buddy chat. Sends ONLY the typed question (no names,
+  // history, or profile data); the Edge Function verifies membership and posts
+  // the reply into the shared chat itself (service role → both buddies see it,
+  // and only the server can flag from_coach).
+  async askInChat(relationshipId: string, text: string): Promise<void> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.functions.invoke('ask-coach', { body: { relationshipId, text } })
+    if (error) throw error
+    if (!(data as { ok?: boolean })?.ok) throw new Error((data as { error?: string })?.error || 'coach unavailable')
   },
 }
 
