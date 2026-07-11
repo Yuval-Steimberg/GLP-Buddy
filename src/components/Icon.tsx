@@ -145,7 +145,7 @@ export function BrandLockup({ height = 32, style }: { height?: number; style?: C
   }
   return (
     <img
-      src="/brand/logo-horizontal.png"
+      src="/brand/logo-lockup.png"
       alt="GLPenPal — a GLP buddy who gets it"
       onError={() => setFailed(true)}
       style={{ height, width: 'auto', display: 'block', ...style }}
