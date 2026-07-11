@@ -43,6 +43,7 @@ export function Landing() {
         <div className="lp-glow lp-glow-b" />
         <div className="lp-hero-in">
           <div className="lp-hero-copy">
+            <BrandLogo width={260} style={{ margin: '0 0 18px' }} />
             <div className="lp-eyebrow"><span className="lp-dot" /> Peer support for GLP‑1</div>
             <h1 className="lp-h1">The GLP‑1 journey feels lighter <span className="lp-em">with someone beside you</span>.</h1>
             <p className="lp-lead">
