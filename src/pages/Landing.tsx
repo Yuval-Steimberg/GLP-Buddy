@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { USE_SUPABASE } from '../lib/env'
-import { Icon, BrandMark, BrandWordmark } from '../components/Icon'
+import { Icon, BrandMark, BrandWordmark, BrandLogo } from '../components/Icon'
 
 export function Landing() {
   const navigate = useNavigate()
@@ -223,7 +223,7 @@ export function Landing() {
       <section className="lp-final">
         <Reveal className="lp-final-card">
           <div className="lp-glow lp-glow-c" />
-          <BrandMark size={56} />
+          <div className="lp-logo-badge"><BrandLogo width={190} /></div>
           <h2 className="lp-h2">Someone out there gets exactly what you're going through.</h2>
           <p className="lp-sub">Find them today — it only takes a couple of minutes.</p>
           <button className="lp-btn lp-btn-lg" onClick={cta}>Find my pen pal — it's free</button>
