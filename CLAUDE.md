@@ -162,8 +162,12 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   Buddy Memories (`buddyMemories(rel)`, client-derived anniversaries); Journey
   Capsule (`journeyCapsule(rel, monthsAgo)`) — its own screen `/capsule` with
   month browsing + canvas PNG export via Web Share (`Capsule.tsx`).
-- **AI Coach** (`src/pages/Coach.tsx`, `/coach`, entry card on BuddyHome): a
-  wellness/habits companion, **never medical advice**. Backed by the
+- **AI Coach** (`src/pages/Coach.tsx`, `/coach`, reached from a card on BuddyHome
+  AND an always-present entry at the top of the Chat tab `ChatList`): a
+  wellness/habits companion, **never medical advice**. `/coach` is NOT in
+  `NAV_PATHS`, so the bottom nav is hidden there — the header has its own back
+  button (`navigate(-1)`, same as buddy `Chat`) or mobile users get trapped.
+  Backed by the
   `supabase/functions/ask-coach` edge function (Deno + Anthropic SDK,
   `MODEL=claude-opus-4-8`, over/ridable via `COACH_MODEL` secret). The
   no-medical-advice rules live in the function's **server-side system prompt**
