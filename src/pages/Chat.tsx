@@ -43,6 +43,8 @@ export function Chat() {
   const galleryRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const touchStart = useRef<{ x: number; y: number; id: string } | null>(null)
+  const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lpFired = useRef(false)
 
   const msgs = state.messages
     .filter((m) => m.relationshipId === relId)
@@ -81,11 +83,27 @@ export function Chat() {
     setTimeout(() => el.classList.remove('msg-flash'), 1100)
   }
 
-  // Swipe a bubble sideways to reply (WhatsApp-style). Only engages on a mostly
-  // horizontal drag so it doesn't fight vertical scrolling.
+  const clearLongPress = () => {
+    if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
+  }
+
+  // Touch gestures on a bubble:
+  //  • press-and-hold (~450ms) → open the reaction picker (WhatsApp-style)
+  //  • swipe sideways → reply
+  // Movement cancels the long-press so it can't fire while scrolling/swiping.
   const onTouchStart = (e: RTouchEvent, id: string) => {
     const t = e.touches[0]
     touchStart.current = { x: t.clientX, y: t.clientY, id }
+    lpFired.current = false
+    clearLongPress()
+    lpTimer.current = setTimeout(() => {
+      lpFired.current = true
+      setReactFor(id)
+      setSwipe(null)
+      // deno-lint-ignore no-explicit-any
+      const nav = navigator as any
+      if (nav.vibrate) nav.vibrate(12)
+    }, 450)
   }
   const onTouchMove = (e: RTouchEvent) => {
     const s = touchStart.current
@@ -93,10 +111,12 @@ export function Chat() {
     const t = e.touches[0]
     const dx = t.clientX - s.x
     const dy = t.clientY - s.y
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearLongPress() // a drag, not a hold
     if (Math.abs(dx) < Math.abs(dy) || dx < 0) return // vertical scroll / wrong way
     setSwipe({ id: s.id, dx: Math.min(72, dx) })
   }
   const onTouchEnd = () => {
+    clearLongPress()
     const s = touchStart.current
     if (s && swipe && swipe.id === s.id && swipe.dx > 48) {
       const m = msgs.find((x) => x.id === s.id)
@@ -192,7 +212,12 @@ export function Chat() {
               {swiping && <span className="swipe-reply-hint" style={{ [mine ? 'right' : 'left']: -34 } as CSSProperties}><Icon name="reply" size={16} /></span>}
               <div
                 className={`bubble ${mine ? 'mine' : 'theirs'}${imgSrc ? ' has-img' : ''}`}
-                onClick={() => setReactFor(reactFor === m.id ? null : m.id)}
+                onClick={() => {
+                  // Swallow the click that trails a long-press (which already
+                  // opened the picker) so it doesn't immediately toggle it shut.
+                  if (lpFired.current) { lpFired.current = false; return }
+                  setReactFor(reactFor === m.id ? null : m.id)
+                }}
               >
                 {m.replyTo && (
                   <div
