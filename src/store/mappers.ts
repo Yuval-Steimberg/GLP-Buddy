@@ -90,6 +90,7 @@ export function rowToMessage(r: MessageRow): ChatMessage {
     createdAt: ms(r.created_at),
     reactions: (r.reactions ?? []) as Reaction[],
     replyTo: r.reply_to ?? undefined,
+    fromCoach: r.from_coach ?? false,
   }
 }
 

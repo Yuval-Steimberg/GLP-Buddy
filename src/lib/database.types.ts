@@ -55,6 +55,7 @@ export interface MessageRow {
   image_url: string | null
   reactions: string[]
   reply_to: string | null
+  from_coach?: boolean
   created_at: string
 }
 

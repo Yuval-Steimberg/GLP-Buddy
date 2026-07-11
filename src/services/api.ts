@@ -289,7 +289,7 @@ export const chat = {
     return (data ?? []).reverse()
   },
 
-  async send(relationshipId: string, senderId: string, text: string, imageUrl?: string, replyTo?: string): Promise<void> {
+  async send(relationshipId: string, senderId: string, text: string, imageUrl?: string, replyTo?: string, fromCoach?: boolean): Promise<void> {
     const sb = requireSupabase()
     const { error } = await sb
       .from('messages')
@@ -299,6 +299,7 @@ export const chat = {
         text: text || null,
         image_url: imageUrl ?? null,
         reply_to: replyTo ?? null,
+        from_coach: fromCoach ?? false,
       })
     if (error) throw error
   },

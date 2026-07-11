@@ -67,7 +67,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   0007 message/trio reaction RLS fix, 0008 `profiles.avatar_url`, 0009
   `messages.image_url` (+ text nullable), 0010 **security hardening** (see below),
   0011 `messages.reply_to` (quoted replies), 0012 `timeline_events.image_url`
-  (timeline photos), 0013 GLP features (injection day + check-ins + support RPC).
+  (timeline photos), 0013 GLP features (injection day + check-ins + support RPC),
+  0014 `messages.from_coach` ("Hey Coach" in the buddy chat).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -179,8 +180,19 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   Activation = set `ANTHROPIC_API_KEY` supabase secret + `supabase functions
   deploy ask-coach`; **no migration/SQL**. Coach replies are markdown — rendered
   by a tiny in-file `CoachText` formatter (paragraphs + `-`/`*` bullets +
-  `**bold**`, no library); the chat is capped to a centred `.chat-wrap.coach`
+  `**bold**`, no library — extracted to `src/components/CoachText.tsx`, shared
+  with the in-chat Coach); the chat is capped to a centred `.chat-wrap.coach`
   760px column (buddy chat still goes full-width ≥640px).
+- **"Hey Coach" in the buddy chat** (migration 0014 `messages.from_coach`): typing
+  `Hey Coach …` / `Coach: …` in a 1:1 chat (`COACH_TRIGGER` in AppStore) summons
+  the Coach; the **asker's client** calls `api.coach.ask` and posts the reply as a
+  normal message with `from_coach=true`, so it syncs to **both** buddies over the
+  existing realtime publication (only the sender calls the AI → no double
+  answers). `Chat.tsx` renders `fromCoach` messages as a distinct non-attributed
+  Coach bubble (`.coach-bubble`, `CoachText` markdown, "not medical advice"
+  label); a `.coach-hint` above the composer advertises it until first use.
+  `from_coach` is cosmetic (immutable — NOT in the 0010 reactions-only UPDATE
+  grant); guardrail unchanged (server-side).
 - **Brand logo system** (all in `src/components/Icon.tsx`; assets in
   `public/brand/`):
   - `BrandMark` = inline-SVG heart mark (small spots, in-app tab bar, install

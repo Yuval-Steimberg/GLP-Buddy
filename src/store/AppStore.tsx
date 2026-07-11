@@ -33,6 +33,10 @@ import { rowToCheckin, rowToMessage, rowToNotification, rowToTimeline } from './
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
 
+// Matches a message that summons the Coach in a buddy chat: "Hey Coach, …",
+// "Coach: …", "coach what about…". The leading greeting is optional.
+const COACH_TRIGGER = /^\s*(?:hey|hi|hello|ok|okay|yo)?[\s,]*coach\b[\s,:!.?-]*/i
+
 function genId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`
 }
@@ -692,9 +696,43 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   // ---- chat --------------------------------------------------------------
+  // "Hey Coach …" inside a buddy chat summons the AI Coach; its reply is posted
+  // as a shared message (from_coach) so BOTH buddies see it. Only the asker's
+  // client makes the call — the other buddy just receives it via realtime.
+  const askCoachInChat = useCallback((relationshipId: string, rawText: string) => {
+    const q = rawText.replace(COACH_TRIGGER, '').trim() || rawText.trim()
+    void (async () => {
+      try {
+        if (!USE_SUPABASE) {
+          await new Promise((r) => setTimeout(r, 600))
+          setState((prev) => (prev.currentUserId ? {
+            ...prev,
+            messages: [...prev.messages, { id: genId('msg'), relationshipId, senderId: prev.currentUserId, text: "I'm just a demo here — but in the live app I'd cheer you both on (never medical advice). You're doing this together, and that counts for a lot.", createdAt: Date.now(), reactions: [], fromCoach: true }],
+          } : prev))
+          return
+        }
+        const recent = state.messages
+          .filter((m) => m.relationshipId === relationshipId)
+          .slice(-6)
+          .map((m) => `${m.fromCoach ? 'Coach' : (state.users[m.senderId]?.profile.nickname ?? 'Buddy')}: ${m.text}`)
+          .join('\n')
+        const prompt =
+          `You've been asked inside a shared chat between two GLP-1 pen pals. Answer warmly for both of them, and keep to wellness/habits — never medical advice.\n\nQuestion: ${q}` +
+          (recent ? `\n\nRecent chat for context:\n${recent}` : '')
+        const reply = await api.coach.ask([{ role: 'user', content: prompt }])
+        const me = await api.auth.currentUserId()
+        if (me) await api.chat.send(relationshipId, me, reply, undefined, undefined, true)
+        await refresh()
+      } catch (e) {
+        console.error('coach-in-chat failed', e)
+      }
+    })()
+  }, [refresh, state.messages, state.users])
+
   const sendMessage = useCallback((relationshipId: string, text: string, imageUrl?: string, replyTo?: string) => {
     const trimmed = text.trim()
     if (!trimmed && !imageUrl) return
+    const summonsCoach = COACH_TRIGGER.test(trimmed)
     if (USE_SUPABASE) {
       // Optimistic: show the message immediately with a client id. The realtime
       // insert echoes back the server row; we de-dupe on send-and-echo below.
@@ -717,6 +755,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           // arrive via realtime / next refresh.
           setState((prev) => ({ ...prev, messages: prev.messages.filter((m) => m.id !== tempId) }))
           await refresh()
+          if (summonsCoach) askCoachInChat(relationshipId, trimmed)
         } catch (e) {
           console.error('sendMessage failed', e)
           // Mark the placeholder as failed so it doesn't silently vanish.
@@ -747,7 +786,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-  }, [refresh, state.currentUserId])
+    if (summonsCoach) askCoachInChat(relationshipId, trimmed)
+  }, [refresh, state.currentUserId, askCoachInChat])
 
   const reactToMessage = useCallback((messageId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {

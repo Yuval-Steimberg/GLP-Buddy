@@ -5,6 +5,7 @@ import { useStore } from '../store/AppStore'
 import { Avatar } from '../components/Avatar'
 import { Icon } from '../components/Icon'
 import { Sheet } from '../components/Sheet'
+import { CoachText } from '../components/CoachText'
 import { REACTIONS, END_REASONS } from '../constants'
 import { clockTime } from '../utils/format'
 import { looksLikeMedicalAdvice } from '../utils/safety'
@@ -189,6 +190,27 @@ export function Chat() {
         )}
 
         {msgs.map((m) => {
+          // Coach replies (summoned with "Hey Coach …") render as a distinct
+          // Coach bubble both buddies see — not attributed to either person.
+          if (m.fromCoach) {
+            return (
+              <div key={m.id} id={`msg-${m.id}`} className="msg-row" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <div className="bubble theirs coach-bubble">
+                  <div className="coach-bubble-head">
+                    <span className="coach-ico"><Icon name="spark" size={13} /></span>
+                    The Coach <span className="coach-nma">· not medical advice</span>
+                  </div>
+                  <CoachText text={m.text} />
+                  <div className="time">{clockTime(m.createdAt)}</div>
+                  {m.reactions.length > 0 && (
+                    <div className="bubble-reactions">
+                      {m.reactions.map((r, i) => <span key={i} className="bubble-react-chip">{r}</span>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          }
           const mine = m.senderId === currentUser?.id
           const imgSrc = safeImageSrc(m.imageUrl)
           const quoted = quotedOf(m)
@@ -310,6 +332,12 @@ export function Chat() {
             <Icon name="close" size={14} />
           </button>
         </div>
+      )}
+
+      {!msgs.some((m) => m.fromCoach) && pending.length === 0 && !replyTo && (
+        <button className="coach-hint" onClick={() => setText('Hey Coach, ')}>
+          <Icon name="spark" size={13} /> Tip: type <strong>&ldquo;Hey Coach…&rdquo;</strong> to ask the Coach together
+        </button>
       )}
 
       <div className="chat-input">

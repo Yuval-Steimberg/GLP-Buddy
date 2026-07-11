@@ -133,6 +133,7 @@ export interface ChatMessage {
   createdAt: number
   reactions: Reaction[]
   replyTo?: string // id of the message this one is replying to
+  fromCoach?: boolean // AI Coach reply summoned with "Hey Coach …" (both buddies see it)
   failed?: boolean // optimistic send that didn't reach the server
 }
 
