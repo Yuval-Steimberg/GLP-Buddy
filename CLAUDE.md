@@ -66,7 +66,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   triggers, 0004 compliance/staff, 0005 realtime, 0006 `delete_own_account`,
   0007 message/trio reaction RLS fix, 0008 `profiles.avatar_url`, 0009
   `messages.image_url` (+ text nullable), 0010 **security hardening** (see below),
-  0011 `messages.reply_to` (quoted replies).
+  0011 `messages.reply_to` (quoted replies), 0012 `timeline_events.image_url`
+  (timeline photos), 0013 GLP features (injection day + check-ins + support RPC).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -91,6 +92,19 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
     loop (denied column writes) + empty matches (restricted reads).
 - Migration 0011: `messages.reply_to` (FK → messages, `on delete set null`) powers
   quoted replies in chat. Rides the existing realtime publication.
+- Migration 0012: `timeline_events.image_url` (data-URL photo, size-capped) —
+  photos on the shared timeline, same pattern as chat images.
+- Migration 0013 (**GLP-journey features**): `profiles.injection_weekday`
+  (0-6; re-granted into the 0010 editable-column GRANT — any NEW editable
+  profile column MUST be added to that grant or client writes are denied);
+  `checkins` table (side-effect check-ins, own RLS + `notify_on_checkin` trigger
+  + realtime + `shares_relationship` helper); `request_support()` RPC ("Someone
+  Gets It" — notifies all active buddies). Buddy Memories (6) + Journey Capsule
+  (15) are derived client-side (no schema).
+- **hydrate must degrade gracefully:** a new per-load fetch that hits a table
+  from an unapplied migration will reject the whole `hydrate` and brick the app
+  on an infinite "Loading…" screen. Wrap optional/new fetches (e.g. `checkins`)
+  in try/catch. This bit us: 0013 unapplied → checkins query failed → stuck load.
 - `supabase/maintenance/reset_all_data.sql` wipes all users/data (deletes
   `auth.users`, cascades everywhere).
 
@@ -137,6 +151,22 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   batch carries it). Reply bubbles render a `.bubble-quote` that scrolls to +
   flashes the original (`#msg-<id>` + `.msg-flash`). Reactions/replies/timeline
   all sync live via realtime.
+- **Chat bubble gestures** (`Chat.tsx`, all share `touchStart`): press-and-hold
+  ~450ms → open reaction picker (`lpTimer`/`lpFired`, swallows the trailing
+  click); swipe sideways → reply; a >8px drag cancels the long-press. Tap also
+  opens reactions (desktop).
+- **GLP-journey features** (BuddyHome unless noted): injection-day nudge (buddy's
+  `injectionWeekday` === today); side-effect check-ins (`postCheckin`, buddies
+  notified + latest status shown; `CHECKIN_OPTIONS` in constants, no emojis — a
+  tone dot); "Someone Gets It" (`requestSupport()` RPC → notifies buddies);
+  Buddy Memories (`buddyMemories(rel)`, client-derived anniversaries); Journey
+  Capsule (`journeyCapsule(rel, monthsAgo)`) — its own screen `/capsule` with
+  month browsing + canvas PNG export via Web Share (`Capsule.tsx`).
+- **Brand logo:** `BrandMark` = SVG heart mark (app icon, nav, small spots).
+  `BrandLogo` = full lockup artwork `public/brand/logo-full.png` (heart + wordmark
+  + tagline) on auth + landing hero/CTA. The source was a JPEG with a baked-in
+  cream box — made background-transparent + tight-cropped via PIL (floodfill from
+  corner bg color). If re-supplying the logo, use a transparent PNG.
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
 - **Service-worker cache = the deploy footgun.** After ANY deploy, existing
