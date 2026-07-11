@@ -1,6 +1,7 @@
 // Convert Supabase row shapes into the in-app domain types the UI/selectors use.
 import type {
   ApprovalRow,
+  CheckinRow,
   MessageRow,
   MilestoneRow,
   NotificationRow,
@@ -28,6 +29,8 @@ import type {
   MainGoal,
   NotificationType,
   TreatmentStage,
+  Checkin,
+  CheckinStatus,
 } from '../types'
 
 const ms = (iso: string) => Date.parse(iso)
@@ -50,6 +53,7 @@ export function rowToProfile(r: ProfileRow): Profile {
     bio: r.bio ?? '',
     interests: r.interests ?? [],
     avatarUrl: r.avatar_url ?? undefined,
+    injectionWeekday: r.injection_weekday ?? undefined,
   }
 }
 
@@ -132,6 +136,16 @@ export function rowToApproval(r: ApprovalRow): MatchApproval {
     fromUserId: r.from_user,
     toUserId: r.to_user,
     status: r.status,
+    createdAt: ms(r.created_at),
+  }
+}
+
+export function rowToCheckin(r: CheckinRow): Checkin {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    status: r.status as CheckinStatus,
+    note: r.note ?? undefined,
     createdAt: ms(r.created_at),
   }
 }

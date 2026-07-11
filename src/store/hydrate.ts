@@ -6,6 +6,7 @@ import { buildEmptyState } from '../data/mockData'
 import type { AppState, BuddyTrioGroup, TrioMessage, User } from '../types'
 import {
   rowToApproval,
+  rowToCheckin,
   rowToMessage,
   rowToMilestone,
   rowToNotification,
@@ -96,6 +97,12 @@ export async function hydrate(userId: string): Promise<AppState> {
   })
   state.trios = trios
   state.trioMessages = trioMessages
+
+  // Check-ins for me + my active buddies (how everyone's feeling today).
+  const buddyIds = new Set<string>([userId])
+  rels.forEach((r) => { buddyIds.add(r.user_a); buddyIds.add(r.user_b) })
+  const checkins = await api.checkins.forUsers([...buddyIds])
+  state.checkins = checkins.map(rowToCheckin)
 
   return state
 }

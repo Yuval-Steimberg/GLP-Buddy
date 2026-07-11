@@ -6,7 +6,8 @@ import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
 import { Icon } from '../components/Icon'
 import { timeAgo } from '../utils/format'
-import type { BuddyRelationship } from '../types'
+import { CHECKIN_OPTIONS } from '../constants'
+import type { BuddyRelationship, CheckinStatus } from '../types'
 
 export function BuddyHome() {
   const navigate = useNavigate()
@@ -18,14 +19,22 @@ export function BuddyHome() {
     buddyLevels,
     state,
     sendEncouragement,
+    postCheckin,
+    requestSupport,
+    latestCheckin,
+    buddyMemories,
+    journeyCapsule,
     trioEligibility,
     activeTrio,
   } = useStore()
   const rels = activeRelationships()
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
+  const [supportSent, setSupportSent] = useState(false)
 
   const greet = `Hi ${currentUser?.profile.nickname}`
+  const todayWeekday = new Date().getDay()
+  const myCheckin = currentUser ? latestCheckin(currentUser.id) : null
 
   const encourage = (rel: BuddyRelationship) => {
     sendEncouragement(rel.id)
@@ -33,9 +42,49 @@ export function BuddyHome() {
     setTimeout(() => setEncouraged(null), 2200)
   }
 
+  const checkin = (status: CheckinStatus) => postCheckin(status)
+
+  const askForSupport = () => {
+    requestSupport()
+    setSupportSent(true)
+    setTimeout(() => setSupportSent(false), 3000)
+  }
+
   return (
     <div className="screen">
       <TopBar title={greet} />
+
+      {rels.length > 0 && (
+        <div className="card">
+          <div style={{ fontWeight: 800, fontSize: 14 }}>How are you feeling today?</div>
+          {myCheckin ? (
+            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+              Shared today: <strong>{CHECKIN_OPTIONS.find((o) => o.status === myCheckin.status)?.label}</strong>. Tap to update.
+            </p>
+          ) : (
+            <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>Your buddies will see this and can send support.</p>
+          )}
+          <div className="chip-row" style={{ marginTop: 8 }}>
+            {CHECKIN_OPTIONS.map((o) => (
+              <button
+                key={o.status}
+                className={`chip checkin-chip ${o.tone}${myCheckin?.status === o.status ? ' selected' : ''}`}
+                onClick={() => checkin(o.status)}
+              >
+                <span className={`dot ${o.tone}`} />{o.label}
+              </button>
+            ))}
+          </div>
+          <button className="btn ghost gets-it" style={{ marginTop: 12 }} onClick={askForSupport}>
+            <Icon name="heart" size={16} /> I need someone who gets it
+          </button>
+          {supportSent && (
+            <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginTop: 10 }}>
+              Your buddies have been let know you could use some support.
+            </div>
+          )}
+        </div>
+      )}
 
       {rels.length === 0 ? (
         <div className="empty">
@@ -56,6 +105,11 @@ export function BuddyHome() {
             .filter((m) => m.relationshipId === rel.id)
             .sort((a, b) => b.createdAt - a.createdAt)
             .slice(0, 3)
+          const buddyToday = latestCheckin(buddy.id)
+          const buddyStatus = buddyToday && CHECKIN_OPTIONS.find((o) => o.status === buddyToday.status)
+          const injectionToday = buddy.profile.injectionWeekday === todayWeekday
+          const memories = buddyMemories(rel)
+          const capsule = journeyCapsule(rel)
 
           return (
             <div className="card" key={rel.id}>
@@ -85,12 +139,57 @@ export function BuddyHome() {
                 </div>
               </div>
 
+              {injectionToday && (
+                <div className="banner" style={{ background: 'var(--primary-soft)', color: 'var(--primary-ink)', marginBottom: 12 }}>
+                  Today is {buddy.profile.nickname}'s injection day — send some encouragement.
+                </div>
+              )}
+
+              {buddyStatus && (
+                <div className="card flat row" style={{ marginBottom: 12, gap: 10 }}>
+                  <span className={`dot ${buddyStatus.tone}`} style={{ width: 12, height: 12 }} />
+                  <div style={{ flex: 1, fontSize: 14 }}>
+                    {buddy.profile.nickname} is feeling: <strong>{buddyStatus.label}</strong> today.
+                  </div>
+                  {buddyStatus.tone === 'rough' && (
+                    <button className="btn sm" onClick={() => encourage(rel)}>Support</button>
+                  )}
+                </div>
+              )}
+
+              {memories.length > 0 && (
+                <div className="card flat" style={{ marginBottom: 12, background: 'var(--accent-soft)' }}>
+                  <div className="muted" style={{ fontSize: 12, fontWeight: 800 }}>ON THIS DAY</div>
+                  {memories.map((m, i) => (
+                    <p key={i} style={{ margin: '6px 0 0', fontSize: 14 }}>{m}</p>
+                  ))}
+                </div>
+              )}
+
               <div className="card flat" style={{ marginBottom: 14 }}>
                 <div className="muted" style={{ fontSize: 12, fontWeight: 800 }}>CURRENT JOURNEY STAGE</div>
                 <div className="chip-row" style={{ marginTop: 8 }}>
                   <span className="chip primary">You · {currentUser?.profile.treatmentStage}</span>
                   <span className="chip">{buddy.profile.nickname} · {buddy.profile.treatmentStage}</span>
                 </div>
+              </div>
+
+              <div className="card flat capsule" style={{ marginBottom: 14 }}>
+                <div className="row between">
+                  <div className="muted" style={{ fontSize: 12, fontWeight: 800 }}>JOURNEY CAPSULE · {capsule.label.toUpperCase()}</div>
+                </div>
+                <div className="capsule-grid" style={{ marginTop: 8 }}>
+                  <div><strong>{capsule.monthsTogether}</strong><span>months together</span></div>
+                  <div><strong>{capsule.milestones}</strong><span>milestones</span></div>
+                  <div><strong>{capsule.messages}</strong><span>messages</span></div>
+                  <div><strong>{capsule.photos}</strong><span>photos</span></div>
+                </div>
+                {capsule.biggestWin && (
+                  <p style={{ margin: '10px 0 0', fontSize: 14 }}>Biggest win: <strong>{capsule.biggestWin}</strong></p>
+                )}
+                {capsule.favoriteMemory && (
+                  <p style={{ margin: '4px 0 0', fontSize: 14 }} className="muted">“{capsule.favoriteMemory}”</p>
+                )}
               </div>
 
               <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 8 }}>Recent milestones</div>

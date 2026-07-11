@@ -143,6 +143,23 @@ export const END_REASONS = [
 export const MAX_BUDDIES = 3
 export const TRIO_MIN_ACCOUNT_AGE_DAYS = 90
 
+// Weekly GLP-1 injection weekday labels (index 0=Sunday … 6=Saturday).
+export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+// Side-effect / how-are-you-feeling check-in options. `tone` drives styling and
+// whether a buddy gets a "might need support" nudge. No emojis (design system);
+// a coloured dot conveys tone.
+import type { CheckinStatus } from './types'
+export const CHECKIN_OPTIONS: { status: CheckinStatus; label: string; tone: 'good' | 'rough' }[] = [
+  { status: 'great', label: 'Feeling great', tone: 'good' },
+  { status: 'good', label: 'Plenty of energy', tone: 'good' },
+  { status: 'hungry', label: 'Hungry today', tone: 'rough' },
+  { status: 'nausea', label: 'Nausea', tone: 'rough' },
+  { status: 'fatigue', label: 'Fatigue', tone: 'rough' },
+  { status: 'constipation', label: 'Constipation', tone: 'rough' },
+  { status: 'low', label: 'Having a hard day', tone: 'rough' },
+]
+
 // Bump when Terms/Privacy change materially; stored on acceptance so you can
 // re-prompt users who accepted an older version.
 export const TERMS_VERSION = '2026-06-18'

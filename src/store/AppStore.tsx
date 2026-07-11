@@ -18,6 +18,9 @@ import type {
   Reaction,
   MilestoneType,
   BuddyTrioGroup,
+  Checkin,
+  CheckinStatus,
+  JourneyCapsule,
 } from '../types'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
 import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
@@ -25,7 +28,7 @@ import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { showLocalNotification } from '../lib/push'
 import { hydrate } from './hydrate'
-import { rowToMessage, rowToNotification, rowToTimeline } from './mappers'
+import { rowToCheckin, rowToMessage, rowToNotification, rowToTimeline } from './mappers'
 
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -126,6 +129,11 @@ interface AppStoreValue {
   reactToTimeline: (eventId: string, reaction: Reaction) => void
   commentOnTimeline: (relationshipId: string, text: string) => void
   addTimelinePhoto: (relationshipId: string, imageUrl: string, caption?: string) => void
+  postCheckin: (status: CheckinStatus, note?: string) => void
+  requestSupport: () => void
+  latestCheckin: (userId: string) => Checkin | null
+  buddyMemories: (rel: BuddyRelationship) => string[]
+  journeyCapsule: (rel: BuddyRelationship) => JourneyCapsule
   sendEncouragement: (relationshipId: string) => void
   addReflection: (relationshipId: string, text: string) => void
   // notifications
@@ -281,7 +289,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           return { ...prev, timeline }
         })
       })
-      cleanupRealtime = () => { unsubNtf(); unsubMsg(); unsubTl() }
+      // Live check-ins: a buddy's "how I'm feeling today" appears without a refresh.
+      const unsubChk = api.checkins.subscribeAll((row) => {
+        setState((prev) => {
+          const c = rowToCheckin(row)
+          if (prev.checkins.some((x) => x.id === c.id)) return prev
+          return { ...prev, checkins: [c, ...prev.checkins] }
+        })
+      })
+      cleanupRealtime = () => { unsubNtf(); unsubMsg(); unsubTl(); unsubChk() }
     })
     // When the app returns to the foreground (e.g. tapped a push notification),
     // quietly re-pull fresh data in the background. Throttled so rapid focus/
@@ -985,6 +1001,117 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     })
   }, [refresh])
 
+  // ---- GLP journey: check-ins + support ---------------------------------
+  // (3) Post how you're feeling today; a trigger notifies your buddies.
+  const postCheckin = useCallback((status: CheckinStatus, note?: string) => {
+    if (USE_SUPABASE) {
+      const meId = state.currentUserId
+      if (meId) {
+        setState((prev) => ({
+          ...prev,
+          checkins: [{ id: genId('chk'), userId: meId, status, note, createdAt: Date.now() }, ...prev.checkins],
+        }))
+      }
+      runWrite('postCheckin', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.checkins.add(me, status, note)
+        await refresh()
+      })
+      return
+    }
+    setState((prev) => {
+      if (!prev.currentUserId) return prev
+      return {
+        ...prev,
+        checkins: [
+          { id: genId('chk'), userId: prev.currentUserId, status, note, createdAt: Date.now() },
+          ...prev.checkins,
+        ],
+      }
+    })
+  }, [refresh, state.currentUserId])
+
+  // (11) "Someone Gets It" — one tap notifies all active buddies.
+  const requestSupport = useCallback(() => {
+    if (USE_SUPABASE) {
+      runWrite('requestSupport', async () => { await api.support.request() })
+      return
+    }
+    // Demo mode has no cross-user delivery; the UI shows a local confirmation.
+  }, [])
+
+  // Today's check-in for a user (only "today" matters for the home nudge).
+  const latestCheckin = useCallback((userId: string): Checkin | null => {
+    const today = new Date().toDateString()
+    const c = state.checkins
+      .filter((x) => x.userId === userId)
+      .sort((a, b) => b.createdAt - a.createdAt)[0]
+    if (!c) return null
+    return new Date(c.createdAt).toDateString() === today ? c : null
+  }, [state.checkins])
+
+  // (6) Buddy Memories — resurfaced "on this day" moments for a relationship.
+  const buddyMemories = useCallback((rel: BuddyRelationship): string[] => {
+    const me = state.currentUserId
+    const buddyId = rel.userIds.find((id) => id !== me)
+    const name = (buddyId && state.users[buddyId]?.profile.nickname) || 'your buddy'
+    const out: string[] = []
+    const start = new Date(rel.createdAt)
+    const today = new Date()
+    const monthsTogether =
+      (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth())
+    if (today.getDate() === start.getDate() && monthsTogether >= 1) {
+      out.push(
+        monthsTogether % 12 === 0
+          ? `${monthsTogether / 12} year${monthsTogether / 12 > 1 ? 's' : ''} ago today, you and ${name} became buddies.`
+          : `${monthsTogether} month${monthsTogether > 1 ? 's' : ''} ago today, you and ${name} became buddies.`,
+      )
+    }
+    state.milestones
+      .filter((m) => m.relationshipId === rel.id)
+      .forEach((m) => {
+        const md = new Date(m.createdAt)
+        const mMonths =
+          (today.getFullYear() - md.getFullYear()) * 12 + (today.getMonth() - md.getMonth())
+        if (today.getDate() === md.getDate() && [1, 3, 6, 12].includes(mMonths)) {
+          out.push(`Remember? ${mMonths} month${mMonths > 1 ? 's' : ''} ago you celebrated "${m.type}".`)
+        }
+      })
+    return out
+  }, [state.currentUserId, state.users, state.milestones])
+
+  // (15) Journey Capsule — an auto-generated recap of the current month.
+  const journeyCapsule = useCallback((rel: BuddyRelationship): JourneyCapsule => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const mo = now.getMonth()
+    const inMonth = (ts: number) => {
+      const d = new Date(ts)
+      return d.getFullYear() === y && d.getMonth() === mo
+    }
+    const start = new Date(rel.createdAt)
+    const monthsTogether = Math.max(0, (y - start.getFullYear()) * 12 + (mo - start.getMonth()))
+    const ms = state.milestones.filter((m) => m.relationshipId === rel.id && inMonth(m.createdAt))
+    const messages = state.messages.filter((m) => m.relationshipId === rel.id && inMonth(m.createdAt)).length
+    const tl = state.timeline.filter((e) => e.relationshipId === rel.id)
+    const reflections = tl.filter((e) => e.type === 'reflection' && inMonth(e.createdAt))
+    const photos = tl.filter((e) => e.type === 'photo' && inMonth(e.createdAt)).length
+    const biggestWin =
+      ms.find((m) => m.type === 'Reached goal weight') ??
+      ms.find((m) => m.type === 'Overcame plateau') ??
+      ms[0]
+    const favorite = reflections[0] ?? tl.find((e) => e.type === 'comment' && inMonth(e.createdAt))
+    return {
+      label: now.toLocaleString('en', { month: 'long', year: 'numeric' }),
+      monthsTogether,
+      milestones: ms.length,
+      messages,
+      photos,
+      biggestWin: biggestWin?.type,
+      favoriteMemory: favorite?.text,
+    }
+  }, [state.milestones, state.messages, state.timeline])
+
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
       'You\'ve got this.',
@@ -1553,6 +1680,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       reactToTimeline,
       commentOnTimeline,
       addTimelinePhoto,
+      postCheckin,
+      requestSupport,
+      latestCheckin,
+      buddyMemories,
+      journeyCapsule,
       sendEncouragement,
       addReflection,
       unreadCount,
@@ -1595,6 +1727,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       reactToTimeline,
       commentOnTimeline,
       addTimelinePhoto,
+      postCheckin,
+      requestSupport,
+      latestCheckin,
+      buddyMemories,
+      journeyCapsule,
       sendEncouragement,
       addReflection,
       unreadCount,

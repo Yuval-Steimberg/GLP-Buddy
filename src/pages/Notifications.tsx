@@ -15,6 +15,8 @@ const ICON: Record<NotificationType, IconName> = {
   goal_reached: 'spark',
   reflection: 'doc',
   trio_unlocked: 'users',
+  checkin: 'heart',
+  support_request: 'heart',
 }
 
 export function Notifications() {

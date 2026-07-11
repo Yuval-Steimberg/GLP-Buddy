@@ -6,6 +6,7 @@
 import { requireSupabase, supabase } from '../lib/supabase'
 import type {
   ApprovalRow,
+  CheckinRow,
   MessageRow,
   MilestoneRow,
   NotificationRow,
@@ -117,6 +118,7 @@ function profileToRow(p: Profile): Partial<ProfileRow> {
     bio: p.bio,
     interests: p.interests,
     avatar_url: p.avatarUrl ?? null,
+    injection_weekday: p.injectionWeekday ?? null,
   }
 }
 
@@ -584,5 +586,53 @@ export const trios = {
       .from('trio_messages')
       .insert({ trio_id: trioId, sender_id: senderId, text })
     if (error) throw error
+  },
+}
+
+// ---- Check-ins (how a user feels today; visible to buddies) ---------------
+export const checkins = {
+  async add(userId: string, status: string, note?: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb
+      .from('checkins')
+      .insert({ user_id: userId, status, note: note || null })
+    if (error) throw error
+  },
+
+  // Recent check-ins for a set of users (self + buddies); RLS enforces access.
+  async forUsers(userIds: string[]): Promise<CheckinRow[]> {
+    if (userIds.length === 0) return []
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('checkins')
+      .select('*')
+      .in('user_id', userIds)
+      .order('created_at', { ascending: false })
+      .limit(120)
+    if (error) throw error
+    return data ?? []
+  },
+
+  subscribeAll(cb: (c: CheckinRow) => void) {
+    const sb = requireSupabase()
+    const channel = sb
+      .channel('checkins-all')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'checkins' },
+        (payload) => { if (payload.new && (payload.new as CheckinRow).id) cb(payload.new as CheckinRow) },
+      )
+      .subscribe()
+    return () => { void sb.removeChannel(channel) }
+  },
+}
+
+// ---- "Someone Gets It" — one-tap support request to all active buddies -----
+export const support = {
+  async request(): Promise<number> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('request_support')
+    if (error) throw error
+    return (data as number) ?? 0
   },
 }

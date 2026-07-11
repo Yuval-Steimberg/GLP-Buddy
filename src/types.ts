@@ -54,6 +54,34 @@ export interface Profile {
   bio: string
   interests: string[]
   avatarUrl?: string // small compressed data URL, optional
+  injectionWeekday?: number // 0=Sun..6=Sat, the weekly GLP-1 injection day
+}
+
+export type CheckinStatus =
+  | 'great'
+  | 'good'
+  | 'nausea'
+  | 'fatigue'
+  | 'constipation'
+  | 'hungry'
+  | 'low'
+
+export interface Checkin {
+  id: string
+  userId: string
+  status: CheckinStatus
+  note?: string
+  createdAt: number
+}
+
+export interface JourneyCapsule {
+  label: string // e.g. "July 2026"
+  monthsTogether: number
+  milestones: number
+  messages: number
+  photos: number
+  biggestWin?: string
+  favoriteMemory?: string
 }
 
 export interface User {
@@ -159,6 +187,8 @@ export type NotificationType =
   | 'goal_reached'
   | 'reflection'
   | 'trio_unlocked'
+  | 'checkin'
+  | 'support_request'
 
 export interface AppNotification {
   id: string
@@ -208,5 +238,6 @@ export interface AppState {
   reports: ReportBlock[]
   trios: BuddyTrioGroup[]
   trioMessages: TrioMessage[]
+  checkins: Checkin[]
   passedUserIds: string[]
 }

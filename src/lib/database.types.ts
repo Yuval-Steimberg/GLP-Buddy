@@ -18,6 +18,7 @@ export interface ProfileRow {
   bio: string | null
   interests: string[]
   avatar_url: string | null
+  injection_weekday: number | null
   accepted_safety: boolean
   age_confirmed: boolean
   terms_version: string | null
@@ -118,5 +119,13 @@ export interface TrioMessageRow {
   sender_id: string
   text: string
   reactions: string[]
+  created_at: string
+}
+
+export interface CheckinRow {
+  id: string
+  user_id: string
+  status: string
+  note: string | null
   created_at: string
 }

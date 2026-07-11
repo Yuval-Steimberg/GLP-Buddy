@@ -15,6 +15,7 @@ import {
   MEDICATIONS,
   TREATMENT_STAGES,
   WEIGHT_RANGES,
+  WEEKDAYS,
 } from '../constants'
 import type { Profile } from '../types'
 
@@ -115,6 +116,20 @@ export function EditProfile() {
         <Picker label="Treatment stage" options={TREATMENT_STAGES} value={p.treatmentStage} onPick={(v) => set('treatmentStage', v as Profile['treatmentStage'])} />
         <Picker label="Current weight range" options={WEIGHT_RANGES} value={p.currentWeightRange} onPick={(v) => set('currentWeightRange', v)} />
         <Picker label="Goal weight range" options={WEIGHT_RANGES} value={p.goalWeightRange} onPick={(v) => set('goalWeightRange', v)} />
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label>Injection day <span className="muted" style={{ fontWeight: 500 }}>(so your buddy can cheer you on)</span></label>
+          <div className="option-grid">
+            {WEEKDAYS.map((d, i) => (
+              <button
+                key={d}
+                className={`option${p.injectionWeekday === i ? ' selected' : ''}`}
+                onClick={() => set('injectionWeekday', p.injectionWeekday === i ? undefined : i)}
+              >
+                {d.slice(0, 3)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="card">
