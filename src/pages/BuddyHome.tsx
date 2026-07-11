@@ -243,6 +243,20 @@ export function BuddyHome() {
         })
       )}
 
+      {/* The Coach */}
+      <div className="card list-tap" onClick={() => navigate('/coach')} style={{ background: 'var(--surface-2)' }}>
+        <div className="row">
+          <span className="row-ico"><Icon name="spark" size={22} /></span>
+          <div style={{ flex: 1 }}>
+            <strong>Talk to your Coach</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Wellness &amp; motivation, any time — never medical advice.
+            </div>
+          </div>
+          <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+        </div>
+      </div>
+
       {/* Buddy Trio teaser */}
       <TrioTeaser
         eligible={trioEligibility().eligible}

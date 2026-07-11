@@ -114,6 +114,19 @@ export function BrandMark({ size = 30 }: { size?: number }) {
   )
 }
 
+// Wordmark that echoes the logo artwork's colour split (GLP = sage, en = ink,
+// Pal = blue). Pure text in the display font — crisp at any size, theme-aware,
+// and it can never fail to load. Pair with <BrandMark> for the lockup.
+export function BrandWordmark({ size = 22, style }: { size?: number; style?: CSSProperties }) {
+  return (
+    <span className="brand-wordmark" style={{ fontSize: size, ...style }}>
+      <span style={{ color: 'var(--primary)' }}>GLP</span>
+      <span style={{ color: 'var(--ink)' }}>en</span>
+      <span style={{ color: 'var(--green)' }}>Pal</span>
+    </span>
+  )
+}
+
 // Full brand lockup: the heart mark + "GLPenPal" wordmark + tagline (the
 // complete logo artwork). Used on the auth screen and marketing landing.
 export function BrandLogo({ width = 220, style }: { width?: number; style?: CSSProperties }) {

@@ -53,6 +53,7 @@ const imports = {
   EditProfile: () => import('./pages/EditProfile').then((m) => ({ default: m.EditProfile })),
   Trio: () => import('./pages/Trio').then((m) => ({ default: m.Trio })),
   Capsule: () => import('./pages/Capsule').then((m) => ({ default: m.Capsule })),
+  Coach: () => import('./pages/Coach').then((m) => ({ default: m.Coach })),
   Moderation: () => import('./pages/Moderation').then((m) => ({ default: m.Moderation })),
   Privacy: () => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })),
   Terms: () => import('./pages/legal/Terms').then((m) => ({ default: m.Terms })),
@@ -79,6 +80,7 @@ const Profile = lazyWithReload(imports.Profile)
 const EditProfile = lazyWithReload(imports.EditProfile)
 const Trio = lazyWithReload(imports.Trio)
 const Capsule = lazyWithReload(imports.Capsule)
+const Coach = lazyWithReload(imports.Coach)
 const Moderation = lazyWithReload(imports.Moderation)
 const Privacy = lazyWithReload(imports.Privacy)
 const Terms = lazyWithReload(imports.Terms)
@@ -201,6 +203,7 @@ export function App() {
           <Route path="/edit-profile" element={<Guard><EditProfile /></Guard>} />
           <Route path="/trio" element={<Guard><Trio /></Guard>} />
           <Route path="/capsule" element={<Guard><Capsule /></Guard>} />
+          <Route path="/coach" element={<Guard><Coach /></Guard>} />
           <Route path="/moderation" element={<Guard staff><Moderation /></Guard>} />
 
           {/* Public legal pages */}

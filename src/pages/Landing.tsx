@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { USE_SUPABASE } from '../lib/env'
-import { Icon, BrandMark } from '../components/Icon'
+import { Icon, BrandMark, BrandWordmark } from '../components/Icon'
 
 export function Landing() {
   const navigate = useNavigate()
@@ -23,7 +23,7 @@ export function Landing() {
         <div className="lp-nav-in">
           <div className="lp-brand">
             <BrandMark size={30} />
-            <span>GLPenPal</span>
+            <BrandWordmark size={22} />
           </div>
           <nav className="lp-nav-links">
             <a onClick={scrollTo('how')}>How it works</a>
@@ -232,7 +232,7 @@ export function Landing() {
 
       <footer className="lp-footer">
         <div className="lp-footer-in">
-          <div className="lp-brand"><BrandMark size={26} /><span>GLPenPal</span></div>
+          <div className="lp-brand"><BrandMark size={26} /><BrandWordmark size={20} /></div>
           <div className="lp-footer-links">
             <a onClick={scrollTo('how')}>How it works</a>
             <a onClick={scrollTo('faq')}>FAQ</a>

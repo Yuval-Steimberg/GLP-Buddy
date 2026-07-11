@@ -508,6 +508,22 @@ export const safety = {
   },
 }
 
+// ---- The Coach (AI wellness companion) ------------------------------------
+export type CoachTurn = { role: 'user' | 'assistant'; content: string }
+export const coach = {
+  // Calls the ask-coach Edge Function (server-side Claude with strict
+  // wellness-only, no-medical-advice guardrails). The API key never touches
+  // the client. Returns the assistant reply text.
+  async ask(messages: CoachTurn[]): Promise<string> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.functions.invoke('ask-coach', { body: { messages } })
+    if (error) throw error
+    const reply = (data as { reply?: string; error?: string })?.reply
+    if (!reply) throw new Error((data as { error?: string })?.error || 'coach unavailable')
+    return reply
+  },
+}
+
 // ---- Buddy Trio -----------------------------------------------------------
 export const trios = {
   async create(creatorId: string, buddyIds: string[]): Promise<TrioRow> {

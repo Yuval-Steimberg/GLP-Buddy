@@ -491,6 +491,15 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 .checkin-chip.selected { outline: 2px solid var(--primary); }
 .gets-it { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
 
+/* Brand wordmark (multi-colour lockup, echoes the logo artwork) */
+.brand-wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 /* Journey Capsule — shareable card */
 .capsule-card {
   background: var(--surface);
