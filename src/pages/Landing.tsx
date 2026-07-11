@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { USE_SUPABASE } from '../lib/env'
-import { Icon, BrandMark, BrandLogo } from '../components/Icon'
+import { Icon, BrandMark } from '../components/Icon'
 
 export function Landing() {
   const navigate = useNavigate()
@@ -43,7 +43,6 @@ export function Landing() {
         <div className="lp-glow lp-glow-b" />
         <div className="lp-hero-in">
           <div className="lp-hero-copy">
-            <BrandLogo width={260} style={{ margin: '0 0 18px' }} />
             <div className="lp-eyebrow"><span className="lp-dot" /> Peer support for GLP‑1</div>
             <h1 className="lp-h1">The GLP‑1 journey feels lighter <span className="lp-em">with someone beside you</span>.</h1>
             <p className="lp-lead">
@@ -224,7 +223,7 @@ export function Landing() {
       <section className="lp-final">
         <Reveal className="lp-final-card">
           <div className="lp-glow lp-glow-c" />
-          <BrandLogo width={280} />
+          <BrandMark size={56} />
           <h2 className="lp-h2">Someone out there gets exactly what you're going through.</h2>
           <p className="lp-sub">Find them today — it only takes a couple of minutes.</p>
           <button className="lp-btn lp-btn-lg" onClick={cta}>Find my pen pal — it's free</button>
