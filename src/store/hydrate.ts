@@ -99,10 +99,16 @@ export async function hydrate(userId: string): Promise<AppState> {
   state.trioMessages = trioMessages
 
   // Check-ins for me + my active buddies (how everyone's feeling today).
-  const buddyIds = new Set<string>([userId])
-  rels.forEach((r) => { buddyIds.add(r.user_a); buddyIds.add(r.user_b) })
-  const checkins = await api.checkins.forUsers([...buddyIds])
-  state.checkins = checkins.map(rowToCheckin)
+  // Non-fatal: if the checkins table doesn't exist yet (migration 0013 not
+  // applied), degrade gracefully instead of bricking the whole app load.
+  try {
+    const buddyIds = new Set<string>([userId])
+    rels.forEach((r) => { buddyIds.add(r.user_a); buddyIds.add(r.user_b) })
+    const checkins = await api.checkins.forUsers([...buddyIds])
+    state.checkins = checkins.map(rowToCheckin)
+  } catch (e) {
+    console.error('checkins fetch failed (is migration 0013 applied?)', e)
+  }
 
   return state
 }

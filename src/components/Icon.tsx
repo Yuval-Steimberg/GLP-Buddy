@@ -119,7 +119,7 @@ export function BrandMark({ size = 30 }: { size?: number }) {
 export function BrandLogo({ width = 220, style }: { width?: number; style?: CSSProperties }) {
   return (
     <img
-      src="/brand/logo-full.jpg"
+      src="/brand/logo-full.png"
       alt="GLPenPal — a GLP buddy who gets it"
       style={{ width, maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto', ...style }}
     />
