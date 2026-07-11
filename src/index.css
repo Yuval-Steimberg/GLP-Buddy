@@ -671,6 +671,35 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 .list-tap { cursor: pointer; transition: transform 0.1s; }
 .list-tap:active { transform: scale(0.99); }
 
+/* Collapsible buddy-card header: a full-width reset button that behaves like a
+   row. Tapping it expands/collapses the rest of the card. */
+.buddy-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.buddy-head h3 { margin: 0; }
+.buddy-head .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.expand-caret {
+  font-weight: 800;
+  color: var(--primary-ink);
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  transform: rotate(90deg);
+  flex: none;
+}
+.expand-caret.open { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) { .expand-caret { transition: none; } }
+
 /* ----- Landing --------------------------------------------------------- */
 .landing {
   min-height: 100vh;

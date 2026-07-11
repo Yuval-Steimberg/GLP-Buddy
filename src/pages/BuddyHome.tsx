@@ -31,6 +31,10 @@ export function BuddyHome() {
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
   const [supportSent, setSupportSent] = useState(false)
+  // Buddy cards start collapsed — just name + medication — so the page is easy
+  // to scan. Tap the header (or the caret) to reveal the full space.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const toggle = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }))
 
   const greet = `Hi ${currentUser?.profile.nickname}`
   const todayWeekday = new Date().getDay()
@@ -110,21 +114,29 @@ export function BuddyHome() {
           const injectionToday = buddy.profile.injectionWeekday === todayWeekday
           const memories = buddyMemories(rel)
           const capsule = journeyCapsule(rel)
+          const isOpen = !!expanded[rel.id]
 
           return (
             <div className="card" key={rel.id}>
-              <div className="row" style={{ marginBottom: 14 }}>
+              <button
+                className="buddy-head"
+                onClick={() => toggle(rel.id)}
+                aria-expanded={isOpen}
+                aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${buddy.profile.nickname}'s space`}
+              >
                 <Avatar name={buddy.profile.nickname} size={56} src={buddy.profile.avatarUrl} />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <h3>{buddy.profile.nickname}</h3>
                   <div className="muted" style={{ fontSize: 13 }}>
                     {buddy.profile.medication}
                   </div>
                 </div>
                 <span className="chip green">Buddy</span>
-              </div>
+                <span className={`expand-caret${isOpen ? ' open' : ''}`} aria-hidden>›</span>
+              </button>
 
-              <div className="stat-grid" style={{ marginBottom: 14 }}>
+              {!isOpen ? null : (<>
+              <div className="stat-grid" style={{ marginTop: 14, marginBottom: 14 }}>
                 <div className="stat">
                   <div className="num">{days}</div>
                   <div className="lbl">Days connected</div>
@@ -238,6 +250,7 @@ export function BuddyHome() {
               <button className="btn ghost" style={{ marginTop: 2 }} onClick={() => navigate('/timeline')}>
                 View shared timeline →
               </button>
+              </>)}
             </div>
           )
         })
