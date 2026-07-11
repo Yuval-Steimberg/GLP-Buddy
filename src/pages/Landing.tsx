@@ -22,7 +22,7 @@ export function Landing() {
       <header className="lp-nav">
         <div className="lp-nav-in">
           <div className="lp-brand">
-            <BrandLockup height={40} />
+            <BrandLockup height={58} />
           </div>
           <nav className="lp-nav-links">
             <a onClick={scrollTo('how')}>How it works</a>
