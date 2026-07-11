@@ -200,6 +200,10 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
     CANNOT set `from_coach` (column-scoped INSERT, same trick as 0010's
     reactions-only UPDATE), so only the service-role function can author a Coach
     bubble. `api.chat.send` therefore must NOT reference `from_coach`.
+  - **Rate limit:** the function enforces one Coach summon per chat per 8s
+    (checks the latest `from_coach` message's `created_at` with the service role
+    BEFORE calling Claude → returns 429 on cooldown, so spam can't burn API
+    cost). The client swallows the 429 (the user's message still posts).
   - The privacy clause lives in the function's SYSTEM prompt (never ask
     for/repeat personal or health specifics). Guardrail unchanged (server-side).
   - Uses the auto-injected `SUPABASE_URL` / `SUPABASE_ANON_KEY` /

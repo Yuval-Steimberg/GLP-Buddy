@@ -112,10 +112,25 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: HEADERS })
       }
 
+      // Rate limit: at most one Coach summon per chat per COOLDOWN. Checked with
+      // the service role BEFORE calling the model (so spam can't burn API cost).
+      const admin = createClient(url, service)
+      const COOLDOWN_MS = 8000
+      const { data: lastCoach } = await admin
+        .from('messages')
+        .select('created_at')
+        .eq('relationship_id', body.relationshipId)
+        .eq('from_coach', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (lastCoach && Date.now() - new Date(lastCoach.created_at as string).getTime() < COOLDOWN_MS) {
+        return new Response(JSON.stringify({ error: 'coach cooldown' }), { status: 429, headers: HEADERS })
+      }
+
       const reply = await coachReply(key, [{ role: 'user', content: `Someone in a shared GLP-1 buddy chat asked you: "${question}". Reply warmly and briefly for both buddies — general wellness/encouragement only, never medical advice, and don't ask for personal details.` }])
 
       // Service role: bypasses RLS and is the only writer that can set from_coach.
-      const admin = createClient(url, service)
       const { error: insErr } = await admin.from('messages').insert({
         relationship_id: body.relationshipId,
         sender_id: caller,
