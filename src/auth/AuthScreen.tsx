@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth } from '../services/api'
-import { BrandMark, BrandWordmark, Icon } from '../components/Icon'
+import { BrandLogo, Icon } from '../components/Icon'
 
 // Real email/password auth for Supabase-backed deployments. Rendered by the
 // App shell when VITE_BACKEND=supabase and there is no active session.
@@ -69,10 +69,8 @@ export function AuthScreen() {
   return (
     <div className="landing" style={{ justifyContent: 'flex-start', paddingTop: 'calc(40px + env(safe-area-inset-top))' }}>
       <a className="auth-back" onClick={() => navigate('/')}>← Back to home</a>
-      <div className="lp-brand" style={{ alignSelf: 'flex-start', gap: 10, fontSize: 24 }}>
-        <BrandMark size={34} /><BrandWordmark size={26} />
-      </div>
-      <div className="tag" style={{ fontSize: 16, marginTop: 10 }}>
+      <BrandLogo width={240} style={{ marginTop: 8 }} />
+      <div className="tag" style={{ fontSize: 16, marginTop: 14 }}>
         {mode === 'signin' ? 'Welcome back' : 'Create your account'}
       </div>
 

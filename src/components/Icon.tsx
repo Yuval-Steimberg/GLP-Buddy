@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import type { CSSProperties } from 'react'
 
 export type IconName =
@@ -129,11 +129,24 @@ export function BrandWordmark({ size = 22, style }: { size?: number; style?: CSS
 
 // Full brand lockup: the heart mark + "GLPenPal" wordmark + tagline (the
 // complete logo artwork). Used on the auth screen and marketing landing.
+// If the raster ever fails to load (stale cache, offline), it degrades to the
+// inline mark + wordmark so a user never sees a broken-image box.
 export function BrandLogo({ width = 220, style }: { width?: number; style?: CSSProperties }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, margin: '0 auto', ...style }}>
+        <BrandMark size={Math.round(width * 0.42)} />
+        <BrandWordmark size={Math.round(width * 0.16)} />
+        <span className="muted" style={{ fontSize: Math.round(width * 0.055) }}>a GLP buddy who gets it</span>
+      </div>
+    )
+  }
   return (
     <img
       src="/brand/logo-full.png"
       alt="GLPenPal — a GLP buddy who gets it"
+      onError={() => setFailed(true)}
       style={{ width, maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto', ...style }}
     />
   )
