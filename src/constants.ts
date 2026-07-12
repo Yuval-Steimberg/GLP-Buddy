@@ -8,6 +8,13 @@ import type {
   Reaction,
 } from './types'
 
+// App store links shown on the marketing landing. Fill these in once the apps
+// are live (App Store Connect / Play Console give you the final URLs). While a
+// value is empty, its badge is hidden and the web CTA stays the primary action.
+// App Store URL looks like: https://apps.apple.com/app/id0000000000
+export const APP_STORE_URL = ''
+export const PLAY_STORE_URL = ''
+
 export const MEDICATIONS: Medication[] = [
   'Ozempic',
   'Wegovy',
