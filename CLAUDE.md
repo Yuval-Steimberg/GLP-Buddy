@@ -69,7 +69,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   0011 `messages.reply_to` (quoted replies), 0012 `timeline_events.image_url`
   (timeline photos), 0013 GLP features (injection day + check-ins + support RPC),
   0014 `messages.from_coach` ("Hey Coach" in the buddy chat), 0015
-  `profiles.is_premium` (premium tier — see Monetization below).
+  `profiles.is_premium` (premium tier — see Monetization below), 0016
+  `weight_logs` (optional private weight logging — powers real "kg lost").
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -145,11 +146,38 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   export are demoable without billing; it's a **no-op in Supabase mode** (real
   flag is server-only). The sheet shows "Preview Premium (demo)" in demo mode and
   "Notify me when Premium launches" in Supabase mode.
-- **Billing is NOT wired yet** (deliberate). When it is: the app is
-  Capacitor-wrapped, so **Apple/Google mandate their IAP** for digital subs
-  inside the native apps (can't use Stripe there); the **PWA at glpenpal.com can
-  use Stripe**. Either way, the billing webhook sets `profiles.is_premium` with
-  the service role — the client never writes it.
+- **Billing (Stripe, WEB ONLY — App Store safe):** wired for the PWA.
+  `PremiumSheet` (JourneyBook.tsx) branches on runtime: demo → "Preview Premium"
+  (`setPremiumDemo`); **web + Supabase** → real Stripe checkout
+  (`api.billing.checkoutUrl()` → `create-checkout` edge fn → redirect); **native
+  app** (`IS_NATIVE` in `src/lib/env.ts`, via `Capacitor.isNativePlatform()`) →
+  **NO purchase button** (Apple/Google mandate their own IAP for digital subs;
+  showing Stripe/web purchase in a native build risks App Store rejection). Edge
+  functions: `create-checkout` (verify_jwt ON; stamps `user_id` into the Stripe
+  subscription metadata) and `stripe-webhook` (deploy `--no-verify-jwt`,
+  signature-verified; the ONLY writer of `profiles.is_premium`, via service role;
+  maps subscription→user by that metadata, so no `stripe_customer_id` column
+  needed). Return path: `?upgraded=1` on `/journey-book` shows a banner; hydrate
+  + focus-refresh reconcile the flag. **Native IAP (RevenueCat/StoreKit) is the
+  follow-up** for selling Premium inside the apps.
+- **Animated recap** (`/recap`, `src/pages/Recap.tsx`, NOT in `NAV_PATHS`): a
+  Spotify-Wrapped-style **full-screen story player** built from `yearReview`
+  (`buildScenes`) — "You started here…", "Remember your first week?/plateau?",
+  tough weeks, buddy's encouragement, biggest moment, year in numbers, finale
+  with share. Auto-advances (`SCENE_MS`), progress bars, tap zones (left/right),
+  hold-to-pause, reduced-motion safe. **Pure client-side CSS animation (no video
+  encoding)** so it's reliable on iOS. Reached from a "Play your recap" button on
+  Year in Review. `.recap-*` CSS.
+- **Weight logging** (migration 0016, PRIVATE self-only RLS — never shown to
+  buddies): optional `WeightSheet` on BuddyHome (`postWeight`/`latestWeight` in
+  the store). `buildYearReview` derives a real **`kgLost`** for the year (shown on
+  the YiR screen, share card, and recap). `hydrate` fetches `weight_logs` with
+  **try/catch graceful degrade** (same footgun as checkins — a new per-load fetch
+  from an unapplied migration would brick load). `load()` now backfills new
+  `AppState` keys onto older persisted caches (so `weightLogs` never reads
+  undefined).
+- **Shared `Reveal`** (`src/components/Reveal.tsx`, `.reveal/.in`): in-app
+  scroll fade+rise (reduced-motion safe), applied to Year in Review.
 - **Deploy:** apply migration 0015, then push the frontend (client reads
   `is_premium` — degrade is safe since a missing column just reads false via the
   mapper default, but apply it to actually gate). No new secret.
@@ -375,6 +403,18 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   `--no-verify-jwt`). No SQL/migration. "Couldn't reach the Coach" = key not set,
   function not deployed, or no Anthropic credit (check Edge Function logs).
   Deploying `ask-coach` needs the file locally — `git pull` first if it's missing.
+- **Stripe billing (web Premium):** `supabase secrets set STRIPE_SECRET_KEY=sk_…
+  STRIPE_PRICE_ID=price_… STRIPE_WEBHOOK_SECRET=whsec_…` then
+  `supabase functions deploy create-checkout` (**keep verify_jwt ON**) and
+  `supabase functions deploy stripe-webhook --no-verify-jwt`. In the Stripe
+  Dashboard add a webhook endpoint → the `stripe-webhook` function URL,
+  subscribed to `checkout.session.completed`, `customer.subscription.updated`,
+  `customer.subscription.deleted`; paste its signing secret as
+  `STRIPE_WEBHOOK_SECRET`. Optional `APP_URL` secret sets the success/cancel
+  origin (defaults to the request origin, else glpenpal.com). No migration — uses
+  the existing `is_premium` column. **Do NOT enable web purchase in the native
+  build** — the client already hides it via `IS_NATIVE`; native Premium needs
+  Apple/Google IAP (a later RevenueCat/StoreKit follow-up).
 - **Deploy order for a release that touches both:** apply the DB migration
   first, THEN push the frontend to the Netlify branch — the frontend depends on
   the new RPCs (see migration 0010 notes). Ship them close together.

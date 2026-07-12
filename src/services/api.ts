@@ -690,3 +690,16 @@ export const support = {
     return (data as number) ?? 0
   },
 }
+
+// ---- Billing (Stripe, WEB ONLY) -------------------------------------------
+// Starts a Premium checkout via the create-checkout Edge Function and returns
+// the Stripe Checkout URL to redirect to. The webhook (not the client) flips
+// profiles.is_premium. Never called from the native app (see IS_NATIVE).
+export const billing = {
+  async checkoutUrl(): Promise<string | null> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.functions.invoke('create-checkout', { body: {} })
+    if (error) throw error
+    return (data as { url?: string })?.url ?? null
+  },
+}

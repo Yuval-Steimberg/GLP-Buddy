@@ -1,5 +1,15 @@
 // Centralised, typed access to build-time environment configuration.
+import { Capacitor } from '@capacitor/core'
+
 const env = import.meta.env
+
+/**
+ * True when running inside the Capacitor native app (iOS/Android) rather than
+ * the web PWA. Apple/Google mandate their own in-app purchase for digital
+ * subscriptions, so the Stripe web checkout MUST be hidden here — showing it in
+ * a native build is grounds for App Store rejection.
+ */
+export const IS_NATIVE = Capacitor.isNativePlatform()
 
 export const SUPABASE_URL = (env.VITE_SUPABASE_URL ?? '').trim()
 export const SUPABASE_ANON_KEY = (env.VITE_SUPABASE_ANON_KEY ?? '').trim()
