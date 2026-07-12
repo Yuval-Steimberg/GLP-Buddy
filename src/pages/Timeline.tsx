@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
@@ -7,7 +7,7 @@ import { MilestoneSheet } from '../components/MilestoneSheet'
 import { Sheet } from '../components/Sheet'
 import { Icon, type IconName } from '../components/Icon'
 import { REACTIONS } from '../constants'
-import { timeAgo } from '../utils/format'
+import { stamp, dayHeading } from '../utils/format'
 import { fileToChatImage, safeImageSrc } from '../lib/image'
 import type { Reaction, TimelineEventType } from '../types'
 
@@ -133,13 +133,18 @@ export function Timeline() {
         <div className="empty">No events yet. Add a milestone to begin!</div>
       ) : (
         <div className="timeline">
-          {events.map((e) => (
-            <div className="tl-item" key={e.id}>
+          {events.map((e, i) => {
+            const prev = events[i - 1]
+            const newDay = !prev || new Date(prev.createdAt).toDateString() !== new Date(e.createdAt).toDateString()
+            return (
+            <Fragment key={e.id}>
+            {newDay && <div className="tl-day">{dayHeading(e.createdAt)}</div>}
+            <div className="tl-item">
               <div className="tl-dot"><Icon name={TYPE_ICON[e.type]} size={12} /></div>
               <div className="card" style={{ marginBottom: 0 }}>
                 <div className="row between">
                   <strong style={{ fontSize: 14 }}>{nameFor(e.authorId)}</strong>
-                  <span className="muted" style={{ fontSize: 11 }}>{timeAgo(e.createdAt)}</span>
+                  <span className="muted tl-stamp">{stamp(e.createdAt)}</span>
                 </div>
                 {safeImageSrc(e.imageUrl) && (
                   <img
@@ -176,7 +181,9 @@ export function Timeline() {
                 </div>
               </div>
             </div>
-          ))}
+            </Fragment>
+            )
+          })}
         </div>
       )}
 

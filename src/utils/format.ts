@@ -42,6 +42,33 @@ export function clockTime(ts: number): string {
   })
 }
 
+// Compact absolute date + time for a single line, e.g. "Jul 12, 3:45 PM".
+export function stamp(ts: number): string {
+  return new Date(ts).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+// Friendly day heading for grouping: "Today" / "Yesterday" / "Fri, Jul 12"
+// (adds the year for entries from a previous year).
+export function dayHeading(ts: number): string {
+  const d = new Date(ts)
+  const now = new Date()
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const days = Math.round((startOf(now) - startOf(d)) / 86400000)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}),
+  })
+}
+
 export function dayLabel(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, {
     weekday: 'short',
