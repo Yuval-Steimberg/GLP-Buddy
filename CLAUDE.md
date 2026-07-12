@@ -248,6 +248,11 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `ProfileCard` (Matches) leads with essentials + a "More about…" toggle for
   bio/secondary chips; Profile "Your details" (11-field list) collapses behind a
   tappable header. Shared `.expand-caret` (rotates) + `.more-toggle` styles.
+- **Timeline dating** (`Timeline.tsx`): each entry shows an absolute
+  `stamp(createdAt)` ("Jul 12, 3:45 PM", `.tl-stamp`) instead of relative time,
+  and entries are grouped under `.tl-day` dividers via `dayHeading()` (Today /
+  Yesterday / "Fri, Jul 12", +year for prior years) — computed inline by
+  comparing adjacent events' `toDateString()` (events are sorted desc).
 - **App icon badge** (`navigator.setAppBadge`) is set in-app from unread count
   and from the push SW (`public/push-sw.js`); iOS support is finicky.
 - **Service-worker cache = the deploy footgun.** After ANY deploy, existing
