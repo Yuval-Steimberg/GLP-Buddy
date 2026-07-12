@@ -122,8 +122,9 @@ export async function shareYearReview(review: YearReview, includeQuote: boolean)
     ctx.fillText(lbl, x, 763)
   })
 
-  // Secondary line: tough weeks overcome + strongest month.
+  // Secondary line: kg lost + tough weeks overcome + strongest month.
   const bits: string[] = []
+  if (review.kgLost != null) bits.push(`${review.kgLost} kg lost`)
   if (review.toughWeeks > 0) bits.push(`${review.toughWeeks} tough week${review.toughWeeks === 1 ? '' : 's'} overcome`)
   if (review.strongestMonth) bits.push(`Strongest month: ${review.strongestMonth}`)
   if (bits.length) {

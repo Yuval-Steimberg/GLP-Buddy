@@ -4,6 +4,7 @@ import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
+import { WeightSheet } from '../components/WeightSheet'
 import { Icon } from '../components/Icon'
 import { timeAgo } from '../utils/format'
 import { CHECKIN_OPTIONS } from '../constants'
@@ -25,10 +26,13 @@ export function BuddyHome() {
     buddyMemories,
     journeyCapsule,
     reviewYears,
+    latestWeight,
     trioEligibility,
     activeTrio,
   } = useStore()
   const availableYears = reviewYears()
+  const myWeight = latestWeight()
+  const [showWeight, setShowWeight] = useState(false)
   const rels = activeRelationships()
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
@@ -83,6 +87,9 @@ export function BuddyHome() {
           </div>
           <button className="btn ghost gets-it" style={{ marginTop: 12 }} onClick={askForSupport}>
             <Icon name="heart" size={16} /> I need someone who gets it
+          </button>
+          <button className="btn ghost" style={{ marginTop: 2 }} onClick={() => setShowWeight(true)}>
+            <Icon name="growth" size={16} /> {myWeight != null ? `Log weight · last ${myWeight} kg` : 'Log your weight (private)'}
           </button>
           {supportSent && (
             <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginTop: 10 }}>
@@ -309,6 +316,7 @@ export function BuddyHome() {
       {milestoneFor && (
         <MilestoneSheet open onClose={() => setMilestoneFor(null)} relationshipId={milestoneFor} />
       )}
+      <WeightSheet open={showWeight} onClose={() => setShowWeight(false)} />
     </div>
   )
 }

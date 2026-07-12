@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { BrandMark, Icon } from '../components/Icon'
+import { Reveal } from '../components/Reveal'
 import { shareYearReview } from '../lib/shareCards'
 
 // Year in Review — a shareable end-of-year recap across all of your buddies.
@@ -57,6 +58,7 @@ export function YearInReview() {
       )}
 
       {/* Hero — mirrors the shareable card. */}
+      <Reveal>
       <div className="jb-cover yir-cover">
         <div className="jb-cover-head">
           <BrandMark size={28} />
@@ -75,8 +77,14 @@ export function YearInReview() {
           <div><strong>{review.buddies}</strong><span>{review.buddies === 1 ? 'buddy' : 'buddies'}</span></div>
         </div>
 
-        {(review.toughWeeks > 0 || review.strongestMonth) && (
+        {(review.kgLost != null || review.toughWeeks > 0 || review.strongestMonth) && (
           <div className="yir-highlights">
+            {review.kgLost != null && (
+              <div className="yir-hl">
+                <span className="yir-hl-num">{review.kgLost} kg</span>
+                <span>lost this year</span>
+              </div>
+            )}
             {review.toughWeeks > 0 && (
               <div className="yir-hl">
                 <span className="yir-hl-num">{review.toughWeeks}</span>
@@ -106,28 +114,36 @@ export function YearInReview() {
           </div>
         )}
       </div>
+      </Reveal>
 
-      <button className="btn" style={{ marginTop: 16 }} disabled={busy} onClick={share}>
-        <Icon name="share" size={17} /> {busy ? 'Preparing…' : `Share my ${review.year}`}
-      </button>
-      <p className="muted center" style={{ fontSize: 12, marginTop: 8 }}>
-        {isPremium
-          ? 'Your card includes your favourite encouragement. No names or health details are shared.'
-          : 'Shares a clean recap image — no names or health details.'}
-      </p>
+      <Reveal delay={80}>
+        <button className="btn yir-recap-btn" style={{ marginTop: 16 }} onClick={() => navigate(`/recap?year=${review.year}`)}>
+          <Icon name="spark" size={17} /> Play your {review.year} recap
+        </button>
+        <button className="btn ghost" style={{ marginTop: 8 }} disabled={busy} onClick={share}>
+          <Icon name="share" size={17} /> {busy ? 'Preparing…' : `Share my ${review.year}`}
+        </button>
+        <p className="muted center" style={{ fontSize: 12, marginTop: 8 }}>
+          {isPremium
+            ? 'Your card includes your favourite encouragement. No names or health details are shared.'
+            : 'Shares a clean recap image — no names or health details.'}
+        </p>
+      </Reveal>
 
       {/* Cross-sell the keepsake. */}
       {!isPremium && review.favoriteEncouragement && (
-        <div className="card flat list-tap jb-teaser" style={{ marginTop: 14 }} onClick={() => navigate('/journey-book')}>
-          <span className="row-ico"><Icon name="spark" size={20} /></span>
-          <div style={{ flex: 1 }}>
-            <strong>Make it personal with Premium</strong>
-            <div className="muted" style={{ fontSize: 13 }}>
-              Add your favourite encouragement to the card, and get a PDF keepsake of your whole story.
+        <Reveal delay={120}>
+          <div className="card flat list-tap jb-teaser" style={{ marginTop: 14 }} onClick={() => navigate('/journey-book')}>
+            <span className="row-ico"><Icon name="spark" size={20} /></span>
+            <div style={{ flex: 1 }}>
+              <strong>Make it personal with Premium</strong>
+              <div className="muted" style={{ fontSize: 13 }}>
+                Add your favourite encouragement to the card, and get a PDF keepsake of your whole story.
+              </div>
             </div>
+            <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
           </div>
-          <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
-        </div>
+        </Reveal>
       )}
     </div>
   )

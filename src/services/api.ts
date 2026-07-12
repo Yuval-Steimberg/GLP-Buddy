@@ -16,6 +16,7 @@ import type {
   TrioMemberRow,
   TrioMessageRow,
   TrioRow,
+  WeightLogRow,
 } from '../lib/database.types'
 import type { Profile } from '../types'
 
@@ -655,6 +656,28 @@ export const checkins = {
       )
       .subscribe()
     return () => { void sb.removeChannel(channel) }
+  },
+}
+
+// ---- Weight logs (private to the user) ------------------------------------
+export const weightLogs = {
+  async add(userId: string, kg: number): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('weight_logs').insert({ user_id: userId, kg })
+    if (error) throw error
+  },
+
+  // The caller's own weight history (RLS is self-only).
+  async forUser(userId: string): Promise<WeightLogRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('weight_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('logged_at', { ascending: false })
+      .limit(400)
+    if (error) throw error
+    return data ?? []
   },
 }
 

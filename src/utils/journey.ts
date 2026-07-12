@@ -8,6 +8,7 @@ import type {
   Milestone,
   MilestoneType,
   TimelineEvent,
+  WeightLog,
   YearReview,
 } from '../types'
 
@@ -193,6 +194,7 @@ export function buildYearReview(args: {
   messages: ChatMessage[]
   timeline: TimelineEvent[]
   checkins: Checkin[]
+  weightLogs?: WeightLog[]
   now?: number
 }): YearReview {
   const { year, meId, meName } = args
@@ -258,6 +260,21 @@ export function buildYearReview(args: {
   const strongestMonth =
     bestMonth >= 0 ? new Date(year, bestMonth, 1).toLocaleString('en', { month: 'long' }) : undefined
 
+  // Weight lost during the year, if the user logged any weights. Start = the
+  // last log before the year began (carry-over), else the earliest log in the
+  // year; end = the latest log in the year. Only report an actual loss.
+  let kgLost: number | undefined
+  const myWeights = (args.weightLogs ?? []).filter((w) => w.userId === meId).sort((a, b) => a.loggedAt - b.loggedAt)
+  const yearStart = new Date(year, 0, 1).getTime()
+  const inYearWeights = myWeights.filter((w) => inYear(w.loggedAt))
+  if (inYearWeights.length > 0) {
+    const priorLogs = myWeights.filter((w) => w.loggedAt < yearStart)
+    const startKg = priorLogs.length ? priorLogs[priorLogs.length - 1].kg : inYearWeights[0].kg
+    const endKg = inYearWeights[inYearWeights.length - 1].kg
+    const diff = Math.round((startKg - endKg) * 10) / 10
+    if (diff > 0) kgLost = diff
+  }
+
   // Biggest milestone reached this year.
   const types = milestones.map((m) => m.type)
   const topMilestone = MILESTONE_RANK.find((t) => types.includes(t))
@@ -282,8 +299,10 @@ export function buildYearReview(args: {
     messages: messages.length,
     photos,
     toughWeeks: toughWeekKeys.size,
+    kgLost,
     strongestMonth,
     topMilestone,
+    milestoneTypes: [...new Set(types)],
     favoriteEncouragement,
     hasData: milestones.length + messages.length + buddies.size > 0,
   }

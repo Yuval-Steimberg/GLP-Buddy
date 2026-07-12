@@ -14,6 +14,7 @@ import {
   rowToTimeline,
   rowToTrioMessage,
   rowToUser,
+  rowToWeightLog,
 } from './mappers'
 
 export async function hydrate(userId: string): Promise<AppState> {
@@ -108,6 +109,16 @@ export async function hydrate(userId: string): Promise<AppState> {
     state.checkins = checkins.map(rowToCheckin)
   } catch (e) {
     console.error('checkins fetch failed (is migration 0013 applied?)', e)
+  }
+
+  // The user's private weight history (for progress recaps). Non-fatal: if the
+  // weight_logs table doesn't exist yet (migration 0016 not applied), degrade
+  // gracefully instead of bricking the whole app load.
+  try {
+    const logs = await api.weightLogs.forUser(userId)
+    state.weightLogs = logs.map(rowToWeightLog)
+  } catch (e) {
+    console.error('weight logs fetch failed (is migration 0016 applied?)', e)
   }
 
   return state

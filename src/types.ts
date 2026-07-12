@@ -74,6 +74,13 @@ export interface Checkin {
   createdAt: number
 }
 
+export interface WeightLog {
+  id: string
+  userId: string
+  kg: number
+  loggedAt: number
+}
+
 export interface JourneyCapsule {
   label: string // e.g. "July 2026"
   monthsTogether: number
@@ -123,8 +130,10 @@ export interface YearReview {
   messages: number
   photos: number
   toughWeeks: number // distinct weeks with a rough side-effect check-in
+  kgLost?: number // weight lost during the year, if weight was logged
   strongestMonth?: string // e.g. 'August'
   topMilestone?: MilestoneType
+  milestoneTypes: MilestoneType[] // distinct milestone types reached this year
   favoriteEncouragement?: string // a received message that stood out (no name)
   hasData: boolean
 }
@@ -286,5 +295,6 @@ export interface AppState {
   trios: BuddyTrioGroup[]
   trioMessages: TrioMessage[]
   checkins: Checkin[]
+  weightLogs: WeightLog[]
   passedUserIds: string[]
 }

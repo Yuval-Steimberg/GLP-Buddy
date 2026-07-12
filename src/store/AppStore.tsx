@@ -49,7 +49,9 @@ function load(): AppState {
   if (USE_SUPABASE) return buildEmptyState()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as AppState
+    // Backfill any keys added by a newer build onto an older persisted cache, so
+    // selectors that read new arrays (e.g. weightLogs) never hit `undefined`.
+    if (raw) return { ...buildEmptyState(), ...(JSON.parse(raw) as AppState) }
   } catch {
     /* ignore */
   }
@@ -143,6 +145,8 @@ interface AppStoreValue {
   commentOnTimeline: (relationshipId: string, text: string) => void
   addTimelinePhoto: (relationshipId: string, imageUrl: string, caption?: string) => void
   postCheckin: (status: CheckinStatus, note?: string) => void
+  postWeight: (kg: number) => void
+  latestWeight: () => number | null
   requestSupport: () => void
   latestCheckin: (userId: string) => Checkin | null
   buddyMemories: (rel: BuddyRelationship) => string[]
@@ -1094,6 +1098,36 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     })
   }, [refresh, state.currentUserId])
 
+  // Log the user's current weight (private — never shown to buddies). Powers the
+  // "kg lost" figure in recaps. Optimistic in both modes.
+  const postWeight = useCallback((kg: number) => {
+    if (!Number.isFinite(kg) || kg <= 0) return
+    const rounded = Math.round(kg * 10) / 10
+    const add = (meId: string) => (prev: AppState): AppState => ({
+      ...prev,
+      weightLogs: [{ id: genId('wt'), userId: meId, kg: rounded, loggedAt: Date.now() }, ...prev.weightLogs],
+    })
+    if (USE_SUPABASE) {
+      const meId = state.currentUserId
+      if (meId) setState(add(meId))
+      runWrite('postWeight', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.weightLogs.add(me, rounded)
+        await refresh()
+      })
+      return
+    }
+    setState((prev) => (prev.currentUserId ? add(prev.currentUserId)(prev) : prev))
+  }, [refresh, state.currentUserId])
+
+  // The user's most recent logged weight (or null if they've never logged one).
+  const latestWeight = useCallback((): number | null => {
+    const me = state.currentUserId
+    if (!me) return null
+    const mine = state.weightLogs.filter((w) => w.userId === me).sort((a, b) => b.loggedAt - a.loggedAt)
+    return mine[0]?.kg ?? null
+  }, [state.currentUserId, state.weightLogs])
+
   // (11) "Someone Gets It" — one tap notifies all active buddies.
   const requestSupport = useCallback(() => {
     if (USE_SUPABASE) {
@@ -1217,8 +1251,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       messages: state.messages,
       timeline: state.timeline,
       checkins: state.checkins,
+      weightLogs: state.weightLogs,
     })
-  }, [state.currentUserId, state.users, state.relationships, state.milestones, state.messages, state.timeline, state.checkins])
+  }, [state.currentUserId, state.users, state.relationships, state.milestones, state.messages, state.timeline, state.checkins, state.weightLogs])
 
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
@@ -1794,6 +1829,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       commentOnTimeline,
       addTimelinePhoto,
       postCheckin,
+      postWeight,
+      latestWeight,
       requestSupport,
       latestCheckin,
       buddyMemories,
@@ -1846,6 +1883,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       commentOnTimeline,
       addTimelinePhoto,
       postCheckin,
+      postWeight,
+      latestWeight,
       requestSupport,
       latestCheckin,
       buddyMemories,

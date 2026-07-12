@@ -9,6 +9,7 @@ import type {
   RelationshipRow,
   TimelineEventRow,
   TrioMessageRow,
+  WeightLogRow,
 } from '../lib/database.types'
 import type {
   AppNotification,
@@ -31,6 +32,7 @@ import type {
   TreatmentStage,
   Checkin,
   CheckinStatus,
+  WeightLog,
 } from '../types'
 
 const ms = (iso: string) => Date.parse(iso)
@@ -149,6 +151,15 @@ export function rowToCheckin(r: CheckinRow): Checkin {
     status: r.status as CheckinStatus,
     note: r.note ?? undefined,
     createdAt: ms(r.created_at),
+  }
+}
+
+export function rowToWeightLog(r: WeightLogRow): WeightLog {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    kg: Number(r.kg),
+    loggedAt: ms(r.logged_at),
   }
 }
 

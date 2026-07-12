@@ -131,3 +131,11 @@ export interface CheckinRow {
   note: string | null
   created_at: string
 }
+
+export interface WeightLogRow {
+  id: string
+  user_id: string
+  kg: number
+  logged_at: string
+  created_at: string
+}
