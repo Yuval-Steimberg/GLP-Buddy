@@ -68,7 +68,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `messages.image_url` (+ text nullable), 0010 **security hardening** (see below),
   0011 `messages.reply_to` (quoted replies), 0012 `timeline_events.image_url`
   (timeline photos), 0013 GLP features (injection day + check-ins + support RPC),
-  0014 `messages.from_coach` ("Hey Coach" in the buddy chat).
+  0014 `messages.from_coach` ("Hey Coach" in the buddy chat), 0015
+  `profiles.is_premium` (premium tier — see Monetization below).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -108,6 +109,47 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   in try/catch. This bit us: 0013 unapplied → checkins query failed → stuck load.
 - `supabase/maintenance/reset_all_data.sql` wipes all users/data (deletes
   `auth.users`, cascades everywhere).
+- Migration 0015: `profiles.is_premium` (bool, default false). **Privileged flag,
+  exactly like `is_staff`** — NOT added to the 0010 editable-column GRANT, so
+  clients can only READ it, never set it. Written only by the service role (a
+  future billing webhook / admin SQL). Mapped to `User.isPremium`
+  (`mappers.rowToUser`); `profileToRow` must NEVER include it (keeps it
+  non-writable). Grant premium for testing:
+  `update profiles set is_premium=true where id='…'`.
+
+## Monetization / Premium (Journey Book)
+- **First premium feature** (branch `claude/premium-monetization-features-*`):
+  **The Journey Book** — `/journey-book` (`src/pages/JourneyBook.tsx`, NOT in
+  `NAV_PATHS` so the bottom nav is hidden → `TopBar back` gives it a back
+  button, same as Coach/Capsule). Reached from a teaser card on BuddyHome
+  (`.jb-teaser`, under the Journey Capsule card).
+- **Free = the retention hook:** a month-by-month auto-written story of a buddy
+  pair, from the month they matched to now. Pure/derived, no schema — computed by
+  `buildJourneyBook()` in `src/utils/journey.ts` from existing milestones +
+  messages + timeline. Store selector `journeyBook(rel)`. Each month is a
+  `JourneyChapter` with an auto-written `story: string[]` (types in `types.ts`).
+- **Premium = the exports:** `src/lib/journeyExport.ts` — `exportJourneyPdf(book)`
+  (designed multi-page **jsPDF** keepsake, native vector drawing in Helvetica, no
+  html2canvas path used) and `shareJourneyCard(book)` (single portrait PNG for
+  IG/FB, same canvas approach as `Capsule.drawCapsule`). Both `deliver()` via
+  `navigator.share` (files) → download fallback. **jsPDF is a heavy dep** (pulls
+  html2canvas) but the whole `/journey-book` chunk is lazy-loaded, so it only
+  loads on that page — fine.
+- **Gating:** `isPremium` (store value = `currentUser?.isPremium ?? false`).
+  Non-premium sees the story free + a `.jb-lock` upsell → `PremiumSheet`
+  (benefits + CTA). **Demo/local mode only:** `setPremiumDemo(v)` flips the flag
+  locally (persisted in the local cache) so both the paywall AND the unlocked
+  export are demoable without billing; it's a **no-op in Supabase mode** (real
+  flag is server-only). The sheet shows "Preview Premium (demo)" in demo mode and
+  "Notify me when Premium launches" in Supabase mode.
+- **Billing is NOT wired yet** (deliberate). When it is: the app is
+  Capacitor-wrapped, so **Apple/Google mandate their IAP** for digital subs
+  inside the native apps (can't use Stripe there); the **PWA at glpenpal.com can
+  use Stripe**. Either way, the billing webhook sets `profiles.is_premium` with
+  the service role — the client never writes it.
+- **Deploy:** apply migration 0015, then push the frontend (client reads
+  `is_premium` — degrade is safe since a missing column just reads false via the
+  mapper default, but apply it to actually gate). No new secret.
 
 ## Hard-won gotchas (do not regress these)
 - **supabase-js deadlock**: never call `supabase.auth.getUser()`/`getSession()`

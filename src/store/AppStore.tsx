@@ -21,7 +21,9 @@ import type {
   Checkin,
   CheckinStatus,
   JourneyCapsule,
+  JourneyBook,
 } from '../types'
+import { buildJourneyBook } from '../utils/journey'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
 import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
@@ -106,6 +108,10 @@ export interface TrioEligibility {
 interface AppStoreValue {
   state: AppState
   currentUser: User | null
+  // premium
+  isPremium: boolean
+  setPremiumDemo: (v: boolean) => void // demo/local mode only — real flag comes from DB
+  journeyBook: (rel: BuddyRelationship) => JourneyBook
   // onboarding / safety
   completeOnboarding: (profile: Profile) => void
   updateProfile: (profile: Profile) => void
@@ -323,6 +329,27 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [hydrateFor])
 
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : null
+
+  // Premium gating. In Supabase mode this reflects the (server-only writable)
+  // profiles.is_premium flag; in demo/local mode it can be toggled locally so
+  // both the paywall and the unlocked experience are demoable without billing.
+  const isPremium = currentUser?.isPremium ?? false
+
+  // Demo/local-mode only: flip the current user's premium flag (persisted with
+  // the local state cache). A no-op in Supabase mode, where is_premium is set
+  // exclusively by the billing webhook / service role.
+  const setPremiumDemo = useCallback((v: boolean) => {
+    if (USE_SUPABASE) return
+    setState((prev) => {
+      if (!prev.currentUserId) return prev
+      const me = prev.users[prev.currentUserId]
+      if (!me) return prev
+      return {
+        ...prev,
+        users: { ...prev.users, [me.id]: { ...me, isPremium: v } },
+      }
+    })
+  }, [])
 
   // ---- helpers -----------------------------------------------------------
   const pushNotification = useCallback(
@@ -1147,6 +1174,24 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state.milestones, state.messages, state.timeline])
 
+  // The Journey Book — the full month-by-month auto-written story of a buddy
+  // pair, from the month they matched to now. Free to read (the retention hook);
+  // Premium unlocks the keepsake PDF + shareable image exports (JourneyBook.tsx).
+  const journeyBook = useCallback((rel: BuddyRelationship): JourneyBook => {
+    const me = state.currentUserId
+    const buddyId = rel.userIds.find((id) => id !== me)
+    const meName = (me && state.users[me]?.profile.nickname) || 'You'
+    const buddyName = (buddyId && state.users[buddyId]?.profile.nickname) || 'your buddy'
+    return buildJourneyBook({
+      rel,
+      meName,
+      buddyName,
+      milestones: state.milestones,
+      messages: state.messages,
+      timeline: state.timeline,
+    })
+  }, [state.currentUserId, state.users, state.milestones, state.messages, state.timeline])
+
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
       'You\'ve got this.',
@@ -1693,6 +1738,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       currentUser,
+      isPremium,
+      setPremiumDemo,
+      journeyBook,
       completeOnboarding,
       updateProfile,
       acceptSafety,
@@ -1740,6 +1788,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [
       state,
       currentUser,
+      isPremium,
+      setPremiumDemo,
+      journeyBook,
       completeOnboarding,
       updateProfile,
       acceptSafety,

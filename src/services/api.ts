@@ -171,6 +171,7 @@ export const profiles = {
       age_confirmed: true,
       terms_version: null,
       is_staff: false,
+      is_premium: false,
       ended_relationship_count: 0,
       updated_at: (r.created_at as string) ?? new Date(0).toISOString(),
       ...r,

@@ -207,6 +207,17 @@ export function BuddyHome() {
                 )}
               </div>
 
+              <div className="card flat list-tap jb-teaser" style={{ marginBottom: 14 }} onClick={() => navigate('/journey-book')}>
+                <span className="row-ico"><Icon name="doc" size={20} /></span>
+                <div style={{ flex: 1 }}>
+                  <strong>Your Journey Book</strong>
+                  <div className="muted" style={{ fontSize: 13 }}>
+                    Your whole story, written month by month — keep it forever.
+                  </div>
+                </div>
+                <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+              </div>
+
               <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 8 }}>Recent milestones</div>
               {recentMs.length === 0 ? (
                 <p className="muted" style={{ fontSize: 14, marginTop: 0 }}>

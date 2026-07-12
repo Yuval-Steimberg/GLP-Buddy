@@ -23,6 +23,7 @@ export interface ProfileRow {
   age_confirmed: boolean
   terms_version: string | null
   is_staff: boolean
+  is_premium: boolean
   onboarding_complete: boolean
   ended_relationship_count: number
   created_at: string

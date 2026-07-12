@@ -84,6 +84,33 @@ export interface JourneyCapsule {
   favoriteMemory?: string
 }
 
+// One month "chapter" in the Journey Book — an auto-written story of a buddy
+// pair's month, derived entirely from existing data (no new schema).
+export interface JourneyChapter {
+  key: string // 'YYYY-MM'
+  label: string // 'July 2026'
+  monthsTogether: number
+  milestoneTypes: MilestoneType[]
+  milestones: number
+  messages: number
+  photos: number
+  story: string[] // the auto-written narrative lines for this month
+}
+
+// The whole Journey Book for a relationship — cover stats + monthly chapters.
+export interface JourneyBook {
+  meName: string
+  buddyName: string
+  startDate: number
+  totalDays: number
+  totalMonths: number
+  totalMilestones: number
+  totalMessages: number
+  totalPhotos: number
+  topMilestone?: MilestoneType // the "biggest" milestone reached across the journey
+  chapters: JourneyChapter[] // oldest → newest
+}
+
 export interface User {
   id: string
   profile: Profile
@@ -91,6 +118,7 @@ export interface User {
   acceptedSafety: boolean
   onboardingComplete: boolean
   isStaff?: boolean
+  isPremium?: boolean // premium subscriber — unlocks Journey Book keepsake exports
   // Behaviour signals used for Buddy Trio eligibility scoring.
   endedRelationshipCount: number
 }

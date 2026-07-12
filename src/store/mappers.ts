@@ -65,6 +65,7 @@ export function rowToUser(r: ProfileRow): User {
     acceptedSafety: r.accepted_safety,
     onboardingComplete: r.onboarding_complete,
     isStaff: r.is_staff,
+    isPremium: r.is_premium,
     endedRelationshipCount: r.ended_relationship_count,
   }
 }
