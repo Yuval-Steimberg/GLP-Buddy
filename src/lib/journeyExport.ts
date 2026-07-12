@@ -1,41 +1,10 @@
 import { jsPDF } from 'jspdf'
 import type { JourneyBook } from '../types'
+import { BLUE, CREAM, FOOTER, INK, MUTED, SAGE, SAGE_DEEP, SAND, deliver, fmtDate } from './shareBrand'
 
-// Brand palette (Sage). RGB tuples for jsPDF / canvas.
-const CREAM: [number, number, number] = [246, 244, 238]
-const SAGE: [number, number, number] = [94, 140, 116]
-const SAGE_DEEP: [number, number, number] = [67, 107, 87]
-const INK: [number, number, number] = [30, 42, 37]
-const BLUE: [number, number, number] = [95, 132, 151]
-const SAND: [number, number, number] = [194, 149, 95]
-const MUTED: [number, number, number] = [86, 99, 92]
-
-const FOOTER = 'GLPenPal · a glp buddy who gets it'
-
-function fmtDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
-// Try the Web Share sheet (best on mobile PWAs); fall back to a download.
-async function deliver(blob: Blob, filename: string, title: string) {
-  const file = new File([blob], filename, { type: blob.type })
-  // deno-lint-ignore no-explicit-any
-  const nav = navigator as any
-  try {
-    if (nav.canShare && nav.canShare({ files: [file] })) {
-      await nav.share({ files: [file], title })
-      return
-    }
-  } catch {
-    /* user cancelled the share sheet — fall through to download */
-  }
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
+// The premium PDF keepsake. jsPDF is heavy (pulls html2canvas), so this module
+// is imported ONLY from the Journey Book page — the canvas share cards live in
+// shareCards.ts and stay jsPDF-free. The shared brand helpers are in shareBrand.
 
 // ---- PDF keepsake ---------------------------------------------------------
 
@@ -178,87 +147,3 @@ export async function exportJourneyPdf(book: JourneyBook) {
   await deliver(blob, 'GLPenPal-Journey-Book.pdf', `${book.meName} & ${book.buddyName} — Journey Book`)
 }
 
-// ---- Shareable image card (year-in-review style) --------------------------
-
-function heartCanvas(ctx: CanvasRenderingContext2D, W: number, top: number) {
-  const OUTER = 'M50,83 C50,83 15,57 15,39 C15,29 24,24 31,24 C39,24 46,30 50,38 C54,30 61,24 69,24 C76,24 85,29 85,39 C85,57 50,83 50,83 Z'
-  const INNER = 'M50,71 C50,71 28,53 28,42 C28,35 33,32 38,32 C43,32 47,36 50,41 C53,36 57,32 62,32 C67,32 72,35 72,42 C72,53 50,71 50,71 Z'
-  ctx.save()
-  ctx.translate(W / 2 - 120, top)
-  ctx.scale(2.4, 2.4)
-  const band = new Path2D(`${OUTER} ${INNER}`)
-  ctx.save(); ctx.beginPath(); ctx.rect(-2, -2, 52, 104); ctx.clip(); ctx.fillStyle = '#5e8c74'; ctx.fill(band, 'evenodd'); ctx.restore()
-  ctx.save(); ctx.beginPath(); ctx.rect(50, -2, 52, 104); ctx.clip(); ctx.fillStyle = '#5f8497'; ctx.fill(band, 'evenodd'); ctx.restore()
-  ctx.fillStyle = '#5e8c74'; ctx.beginPath(); ctx.arc(31.5, 19, 9, 0, 7); ctx.fill()
-  ctx.fillStyle = '#5f8497'; ctx.beginPath(); ctx.arc(68.5, 19, 9, 0, 7); ctx.fill()
-  ctx.restore()
-}
-
-// A single portrait PNG summarising the whole journey — made for Instagram /
-// Facebook. Shows only what's already on the (self-owned) card: no health data.
-export async function shareJourneyCard(book: JourneyBook) {
-  const W = 1080
-  const H = 1350
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
-  const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = '#f4f1e8'
-  ctx.fillRect(0, 0, W, H)
-
-  heartCanvas(ctx, W, 110)
-
-  const cx = W / 2
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#c2955f'
-  ctx.font = '700 34px Inter, sans-serif'
-  ctx.fillText('MY GLP JOURNEY', cx, 470)
-
-  ctx.fillStyle = '#1e2a25'
-  ctx.font = '700 60px "Space Grotesk", Inter, sans-serif'
-  ctx.fillText(`${book.meName} & ${book.buddyName}`, cx, 545)
-
-  ctx.font = '500 34px Inter, sans-serif'
-  ctx.fillStyle = '#56635c'
-  ctx.fillText(`${book.totalDays} days together · since ${fmtDate(book.startDate)}`, cx, 600)
-
-  const stats: [string, string][] = [
-    [String(book.totalMonths), book.totalMonths === 1 ? 'month' : 'months'],
-    [String(book.totalMilestones), 'milestones'],
-    [String(book.totalMessages), 'messages'],
-    [String(book.totalPhotos), 'photos'],
-  ]
-  const colW = W / 4
-  stats.forEach(([num, lbl], i) => {
-    const x = colW * i + colW / 2
-    ctx.fillStyle = '#436b57'
-    ctx.font = '700 72px "Space Grotesk", Inter, sans-serif'
-    ctx.fillText(num, x, 780)
-    ctx.fillStyle = '#56635c'
-    ctx.font = '600 26px Inter, sans-serif'
-    ctx.fillText(lbl, x, 825)
-  })
-
-  if (book.topMilestone) {
-    ctx.fillStyle = '#eef2ee'
-    const bw = W - 200
-    const bx = (W - bw) / 2
-    ctx.beginPath()
-    ctx.roundRect(bx, 910, bw, 150, 24)
-    ctx.fill()
-    ctx.fillStyle = '#c2955f'
-    ctx.font = '700 26px Inter, sans-serif'
-    ctx.fillText('BIGGEST MILESTONE', cx, 975)
-    ctx.fillStyle = '#1e2a25'
-    ctx.font = '700 44px "Space Grotesk", Inter, sans-serif'
-    ctx.fillText(book.topMilestone, cx, 1025)
-  }
-
-  ctx.fillStyle = '#56635c'
-  ctx.font = '600 30px Inter, sans-serif'
-  ctx.fillText(FOOTER, cx, H - 70)
-
-  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'))
-  if (!blob) return
-  await deliver(blob, 'GLPenPal-Journey.png', `My GLPenPal Journey — ${book.meName} & ${book.buddyName}`)
-}

@@ -22,8 +22,9 @@ import type {
   CheckinStatus,
   JourneyCapsule,
   JourneyBook,
+  YearReview,
 } from '../types'
-import { buildJourneyBook } from '../utils/journey'
+import { availableReviewYears, buildJourneyBook, buildYearReview } from '../utils/journey'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
 import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
@@ -112,6 +113,8 @@ interface AppStoreValue {
   isPremium: boolean
   setPremiumDemo: (v: boolean) => void // demo/local mode only — real flag comes from DB
   journeyBook: (rel: BuddyRelationship) => JourneyBook
+  yearReview: (year: number) => YearReview
+  reviewYears: () => number[]
   // onboarding / safety
   completeOnboarding: (profile: Profile) => void
   updateProfile: (profile: Profile) => void
@@ -1192,6 +1195,31 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     })
   }, [state.currentUserId, state.users, state.milestones, state.messages, state.timeline])
 
+  // Years that have any journey activity — powers the Year in Review year picker.
+  const reviewYears = useCallback((): number[] => {
+    const me = state.currentUserId
+    const rels = state.relationships.filter((r) => me && r.userIds.includes(me))
+    return availableReviewYears({ relationships: rels, milestones: state.milestones, messages: state.messages })
+  }, [state.currentUserId, state.relationships, state.milestones, state.messages])
+
+  // Year in Review — a shareable end-of-year recap aggregated across ALL of the
+  // user's buddies (JourneyBook is per-pair; this is the whole year). Free +
+  // viral: the shareable card drives growth (YearInReview.tsx).
+  const yearReview = useCallback((year: number): YearReview => {
+    const me = state.currentUserId ?? ''
+    const meName = (state.currentUserId && state.users[state.currentUserId]?.profile.nickname) || 'You'
+    return buildYearReview({
+      year,
+      meId: me,
+      meName,
+      relationships: state.relationships,
+      milestones: state.milestones,
+      messages: state.messages,
+      timeline: state.timeline,
+      checkins: state.checkins,
+    })
+  }, [state.currentUserId, state.users, state.relationships, state.milestones, state.messages, state.timeline, state.checkins])
+
   const sendEncouragement = useCallback((relationshipId: string) => {
     const messages = [
       'You\'ve got this.',
@@ -1741,6 +1769,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       isPremium,
       setPremiumDemo,
       journeyBook,
+      yearReview,
+      reviewYears,
       completeOnboarding,
       updateProfile,
       acceptSafety,
@@ -1791,6 +1821,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       isPremium,
       setPremiumDemo,
       journeyBook,
+      yearReview,
+      reviewYears,
       completeOnboarding,
       updateProfile,
       acceptSafety,

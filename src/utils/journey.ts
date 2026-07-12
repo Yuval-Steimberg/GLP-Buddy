@@ -1,11 +1,14 @@
 import type {
   BuddyRelationship,
   ChatMessage,
+  Checkin,
+  CheckinStatus,
   JourneyBook,
   JourneyChapter,
   Milestone,
   MilestoneType,
   TimelineEvent,
+  YearReview,
 } from '../types'
 
 const DAY = 86400000
@@ -157,5 +160,131 @@ export function buildJourneyBook(args: {
     totalPhotos: chapters.reduce((s, c) => s + c.photos, 0),
     topMilestone,
     chapters,
+  }
+}
+
+// ---- Year in Review -------------------------------------------------------
+
+// Side-effect check-in statuses that count as a "rough" day.
+const TOUGH_STATUSES: CheckinStatus[] = ['nausea', 'fatigue', 'constipation', 'hungry', 'low']
+
+// Which calendar years have any journey activity for this user — used to offer
+// a year picker and to default to the most recent year with data.
+export function availableReviewYears(args: {
+  relationships: BuddyRelationship[]
+  milestones: Milestone[]
+  messages: ChatMessage[]
+}): number[] {
+  const years = new Set<number>()
+  for (const r of args.relationships) years.add(new Date(r.createdAt).getFullYear())
+  for (const m of args.milestones) years.add(new Date(m.createdAt).getFullYear())
+  for (const m of args.messages) years.add(new Date(m.createdAt).getFullYear())
+  return [...years].sort((a, b) => b - a)
+}
+
+// Aggregate a whole calendar year across ALL the user's buddies into a
+// shareable recap. Pure/deterministic (pass `now` for tests).
+export function buildYearReview(args: {
+  year: number
+  meId: string
+  meName: string
+  relationships: BuddyRelationship[] // all relationships the user belongs to
+  milestones: Milestone[]
+  messages: ChatMessage[]
+  timeline: TimelineEvent[]
+  checkins: Checkin[]
+  now?: number
+}): YearReview {
+  const { year, meId, meName } = args
+  const now = args.now ?? Date.now()
+  const inYear = (ts: number) => new Date(ts).getFullYear() === year
+
+  const myRels = args.relationships.filter((r) => r.userIds.includes(meId))
+  const myRelIds = new Set(myRels.map((r) => r.id))
+
+  const milestones = args.milestones.filter((m) => myRelIds.has(m.relationshipId) && inYear(m.createdAt))
+  const messages = args.messages.filter((m) => myRelIds.has(m.relationshipId) && inYear(m.createdAt))
+  const timeline = args.timeline.filter((e) => myRelIds.has(e.relationshipId) && inYear(e.createdAt))
+  const checkins = args.checkins.filter((c) => c.userId === meId && inYear(c.createdAt))
+
+  // Buddies connected at any point during the year (matched on/before year end,
+  // and not ended before the year started).
+  const yearEnd = new Date(year, 11, 31, 23, 59, 59).getTime()
+  const buddies = new Set<string>()
+  for (const r of myRels) {
+    if (r.createdAt <= yearEnd) {
+      const other = r.userIds.find((id) => id !== meId)
+      if (other) buddies.add(other)
+    }
+  }
+
+  // Journey start = earliest relationship or milestone overall.
+  const allDates = [
+    ...myRels.map((r) => r.createdAt),
+    ...args.milestones.filter((m) => myRelIds.has(m.relationshipId)).map((m) => m.createdAt),
+  ]
+  const journeyStart = allDates.length ? Math.min(...allDates) : undefined
+  const asOf = year === new Date(now).getFullYear() ? now : yearEnd
+  const daysOnJourney = journeyStart ? Math.max(0, Math.floor((asOf - journeyStart) / DAY)) : 0
+
+  // Photos: timeline photo posts + chat image messages.
+  const photos =
+    timeline.filter((e) => e.type === 'photo').length + messages.filter((m) => m.imageUrl).length
+
+  // Tough weeks overcome: distinct ISO-ish weeks with at least one rough check-in.
+  const toughWeekKeys = new Set<string>()
+  for (const c of checkins) {
+    if (!TOUGH_STATUSES.includes(c.status)) continue
+    const d = new Date(c.createdAt)
+    const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / DAY)
+    toughWeekKeys.add(`${d.getFullYear()}-${Math.floor(dayOfYear / 7)}`)
+  }
+
+  // Strongest month: most milestones, tie-break most messages.
+  const monthScore = new Array(12).fill(0).map(() => ({ ms: 0, msg: 0 }))
+  for (const m of milestones) monthScore[new Date(m.createdAt).getMonth()].ms++
+  for (const m of messages) monthScore[new Date(m.createdAt).getMonth()].msg++
+  let bestMonth = -1
+  monthScore.forEach((s, i) => {
+    if (s.ms === 0 && s.msg === 0) return
+    if (
+      bestMonth === -1 ||
+      s.ms > monthScore[bestMonth].ms ||
+      (s.ms === monthScore[bestMonth].ms && s.msg > monthScore[bestMonth].msg)
+    ) {
+      bestMonth = i
+    }
+  })
+  const strongestMonth =
+    bestMonth >= 0 ? new Date(year, bestMonth, 1).toLocaleString('en', { month: 'long' }) : undefined
+
+  // Biggest milestone reached this year.
+  const types = milestones.map((m) => m.type)
+  const topMilestone = MILESTONE_RANK.find((t) => types.includes(t))
+
+  // A favourite encouragement: the most-reacted message you received this year
+  // (tie-break the longest), trimmed to a shareable quote. No name attached.
+  const received = messages
+    .filter((m) => m.senderId !== meId && !m.fromCoach && m.text && m.text.trim().length > 0)
+    .sort((a, b) => b.reactions.length - a.reactions.length || b.text.length - a.text.length)
+  let favoriteEncouragement = received[0]?.text?.trim()
+  if (favoriteEncouragement && favoriteEncouragement.length > 140) {
+    favoriteEncouragement = favoriteEncouragement.slice(0, 137).trimEnd() + '…'
+  }
+
+  return {
+    year,
+    meName,
+    journeyStart,
+    daysOnJourney,
+    buddies: buddies.size,
+    milestones: milestones.length,
+    messages: messages.length,
+    photos,
+    toughWeeks: toughWeekKeys.size,
+    strongestMonth,
+    topMilestone,
+    favoriteEncouragement,
+    hasData: milestones.length + messages.length + buddies.size > 0,
   }
 }

@@ -111,6 +111,24 @@ export interface JourneyBook {
   chapters: JourneyChapter[] // oldest → newest
 }
 
+// A shareable end-of-year recap aggregated across ALL the user's buddies for a
+// calendar year — the viral "Your GLP Journey 2026" card. Derived, no schema.
+export interface YearReview {
+  year: number
+  meName: string
+  journeyStart?: number // earliest relationship/milestone date overall
+  daysOnJourney: number // days on the journey by the end of the reviewed year
+  buddies: number // distinct buddies connected during the year
+  milestones: number
+  messages: number
+  photos: number
+  toughWeeks: number // distinct weeks with a rough side-effect check-in
+  strongestMonth?: string // e.g. 'August'
+  topMilestone?: MilestoneType
+  favoriteEncouragement?: string // a received message that stood out (no name)
+  hasData: boolean
+}
+
 export interface User {
   id: string
   profile: Profile

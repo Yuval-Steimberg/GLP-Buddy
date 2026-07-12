@@ -599,6 +599,20 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 .jb-pay-list li { display: flex; align-items: center; gap: 10px; font-size: 15px; }
 .jb-pay-list li svg { color: var(--primary-ink); flex: none; }
 
+/* --- Year in Review ------------------------------------------------------ */
+.yir-cover { text-align: left; }
+.yir-name { font-family: var(--font-display); font-size: 30px; color: var(--ink); line-height: 1.1; margin-top: 14px; }
+.yir-highlights { display: flex; gap: 10px; margin-top: 14px; }
+.yir-hl {
+  flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px;
+  background: var(--surface-2); border-radius: var(--radius-sm);
+}
+.yir-hl-num { font-family: var(--font-display); font-size: 20px; color: var(--primary-ink); }
+.yir-hl span:last-child { font-size: 12px; color: var(--ink-soft); }
+.yir-quote { margin-top: 16px; font-size: 15px; font-style: italic; line-height: 1.5; color: var(--ink); }
+.yir-entry { display: flex; align-items: center; gap: 12px; }
+.yir-entry .row-ico { background: var(--grad); color: #fff; }
+
 /* Journey Capsule mini-card (BuddyHome) */
 .capsule-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .capsule-grid > div { text-align: center; }

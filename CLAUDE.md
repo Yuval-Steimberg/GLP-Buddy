@@ -130,11 +130,14 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `JourneyChapter` with an auto-written `story: string[]` (types in `types.ts`).
 - **Premium = the exports:** `src/lib/journeyExport.ts` — `exportJourneyPdf(book)`
   (designed multi-page **jsPDF** keepsake, native vector drawing in Helvetica, no
-  html2canvas path used) and `shareJourneyCard(book)` (single portrait PNG for
-  IG/FB, same canvas approach as `Capsule.drawCapsule`). Both `deliver()` via
-  `navigator.share` (files) → download fallback. **jsPDF is a heavy dep** (pulls
-  html2canvas) but the whole `/journey-book` chunk is lazy-loaded, so it only
-  loads on that page — fine.
+  html2canvas path used). Canvas PNG share cards live in **`src/lib/shareCards.ts`**
+  (`shareJourneyCard` + `shareYearReview`, same approach as `Capsule.drawCapsule`);
+  shared colours/`deliver()`/`heartCanvas()` are in **`src/lib/shareBrand.ts`**.
+  Both `deliver()` via `navigator.share` (files) → download fallback.
+  **Split on purpose:** jsPDF is heavy (pulls html2canvas), so ONLY
+  `journeyExport.ts` imports it — `shareCards.ts`/`shareBrand.ts` are jsPDF-free
+  so the free/viral Year in Review page (canvas only) never loads jsPDF. The
+  `/journey-book` chunk (with jsPDF) is lazy-loaded, so it only loads there.
 - **Gating:** `isPremium` (store value = `currentUser?.isPremium ?? false`).
   Non-premium sees the story free + a `.jb-lock` upsell → `PremiumSheet`
   (benefits + CTA). **Demo/local mode only:** `setPremiumDemo(v)` flips the flag
@@ -150,6 +153,19 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
 - **Deploy:** apply migration 0015, then push the frontend (client reads
   `is_premium` — degrade is safe since a missing column just reads false via the
   mapper default, but apply it to actually gate). No new secret.
+- **Year in Review** (`/year-in-review`, `src/pages/YearInReview.tsx`, NOT in
+  `NAV_PATHS`): a shareable end-of-year recap **aggregated across ALL the user's
+  buddies** for a calendar year (JourneyBook is per-pair; this is the whole year).
+  `buildYearReview()` + `availableReviewYears()` in `utils/journey.ts`; store
+  selectors `yearReview(year)` + `reviewYears()`. Stats: days on journey,
+  milestones, messages, buddies, photos, **tough weeks overcome** (distinct weeks
+  with a rough side-effect check-in), **strongest month**, biggest milestone, and
+  a **favourite encouragement** (the most-reacted message you received, no name).
+  **Deliberately FREE + viral** (free users sharing "My GLP Journey 2026" is the
+  growth loop) — the shareable card (`shareYearReview`) is free; **Premium is a
+  card upgrade**: `includeQuote` (= `isPremium`) adds the favourite-encouragement
+  line, and the page cross-sells the Journey Book keepsake. Entry: a `.yir-entry`
+  card on BuddyHome (shown when `reviewYears().length > 0`). No schema — pure/derived.
 
 ## Hard-won gotchas (do not regress these)
 - **supabase-js deadlock**: never call `supabase.auth.getUser()`/`getSession()`

@@ -24,9 +24,11 @@ export function BuddyHome() {
     latestCheckin,
     buddyMemories,
     journeyCapsule,
+    reviewYears,
     trioEligibility,
     activeTrio,
   } = useStore()
+  const availableYears = reviewYears()
   const rels = activeRelationships()
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
@@ -267,6 +269,20 @@ export function BuddyHome() {
             </div>
           )
         })
+      )}
+
+      {/* Year in Review — shareable end-of-year recap (viral). */}
+      {availableYears.length > 0 && (
+        <div className="card list-tap yir-entry" onClick={() => navigate('/year-in-review')}>
+          <span className="row-ico"><Icon name="spark" size={22} /></span>
+          <div style={{ flex: 1 }}>
+            <strong>Your GLP Journey {availableYears[0]}</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Your year, wrapped — a recap you can share.
+            </div>
+          </div>
+          <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+        </div>
       )}
 
       {/* The Coach */}

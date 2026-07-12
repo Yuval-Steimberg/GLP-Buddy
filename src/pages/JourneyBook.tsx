@@ -6,7 +6,8 @@ import { Avatar } from '../components/Avatar'
 import { BrandMark, Icon } from '../components/Icon'
 import { Sheet } from '../components/Sheet'
 import { USE_SUPABASE } from '../lib/env'
-import { exportJourneyPdf, shareJourneyCard } from '../lib/journeyExport'
+import { exportJourneyPdf } from '../lib/journeyExport'
+import { shareJourneyCard } from '../lib/shareCards'
 
 // The Journey Book — a month-by-month auto-written story of a buddy pair.
 // Reading it is FREE (the retention hook: "don't lose your story"). Premium

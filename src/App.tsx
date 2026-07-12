@@ -54,6 +54,7 @@ const imports = {
   Trio: () => import('./pages/Trio').then((m) => ({ default: m.Trio })),
   Capsule: () => import('./pages/Capsule').then((m) => ({ default: m.Capsule })),
   JourneyBook: () => import('./pages/JourneyBook').then((m) => ({ default: m.JourneyBook })),
+  YearInReview: () => import('./pages/YearInReview').then((m) => ({ default: m.YearInReview })),
   Coach: () => import('./pages/Coach').then((m) => ({ default: m.Coach })),
   Moderation: () => import('./pages/Moderation').then((m) => ({ default: m.Moderation })),
   Privacy: () => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })),
@@ -82,6 +83,7 @@ const EditProfile = lazyWithReload(imports.EditProfile)
 const Trio = lazyWithReload(imports.Trio)
 const Capsule = lazyWithReload(imports.Capsule)
 const JourneyBook = lazyWithReload(imports.JourneyBook)
+const YearInReview = lazyWithReload(imports.YearInReview)
 const Coach = lazyWithReload(imports.Coach)
 const Moderation = lazyWithReload(imports.Moderation)
 const Privacy = lazyWithReload(imports.Privacy)
@@ -206,6 +208,7 @@ export function App() {
           <Route path="/trio" element={<Guard><Trio /></Guard>} />
           <Route path="/capsule" element={<Guard><Capsule /></Guard>} />
           <Route path="/journey-book" element={<Guard><JourneyBook /></Guard>} />
+          <Route path="/year-in-review" element={<Guard><YearInReview /></Guard>} />
           <Route path="/coach" element={<Guard><Coach /></Guard>} />
           <Route path="/moderation" element={<Guard staff><Moderation /></Guard>} />
 
