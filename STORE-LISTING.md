@@ -140,8 +140,6 @@ photos, audio, advertising data.
 > match suggestions and can open a 1:1 chat. Account deletion is available in
 > Profile. Demo credentials are not required.
 >
-> The app contains NO in-app purchases and does not unlock any paid content inside
-> the app. An optional "Premium" tier (keepsake PDF/recap exports) exists but is
-> sold only on our website (glpenpal.com); the app shows its benefits with no
-> purchase mechanism. Camera/photo access is used solely when the user chooses to
-> attach a photo to a chat, timeline post, or profile.
+> The app is completely free and contains NO in-app purchases, subscriptions, or
+> paid content of any kind. Camera/photo access is used solely when the user
+> chooses to attach a photo to a chat, timeline post, or profile.
