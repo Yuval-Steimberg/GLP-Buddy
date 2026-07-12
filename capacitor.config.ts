@@ -4,7 +4,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 // Android apps and talks to Supabase over the network — a real native app, not
 // a remote-URL webview wrapper (which App Review tends to reject).
 const config: CapacitorConfig = {
-  appId: 'com.glpenpal.app',
+  appId: 'com.glpenpal.mobile.ios',
   appName: 'GLPenPal',
   webDir: 'dist',
   backgroundColor: '#f6f4ee',

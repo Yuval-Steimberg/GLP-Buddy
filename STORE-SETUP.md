@@ -53,7 +53,7 @@ In Xcode:
    ```
 4. **Product → Archive** → **Distribute App → App Store Connect**.
 5. In **App Store Connect** (appstoreconnect.apple.com): create the app
-   (bundle id `com.glpenpal.app`), fill the listing, upload screenshots,
+   (bundle id `com.glpenpal.mobile.ios`), fill the listing, upload screenshots,
    set the **Privacy Policy URL** = `https://glpenpal.com/privacy`, and a
    **support URL/email**. Submit for review.
 

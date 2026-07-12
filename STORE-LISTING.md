@@ -8,7 +8,7 @@ Screenshots are ready in `store-screenshots/` (6.7" iPhone size, 1290×2796).
 ## Names & IDs
 - **App name:** GLPenPal
 - **Subtitle (Apple, 30 char max):** A pen pal for your GLP-1 journey
-- **Bundle ID:** `com.glpenpal.app`
+- **Bundle ID:** `com.glpenpal.mobile.ios`
 - **Category:** Health & Fitness  (Secondary: Lifestyle)
 - **Age rating:** 17+ (health/medical references; peer messaging)
 - **Price:** Free
