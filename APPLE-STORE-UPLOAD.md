@@ -1,7 +1,8 @@
-# GLPenPal — Uploading to the Apple App Store (production, step by step)
+# GLPenPal — Apple App Store: full upload & listing guide
 
 A complete, do-this-then-that walkthrough for shipping GLPenPal to the real App
-Store. Written for someone who has **not** done an iOS release before.
+Store — **every command, every click, and all the copy/paste listing text in one
+place.** Written for someone who has **not** done an iOS release before.
 
 The app is already wrapped for native with **Capacitor** (`capacitor.config.ts`:
 appId `com.glpenpal.app`, appName `GLPenPal`). The built web app (`dist/`) is
@@ -12,6 +13,17 @@ yet; you generate it on your Mac in Part C.
 > **This all happens on a Mac.** iOS apps can only be built and uploaded from
 > macOS with Xcode. Nothing here can be done from Linux, the web session, or a
 > phone. Budget ~2–4 hours for a first-time run, plus 1–3 days for Apple review.
+
+## Contents
+- **Where you run each thing** — the three places you'll work
+- **Part A** — one-time accounts & tools
+- **Part B** — get the code + production config onto your Mac
+- **Part C** — generate & build the iOS app *(Terminal)*
+- **Part D** — sign, archive, upload *(Xcode)*
+- **Part E** — create the listing & submit *(App Store Connect)* — includes all paste-ready copy
+- **Part F** — after you submit
+- **Shipping updates after launch** — changing things once you're live
+- **Quick command reference** · **Troubleshooting** · **Appendix: Google Play mirror**
 
 ---
 
@@ -76,9 +88,8 @@ installer) and re-run `node -v`.
 
 ### B1. Get the repository — **[Terminal]**
 Clone the **production branch** (Netlify deploys from
-`claude/glp-buddy-mvp-c0ante`, and this Apple-upload work lives on
-`claude/apple-store-upload-snyqvn`). If you already have the folder, skip the
-clone and just `cd` into it, then `git pull`.
+`claude/glp-buddy-mvp-c0ante`). If you already have the folder, skip the clone
+and just `cd` into it, then `git pull`.
 
 ```bash
 $ cd ~
@@ -129,10 +140,7 @@ EOF
 ```
 (You can instead open the project in any text editor and create `.env.production`
 by hand with those three lines.) Vite automatically loads `.env.production`
-during `npm run build`.
-
-**Confirm it will use the real backend** after you build in Part C — see the
-verification note there. `.env.production` is gitignored; keep it local.
+during `npm run build`. `.env.production` is gitignored; keep it local.
 
 ---
 
@@ -165,7 +173,7 @@ launch — Part D continues there.
 
 > **Verify you're NOT in demo mode.** After the build, run:
 > ```bash
-> $ grep -r "YOUR-PROJECT.supabase.co" dist/assets >/dev/null && echo "supabase URL is baked in ✅" || echo "⚠️ using your real URL? check .env.production"
+> $ grep -r "YOUR-PROJECT.supabase.co" dist/assets >/dev/null && echo "supabase URL is baked in ✅" || echo "⚠️ check .env.production"
 > ```
 > Replace `YOUR-PROJECT.supabase.co` with your actual URL host. Seeing it in the
 > built bundle confirms the production config took. (Simplest real check: run
@@ -226,7 +234,8 @@ In the Organizer window:
 
 ## Part E — Create the listing and submit — **[Web: appstoreconnect.apple.com]**
 
-You can do E1–E2 while the build from Part D is still processing.
+You can do E1–E7 while the build from Part D is still processing. **All the
+copy/paste text lives right here** — no other file needed.
 
 ### E1. Create the app record
 1. Sign in at <https://appstoreconnect.apple.com> → **Apps** → **`+` → New App**.
@@ -240,54 +249,115 @@ You can do E1–E2 while the build from Part D is still processing.
    - **User Access:** Full Access
 3. Click **Create**.
 
-### E2. Fill in the listing
-Everything you paste here is written out in **`STORE-LISTING.md`** in the repo —
-open that file and copy from it. Key fields, in the App Store Connect left nav:
-
-**General → App Information**
-- **Subtitle:** `A pen pal for your GLP-1 journey`
-- **Category:** Health & Fitness (Secondary: Lifestyle)
+### E2. App Information (left nav → **General → App Information**)
+- **Subtitle** (30-char max):
+  ```
+  A pen pal for your GLP-1 journey
+  ```
+- **Category:** Health & Fitness  •  **Secondary:** Lifestyle
 - **Privacy Policy URL:** `https://glpenpal.com/privacy`  *(page is live)*
-- (Terms/EULA is optional; `https://glpenpal.com/terms` is live if you want it.)
+- **Terms/EULA:** optional; `https://glpenpal.com/terms` is live if you want it.
 
-**Pricing and Availability**
+### E3. Pricing and Availability
 - **Price:** Free. Choose your country availability (all is fine).
 
-**The version page (left nav shows "1.0 Prepare for Submission")**
-- **Promotional Text**, **Description**, **Keywords**, **Support URL**
-  (`https://glpenpal.com`), **Marketing URL** (`https://glpenpal.com`) — all in
-  `STORE-LISTING.md`.
-- **Screenshots:** upload the six PNGs from the repo's **`store-screenshots/`**
-  folder. They're already the required **6.7" iPhone size (1290×2796)**. Upload
-  order is listed in `STORE-LISTING.md` (`00-landing`, `01-chat`, `04-matches`,
-  `02-home`, `03-timeline`, `05-profile`). The 6.7" set is enough — Apple scales
-  it for other devices.
-- **Build:** once processing finishes, a **Build** section appears — click
-  **`+`** / **Select a build** and pick the build you uploaded (1.0.0 (1)).
+### E4. The version page (left nav → **"1.0 Prepare for Submission"**)
 
-### E3. App Privacy questionnaire — **[Web]**
-Left nav → **App Privacy → Get Started / Edit**. Apple requires this and is
-strict about health apps. The exact answers for how GLPenPal actually works are
-spelled out under **"App Privacy — answers for Apple's questionnaire"** in
-`STORE-LISTING.md`. In short:
-- **Not** used to track you.
-- **Linked to you:** Email (sign-in), User Content (profile + messages), User ID,
-  and **Health & Fitness → Health** (self-reported medication/stage/goals) — all
-  for **App Functionality**, not tracking.
-- **Diagnostics:** only if you enabled Sentry; otherwise mark not collected.
+**Promotional Text** (170 chars — editable later *without* review):
+```
+Get matched 1:1 with someone on the same medication, stage, and goals. Real peer support for the wins, the rough side-effect weeks, and the days the scale makes no sense.
+```
 
-### E4. Age rating & other required bits — **[Web]**
-- **Age Rating:** answer the questionnaire → it resolves to **17+** (health/medical
-  references + user-to-user messaging). See `STORE-LISTING.md`.
-- **Content Rights, Export Compliance:** the app uses only standard HTTPS
-  encryption → when asked "Does your app use encryption?" you can answer **No**
-  (exempt) unless you've added custom crypto. Answer honestly.
-- **Sign-in required for review:** GLPenPal lets the reviewer create an account
-  with any email, so demo credentials aren't required — but paste the **Review
-  Notes** from `STORE-LISTING.md` into **App Review Information → Notes** so the
-  reviewer knows how to test and that it's peer support, not medical advice.
+**Keywords** (100 chars, comma-separated, no spaces):
+```
+GLP-1,Ozempic,Wegovy,Mounjaro,Zepbound,weight loss,semaglutide,support,accountability,buddy,health
+```
 
-### E5. Submit
+**Support URL:** `https://glpenpal.com`  •  **Marketing URL:** `https://glpenpal.com`
+
+**Description** (paste as-is):
+```
+You don't have to do GLP-1 alone.
+
+Starting a GLP-1 medication like Ozempic, Wegovy, Mounjaro, Zepbound, or Saxenda can feel isolating. The nausea weeks are rough, progress isn't always linear, and the people around you don't always get it. GLPenPal matches you 1:1 with a pen pal who's on the same path.
+
+How it works
+- Get matched, mutually. We suggest people on the same medication, treatment stage, and goals as you. A private space only opens when you both say yes.
+- Check in your way. Daily, a few times a week, or weekly — you set the pace.
+- Celebrate the milestones. Log wins together and watch a shared timeline of how far you've come.
+- Grow the friendship. Unlock Buddy Levels the longer you support each other, and Buddy Trios once you're an established member.
+
+Built for privacy and safety
+- Private 1:1 conversations. No public feeds, no follower counts.
+- You choose what to share — a nickname is all you need.
+- Report or block anyone, anytime.
+- 18+ only.
+
+Peer support — not medical advice. GLPenPal is a place to feel understood by people who get it. It does not provide medical, dosing, or clinical guidance. Always talk to a qualified healthcare professional about your treatment, and for urgent symptoms contact a clinician or emergency services.
+
+Find your pen pal today — it's free.
+```
+
+### E5. Screenshots
+Upload the six PNGs from the repo's **`store-screenshots/`** folder. They're
+already the required **6.7" iPhone size (1290×2796)** — the 6.7" set is enough,
+Apple scales it for other devices. **Upload in this order** (the first two matter
+most in search results):
+
+| # | File | What it shows |
+|---|------|---------------|
+| 1 | `00-landing.png` | Hero — "You don't have to do GLP-1 alone" |
+| 2 | `01-chat.png`     | Real 1:1 conversation with a pen pal |
+| 3 | `04-matches.png`  | Compatibility-based matching |
+| 4 | `02-home.png`     | Buddy home — streak, levels, milestones |
+| 5 | `03-timeline.png` | Shared milestone timeline |
+| 6 | `05-profile.png`  | Your profile |
+
+> Regenerate anytime: `node store-screenshots/shots.mjs` (runs against a local
+> `vite preview` on port 4196 in demo mode).
+
+**Build:** once processing finishes, a **Build** section appears on this page —
+click **`+` / Select a build** and pick the one you uploaded (`1.0.0 (1)`).
+
+### E6. App Privacy questionnaire (left nav → **App Privacy → Get Started / Edit**)
+Apple requires this and is strict about health apps. GLPenPal uses Supabase auth
++ Postgres with **no ad SDKs and no third-party trackers**. Answer:
+
+- **Data used to track you:** **None.**
+- **Data linked to you** (stored in the account):
+  - **Contact Info → Email address** — account sign-in. *Not* for tracking.
+  - **User Content → Other user content** — profile (nickname, non-identifying
+    medication/stage/goals) and messages sent to buddies.
+  - **Identifiers → User ID** — an internal account ID.
+  - **Health & Fitness → Health** — self-reported medication/stage/goals. Apple
+    treats health data as **Sensitive**; declare it **Linked to you**, used for
+    **App Functionality** only, **not** tracking.
+- **Data not linked to you:**
+  - **Diagnostics → Crash / Performance data** — **only if** you enabled Sentry
+    (`VITE_SENTRY_DSN`). If you didn't ship Sentry, mark this **not collected**.
+- **Data NOT collected:** name, phone, address, precise/coarse location,
+  contacts, browsing/search history, purchases, financial info, photos, audio,
+  advertising data.
+
+> If you later enable Plausible analytics (`VITE_PLAUSIBLE_DOMAIN` — cookieless,
+> no personal data), add **Usage Data → Product Interaction** (not linked, app
+> functionality) to be safe.
+
+### E7. Age rating, compliance & reviewer notes
+- **Age Rating:** answer the questionnaire → it resolves to **17+** (health/
+  medical references + user-to-user messaging).
+- **Export Compliance:** the app uses only standard HTTPS encryption → when asked
+  "Does your app use encryption?" answer **No** (exempt) unless you've added
+  custom crypto. Answer honestly.
+- **Sign-in for review:** the reviewer can create an account with any email, so
+  demo credentials aren't required. Paste this into **App Review Information →
+  Notes**:
+  ```
+  GLPenPal is a real native app (Capacitor) bundling a React web app that talks to a Supabase backend — not a remote-URL webview. It is peer-support only and shows clear, repeated disclaimers that it does not provide medical advice. To test: create an account with any email, complete the short onboarding, and you'll see match suggestions and can open a 1:1 chat. Account deletion is available in Profile. Demo credentials are not required.
+  ```
+- **Support email** (if asked): `yuvalste13@gmail.com`
+
+### E8. Submit
 Click **Add for Review** / **Submit for Review** (top right of the version page).
 If a field is missing, App Store Connect highlights it in red — fill it and
 resubmit.
@@ -309,9 +379,6 @@ resubmit.
   real bundled native app with clear not-medical-advice disclaimers, and account
   deletion is at **Profile → Delete my account**. Fix what they cite, bump the
   **Build** number in Xcode (Part D2), re-archive/upload, and resubmit.
-- **Releasing an update later:** change code → `npm run cap:ios` → bump Build in
-  Xcode → Archive → Distribute/Upload → in App Store Connect create a new version
-  and submit.
 
 ---
 
@@ -415,7 +482,26 @@ Everything after `npm run cap:ios` is clicks in **Xcode** (Part D) and the
 
 ---
 
-### Related docs in this repo
-- **`STORE-LISTING.md`** — all the copy/paste listing text, privacy answers,
-  screenshot order, and reviewer notes.
-- **`STORE-SETUP.md`** — the shorter original setup notes (iOS **and** Android).
+## Appendix — Google Play (mirror, for when you do Android)
+
+The same listing copy above works for Google Play. Android build steps live in
+**`STORE-SETUP.md`**; the Play-specific listing bits are:
+
+- **Short description** (80-char max):
+  ```
+  1:1 peer support for your GLP-1 journey — matched by medication, stage & goals.
+  ```
+- **Full description:** reuse the E4 Description block verbatim.
+- **Screenshots:** the same `store-screenshots/` PNGs (min 2, max 8) are fine.
+- **Data safety form:**
+  - Data collected: Email, User IDs, Messages/User content, Health info (self-reported).
+  - Encrypted in transit: **Yes.**
+  - Users can request deletion: **Yes** — in-app **Profile → Delete my account**
+    permanently removes the account and all data.
+  - Data shared with third parties: **No.**
+- **Reviewer notes / data-handling:** same as E7.
+
+### Names & IDs (quick reference)
+- **App name:** GLPenPal · **Bundle ID:** `com.glpenpal.app`
+- **Category:** Health & Fitness (Secondary: Lifestyle) · **Age:** 17+ · **Price:** Free
+- **Support:** yuvalste13@gmail.com · **Privacy:** https://glpenpal.com/privacy · **Terms:** https://glpenpal.com/terms

@@ -327,6 +327,9 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   (SQL Editor). Re-grant staff after: `update profiles set is_staff=true where id='…'`.
 
 ## Guide docs (repo root)
-`GETTING-STARTED-PWA.md` (go-live + install + smoke test), `STORE-SETUP.md` /
-`STORE-LISTING.md` (App Store/Play), `ACTIVATE-OPTIONAL.md` (push/SMTP/analytics/
-Sentry), `PRODUCTION.md`, `GO_LIVE.md`.
+`GETTING-STARTED-PWA.md` (go-live + install + smoke test),
+`APPLE-STORE-UPLOAD.md` (**full Apple App Store guide** — build → upload →
+listing copy + privacy + reviewer notes, all inlined; `STORE-LISTING.md` was
+folded into it and deleted), `STORE-SETUP.md` (short iOS+Android build notes),
+`ACTIVATE-OPTIONAL.md` (push/SMTP/analytics/Sentry), `PRODUCTION.md`,
+`GO_LIVE.md`.
