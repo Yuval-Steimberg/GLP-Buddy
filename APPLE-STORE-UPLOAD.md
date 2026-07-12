@@ -315,6 +315,60 @@ resubmit.
 
 ---
 
+## Shipping updates after launch — can you change things later?
+
+**Yes. The App Store is not a one-way door.** How you push a change depends on
+*what* you're changing. GLPenPal's Supabase + Capacitor setup gives you fast
+paths a typical native app doesn't. Four categories:
+
+### 1. Backend / data / logic → **instant, no review**
+Anything in **Supabase** — database rows, migrations, RLS policies, edge
+functions (`ask-coach`, `send-push`), the Coach system prompt, server-side logic
+— goes live the moment you deploy it. The installed app just talks to the new
+backend. No Apple involvement, no waiting.
+
+### 2. Store metadata → **easy, little or no review**
+In App Store Connect:
+- **Promotional text** — changes instantly, no review.
+- **Description, keywords, screenshots, support URL, privacy URL** — take effect
+  with your next version submission (or a quick metadata-only review).
+- **Price / availability** — changeable anytime.
+
+### 3. App code (React/TS, UI, new screens/features) → **new build + review**
+Because the web app (`dist/`) is **bundled into the binary**, any front-end
+change needs the full release loop:
+
+> change code → `npm run cap:ios` → **bump the Build number in Xcode** (Part D2)
+> → Archive → Upload (Part D5) → submit the new version in App Store Connect
+> (Part E) → Apple review.
+
+- Bump **Build** (`2`, `3`, …) on **every** upload — Apple rejects a duplicate
+  build number.
+- Bump **Version** (`1.0.1`, `1.1.0`, …) when you want a new public version
+  number; create it in App Store Connect via **`+ Version or Platform`**.
+- Update reviews are usually **faster** than the first submission.
+- Users get it through the App Store's normal update mechanism.
+
+> ⚠️ **The store app and the website are now two separate deployments of the same
+> code.** Pushing to the Netlify branch (`claude/glp-buddy-mvp-c0ante`) updates
+> the web/PWA instantly, but the **iOS app keeps running its bundled build** until
+> you cut a new release and it clears review. When you ship a front-end change you
+> want native users to have, rebuild and resubmit the app too.
+
+### 4. Over-the-air (OTA) updates → **optional, not set up today**
+Services like **Capgo** or **Ionic Appflow** can push bundled-JS changes to
+installed apps **without** re-review. Apple's guideline **3.3.2** allows this
+**only** for changes that don't materially alter the app's purpose or add
+un-reviewed features — bug fixes and tweaks are fine; whole new features are a
+gray area. GLPenPal doesn't use OTA today; it's an optional future add if update
+velocity ever becomes a bottleneck.
+
+### Sensible pattern
+Iterate fast and continuously on the **backend** and the **web/PWA**; batch
+**front-end app changes** into periodic App Store version releases.
+
+---
+
 ## Quick command reference (all **[Terminal]**, run in `~/GLP-Buddy`)
 ```bash
 # One-time environment
