@@ -111,9 +111,8 @@ export interface TrioEligibility {
 interface AppStoreValue {
   state: AppState
   currentUser: User | null
-  // premium
+  // premium (disabled for launch — isPremium is always true; see the store)
   isPremium: boolean
-  setPremiumDemo: (v: boolean) => void // demo/local mode only — real flag comes from DB
   journeyBook: (rel: BuddyRelationship) => JourneyBook
   yearReview: (year: number) => YearReview
   reviewYears: () => number[]
@@ -337,26 +336,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const currentUser = state.currentUserId ? state.users[state.currentUserId] : null
 
-  // Premium gating. In Supabase mode this reflects the (server-only writable)
-  // profiles.is_premium flag; in demo/local mode it can be toggled locally so
-  // both the paywall and the unlocked experience are demoable without billing.
-  const isPremium = currentUser?.isPremium ?? false
-
-  // Demo/local-mode only: flip the current user's premium flag (persisted with
-  // the local state cache). A no-op in Supabase mode, where is_premium is set
-  // exclusively by the billing webhook / service role.
-  const setPremiumDemo = useCallback((v: boolean) => {
-    if (USE_SUPABASE) return
-    setState((prev) => {
-      if (!prev.currentUserId) return prev
-      const me = prev.users[prev.currentUserId]
-      if (!me) return prev
-      return {
-        ...prev,
-        users: { ...prev.users, [me.id]: { ...me, isPremium: v } },
-      }
-    })
-  }, [])
+  // Premium is DISABLED for launch — every feature (Journey Book exports, the
+  // full-detail Year in Review card, etc.) is free for everyone. The is_premium
+  // column + mapper are kept so re-enabling later is a one-line change:
+  //   const isPremium = currentUser?.isPremium ?? false
+  const isPremium = true
 
   // ---- helpers -----------------------------------------------------------
   const pushNotification = useCallback(
@@ -1802,7 +1786,6 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       isPremium,
-      setPremiumDemo,
       journeyBook,
       yearReview,
       reviewYears,
@@ -1856,7 +1839,6 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       isPremium,
-      setPremiumDemo,
       journeyBook,
       yearReview,
       reviewYears,

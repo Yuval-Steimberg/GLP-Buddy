@@ -7,11 +7,10 @@ import { Reveal } from '../components/Reveal'
 import { shareYearReview } from '../lib/shareCards'
 
 // Year in Review — a shareable end-of-year recap across all of your buddies.
-// FREE and built to be shared (the viral growth loop). Premium adds the
-// "favourite encouragement" quote to the shareable card.
+// Free and built to be shared (the viral growth loop).
 export function YearInReview() {
   const navigate = useNavigate()
-  const { currentUser, reviewYears, yearReview, isPremium } = useStore()
+  const { currentUser, reviewYears, yearReview } = useStore()
   const years = reviewYears()
   const [year, setYear] = useState(years[0] ?? new Date().getFullYear())
   const [busy, setBusy] = useState(false)
@@ -35,7 +34,7 @@ export function YearInReview() {
   const share = async () => {
     setBusy(true)
     try {
-      await shareYearReview(review, isPremium)
+      await shareYearReview(review, true)
     } catch {
       /* cancelled / unsupported — no-op */
     } finally {
@@ -124,27 +123,9 @@ export function YearInReview() {
           <Icon name="share" size={17} /> {busy ? 'Preparing…' : `Share my ${review.year}`}
         </button>
         <p className="muted center" style={{ fontSize: 12, marginTop: 8 }}>
-          {isPremium
-            ? 'Your card includes your favourite encouragement. No names or health details are shared.'
-            : 'Shares a clean recap image — no names or health details.'}
+          Shares a recap image — no names or health details.
         </p>
       </Reveal>
-
-      {/* Cross-sell the keepsake. */}
-      {!isPremium && review.favoriteEncouragement && (
-        <Reveal delay={120}>
-          <div className="card flat list-tap jb-teaser" style={{ marginTop: 14 }} onClick={() => navigate('/journey-book')}>
-            <span className="row-ico"><Icon name="spark" size={20} /></span>
-            <div style={{ flex: 1 }}>
-              <strong>Make it personal with Premium</strong>
-              <div className="muted" style={{ fontSize: 13 }}>
-                Add your favourite encouragement to the card, and get a PDF keepsake of your whole story.
-              </div>
-            </div>
-            <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
-          </div>
-        </Reveal>
-      )}
     </div>
   )
 }

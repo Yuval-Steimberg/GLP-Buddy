@@ -119,6 +119,15 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `update profiles set is_premium=true where id='…'`.
 
 ## Monetization / Premium (Journey Book)
+- **STATUS: Premium is DISABLED for launch — every feature is free.** The store's
+  `isPremium` is hardcoded `true` (see `AppStore.tsx`), so all exports/cards are
+  unlocked for everyone; the paywall UI, the `PremiumSheet`, the `setPremiumDemo`
+  demo toggle, the Stripe billing (`api.billing`, the `create-checkout` /
+  `stripe-webhook` edge functions), and `IS_NATIVE` were all removed. The
+  `profiles.is_premium` column (migration 0015) + the `rowToUser` mapper are kept
+  so re-enabling later is a one-line change: `isPremium = currentUser?.isPremium
+  ?? false`, then re-add a paywall + billing. The notes below describe the
+  (removed) paywall/billing design for when that happens.
 - **First premium feature** (branch `claude/premium-monetization-features-*`):
   **The Journey Book** — `/journey-book` (`src/pages/JourneyBook.tsx`, NOT in
   `NAV_PATHS` so the bottom nav is hidden → `TopBar back` gives it a back
