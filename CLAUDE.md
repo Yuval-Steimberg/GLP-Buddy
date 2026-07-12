@@ -325,6 +325,14 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   unless asked.
 - Wipe all data to test from scratch: `supabase/maintenance/reset_all_data.sql`
   (SQL Editor). Re-grant staff after: `update profiles set is_staff=true where id='…'`.
+- **Native store builds (iOS/Android, Capacitor):** the `ios/`/`android/` shells
+  are NOT committed — generate on a Mac with `npx cap add ios`. The web app is
+  bundled at BUILD time, so env vars must be supplied locally (Netlify's dashboard
+  doesn't reach the Mac): create `.env.production` with `VITE_BACKEND=supabase` +
+  `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` BEFORE `npm run cap:ios`, or the
+  store app ships in **demo mode with fake data** (the #1 gotcha). Every re-upload
+  needs a higher Xcode **Build** number. Bundle id `com.glpenpal.app`; icon/splash
+  source art in `resources/`. Full step-by-step in `APPLE-STORE-UPLOAD.md`.
 
 ## Guide docs (repo root)
 `GETTING-STARTED-PWA.md` (go-live + install + smoke test),
