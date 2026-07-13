@@ -13,7 +13,10 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
 - `npm run build` — `tsc -b && vite build` (this is the typecheck; run it after changes)
 - `npm run lint` — `tsc --noEmit`
 - `npm run preview` — serve the built `dist/` (used for screenshot verification)
-- Native: `npm run cap:sync` / `cap:ios` / `cap:android`
+- Native: `npm run cap:sync` (= `npm run build && cap sync`) / `cap:ios` / `cap:android`.
+  **After any `git pull` that touched `package.json`, run `npm install` before
+  `cap:sync`** — `jspdf` (Journey Book PDF) is a dep; a stale `node_modules`
+  fails the build with "Cannot find module 'jspdf'".
 
 ## Architecture
 - **Dual backend**, gated by `USE_SUPABASE` in `src/lib/env.ts`:
@@ -432,6 +435,39 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   unless asked.
 - Wipe all data to test from scratch: `supabase/maintenance/reset_all_data.sql`
   (SQL Editor). Re-grant staff after: `update profiles set is_staff=true where id='…'`.
+
+## Native app / App Store (Capacitor iOS + Android)
+- **Native projects (`ios/`, `android/`) are generated on the user's Mac** with
+  `npx cap add ios` / `add android`; they are **NOT committed** (local only) —
+  that's fine, they aren't needed in git to submit. Regenerate with `cap add`.
+- **Bundle ID: `com.glpenpal.mobile.ios`** (`capacitor.config.ts` `appId`; also
+  in STORE-SETUP/STORE-LISTING). The original `com.glpenpal.app` was taken, so we
+  moved to this. Keep all three in sync if it ever changes.
+- **Apple account:** submitted under a **new Apple ID** (`steimberg.yuval1@gmail.com`),
+  a **paid Individual** Developer team ("Yuval Steimberg (Individual)"). The App
+  Store app **name is `GLPenPal`** (bundle id above). The old Apple ID was a free
+  "Personal Team" — can't distribute; the paid enrollment is what unblocks Xcode
+  signing + the developer portal.
+- **iOS Info.plist camera/photo strings (MUST add after `cap add ios`, footgun):**
+  the app attaches photos (chat/timeline/onboarding/profile), so `ios/App/App/Info.plist`
+  needs `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription`,
+  `NSPhotoLibraryAddUsageDescription` or **iOS crashes on the photo button and
+  Apple rejects**. `cap sync` does NOT add or overwrite these (they live only on
+  the Mac's ios/ copy). The exact strings are in **STORE-SETUP.md §4**.
+- **Screenshots:** `store-screenshots/shots.mjs` = iPhone 6.7" (1290×2796);
+  **`store-screenshots/shots-ipad.mjs` = 13" iPad (2048×2732)** — iPad shots are
+  **required** because the build supports iPad ("Designed for iPad"). Both drive a
+  `vite preview` (port 4196) with an injected demo `AppState`; the iPad script
+  uses a 1024×1366 @2x desktop viewport so the ≥980px sidebar layout renders.
+- **Export compliance:** answer **"None of the algorithms mentioned above"**
+  (HTTPS only = exempt) → no docs needed. Optional: set
+  `ITSAppUsesNonExemptEncryption=false` in Info.plist to skip the prompt.
+- **Release flow:** archive against **"Any iOS Device (arm64)"** (a stuck device
+  list — e.g. an iPhone on a newer iOS than Xcode supports — hides it; **quitting
+  Xcode with ⌘Q fixes it**). Create the App Store Connect record FIRST (as
+  `GLPenPal`) so `Distribute → Upload` has a home (avoids "App Record Creation
+  Error"). Reviewer: **provide a demo login** (app is sign-in-gated) — ideally an
+  account pre-matched with a buddy so the 1:1 chat/timeline is reachable.
 
 ## Guide docs (repo root)
 `GETTING-STARTED-PWA.md` (go-live + install + smoke test), `STORE-SETUP.md` /
