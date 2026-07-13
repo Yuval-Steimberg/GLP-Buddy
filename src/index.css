@@ -634,6 +634,27 @@ img.avatar { object-fit: cover; background: var(--surface-2); }
 .yir-entry { display: flex; align-items: center; gap: 12px; }
 .yir-entry .row-ico { background: var(--grad); color: #fff; }
 
+/* --- Staff admin dashboard ----------------------------------------------- */
+.admin-tabs { display: flex; gap: 6px; margin-bottom: 16px; background: var(--surface-2); padding: 4px; border-radius: 12px; }
+.admin-tab { flex: 1; padding: 8px 6px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--ink-soft); background: none; cursor: pointer; }
+.admin-tab.active { background: var(--surface); color: var(--primary-ink); box-shadow: var(--shadow); }
+.admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+.admin-stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; }
+.admin-stat.warn { border-color: var(--accent); background: #fbf4ea; }
+.admin-stat-num { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--primary-ink); line-height: 1; }
+.admin-stat-label { font-size: 12.5px; color: var(--ink); margin-top: 4px; font-weight: 600; }
+.admin-stat-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+.admin-h { font-weight: 800; font-size: 13px; margin-bottom: 10px; }
+.admin-bars { display: flex; align-items: flex-end; gap: 3px; height: 70px; }
+.admin-bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.admin-bar span { width: 100%; background: var(--grad); border-radius: 3px 3px 0 0; min-height: 4px; }
+.admin-user { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; }
+.admin-badge { font-size: 10px; font-weight: 800; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; }
+.admin-badge.staff { background: var(--primary-soft); color: var(--primary-ink); }
+.admin-badge.premium { background: #f2e6d3; color: var(--accent); }
+.admin-badge.muted { background: var(--surface-2); color: var(--ink-soft); }
+.admin-report.resolved { opacity: 0.62; }
+
 /* Journey Capsule mini-card (BuddyHome) */
 .capsule-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .capsule-grid > div { text-align: center; }

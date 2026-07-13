@@ -74,6 +74,48 @@ export interface Checkin {
   createdAt: number
 }
 
+// ---- Staff admin dashboard (all fed by is_staff-gated RPCs) ---------------
+export interface AdminOverview {
+  users_total: number
+  users_7d: number
+  users_30d: number
+  onboarded: number
+  premium: number
+  staff: number
+  pairs_active: number
+  pairs_total: number
+  messages_total: number
+  messages_7d: number
+  milestones_total: number
+  checkins_7d: number
+  reports_open: number
+  reports_total: number
+}
+
+export interface AdminUser {
+  id: string
+  nickname: string
+  medication: string
+  treatmentStage: string
+  country: string
+  createdAt: number
+  onboardingComplete: boolean
+  isPremium: boolean
+  isStaff: boolean
+}
+
+export interface AdminReport {
+  id: string
+  kind: string
+  reason: string
+  resolved: boolean
+  createdAt: number
+  reporterId: string
+  reporterNick: string
+  targetId: string
+  targetNick: string
+}
+
 export interface WeightLog {
   id: string
   userId: string

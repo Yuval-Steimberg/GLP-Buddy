@@ -681,6 +681,39 @@ export const weightLogs = {
   },
 }
 
+// ---- Staff admin dashboard (is_staff-gated RPCs; migration 0017) ----------
+export const admin = {
+  async overview() {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_overview')
+    if (error) throw error
+    return data as unknown
+  },
+  async signupsDaily(): Promise<{ day: string; count: number }[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_signups_daily')
+    if (error) throw error
+    return (data as { day: string; count: number }[]) ?? []
+  },
+  async users(search?: string) {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_users', { p_limit: 200, p_search: search ?? null })
+    if (error) throw error
+    return (data as Record<string, unknown>[]) ?? []
+  },
+  async reports() {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_reports', { p_limit: 300 })
+    if (error) throw error
+    return (data as Record<string, unknown>[]) ?? []
+  },
+  async resolveReport(id: string, resolved: boolean): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.rpc('admin_resolve_report', { p_id: id, p_resolved: resolved })
+    if (error) throw error
+  },
+}
+
 // ---- "Someone Gets It" — one-tap support request to all active buddies -----
 export const support = {
   async request(): Promise<number> {

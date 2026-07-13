@@ -73,7 +73,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   (timeline photos), 0013 GLP features (injection day + check-ins + support RPC),
   0014 `messages.from_coach` ("Hey Coach" in the buddy chat), 0015
   `profiles.is_premium` (premium tier — see Monetization below), 0016
-  `weight_logs` (optional private weight logging — powers real "kg lost").
+  `weight_logs` (optional private weight logging — powers real "kg lost"), 0017
+  admin dashboard RPCs (see Admin below).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -435,6 +436,23 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   unless asked.
 - Wipe all data to test from scratch: `supabase/maintenance/reset_all_data.sql`
   (SQL Editor). Re-grant staff after: `update profiles set is_staff=true where id='…'`.
+
+## Staff admin dashboard
+- **`/moderation`** (`src/pages/Moderation.tsx`, staff-only via `Guard staff`,
+  reached from a "Admin dashboard (staff)" row on Profile shown when
+  `isStaff`). Full dashboard with tabs: **Overview** (stat cards + 30-day signups
+  mini bar chart), **Users** (searchable list, staff/premium/onboarding badges),
+  **Reports** (reporter→target + reason, "Mark resolved" toggle).
+- **Data source depends on mode:** local/demo mode derives everything from the
+  store `state` (so it's demoable/screenshot-testable); Supabase mode calls the
+  **migration 0017** RPCs (`api.admin.*`). Those RPCs (`admin_overview`,
+  `admin_signups_daily`, `admin_users`, `admin_reports`, `admin_resolve_report`)
+  are **SECURITY DEFINER, gated on `is_staff()`, search_path=''** — required
+  because the per-user RLS (0010) hides other users' profiles/messages from
+  everyone, staff included, so a plain `select` returns nothing.
+- **Grant staff:** `update profiles set is_staff=true where id='…'`, then refresh
+  the app. Destructive actions (ban/delete) still go through the Supabase
+  dashboard — the in-app admin is read + report-resolve only for now.
 
 ## Native app / App Store (Capacitor iOS + Android)
 - **Native projects (`ios/`, `android/`) are generated on the user's Mac** with
