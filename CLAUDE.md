@@ -244,7 +244,10 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   content"). Keep it opaque. On mobile `.lp-nav-in .lp-brand` is `flex:1` so the
   sign-in button sits at the right edge.
 - **Data-density collapses** (scannability): BuddyHome buddy card collapses to a
-  header (avatar+name+medication+caret), auto-open when there's a single buddy;
+  header (avatar+name+medication+caret) and **always starts collapsed on app
+  entry** (no single-buddy auto-open — user wanted a calm home screen every time;
+  a `visibilitychange` listener re-collapses all cards when the app returns to the
+  foreground, so a card left open before backgrounding is closed on reopen);
   `ProfileCard` (Matches) leads with essentials + a "More about…" toggle for
   bio/secondary chips; Profile "Your details" (11-field list) collapses behind a
   tappable header. Shared `.expand-caret` (rotates) + `.more-toggle` styles.

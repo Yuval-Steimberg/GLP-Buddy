@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
@@ -35,6 +35,14 @@ export function BuddyHome() {
   // to scan. Tap the header (or the caret) to reveal the full space.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const toggle = (id: string, cur: boolean) => setExpanded((e) => ({ ...e, [id]: !cur }))
+  // Collapse every card whenever the app is (re)opened — returning from the
+  // background or reopening from the home screen always starts fully collapsed,
+  // even if the user had a card open when they left.
+  useEffect(() => {
+    const collapseAll = () => { if (document.visibilityState === 'visible') setExpanded({}) }
+    document.addEventListener('visibilitychange', collapseAll)
+    return () => document.removeEventListener('visibilitychange', collapseAll)
+  }, [])
 
   const greet = `Hi ${currentUser?.profile.nickname}`
   const todayWeekday = new Date().getDay()
@@ -114,9 +122,10 @@ export function BuddyHome() {
           const injectionToday = buddy.profile.injectionWeekday === todayWeekday
           const memories = buddyMemories(rel)
           const capsule = journeyCapsule(rel)
-          // With a single buddy the card defaults open (nothing to hide); with
-          // several, they default collapsed so the list stays scannable.
-          const isOpen = expanded[rel.id] ?? rels.length === 1
+          // Buddy cards always start collapsed (see the reset in the effect
+          // above) — tap a header to open it. Reopening the app collapses them
+          // again so the home screen is always calm and scannable on entry.
+          const isOpen = expanded[rel.id] ?? false
 
           return (
             <div className="card" key={rel.id}>
