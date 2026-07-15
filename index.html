@@ -8,6 +8,20 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <title>GLPenPal</title>
+    <!-- Apply the saved theme before first paint to avoid a light-mode flash.
+         Kept in sync with src/lib/theme.ts (key + meta colours). -->
+    <script>
+      (function () {
+        try {
+          var c = localStorage.getItem('glpenpal-theme') || 'system'
+          var dark = c === 'dark' || (c === 'system' &&
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+          var m = document.querySelector('meta[name="theme-color"]')
+          if (m) m.setAttribute('content', dark ? '#12181a' : '#5e8c74')
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

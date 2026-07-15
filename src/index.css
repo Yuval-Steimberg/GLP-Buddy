@@ -1447,6 +1447,21 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
   --lp-ink: #1e2a25;
   --lp-line: #e7e3d8;
   --lp-bg: #f7f5ef;
+  /* The marketing site is always light — re-declare the neutral palette locally
+     so the app's dark theme (data-theme='dark' on <html>) can never leak in,
+     even for a visitor whose OS prefers dark (default theme choice is "system"). */
+  --bg: #f7f5ef;
+  --surface: #ffffff;
+  --surface-2: #eaefe9;
+  --ink: #1e2a25;
+  --ink-soft: #56635c;
+  --ink-faint: #98a29b;
+  --line: #e7e3d8;
+  --amber: #d9a441;
+  --amber-soft: #f7ecd4;
+  --danger: #c2405a;
+  --danger-soft: #f8e2e6;
+  --gold: #c99a3f;
   width: 100%;
   background: var(--lp-bg);
   color: var(--lp-ink);
@@ -1816,3 +1831,61 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
   .lp-stat + .lp-stat { }
   .lp-quotes { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ======================================================================
+   Appearance / theme control (Profile → Appearance) — a small segmented
+   Light / Dark / System switch. Theme-neutral (uses palette vars).
+   ====================================================================== */
+.seg { display: flex; gap: 4px; background: var(--surface-2); border-radius: 999px; padding: 4px; }
+.seg button {
+  flex: 1; border-radius: 999px; padding: 9px 8px; font-weight: 700; font-size: 13.5px;
+  color: var(--ink-soft); display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+/* ======================================================================
+   Dark mode ("Sage after dark") — opt-in via data-theme='dark' on <html>
+   (see src/lib/theme.ts + the inline bootstrap in index.html). The palette
+   is re-declared here; the marketing landing (.lp) re-declares its own
+   neutrals so it always stays light. Only in-app surfaces flip.
+   ====================================================================== */
+:root[data-theme='dark'] {
+  --bg: #12181a;             /* deep green-charcoal canvas */
+  --surface: #1a2325;        /* cards / bubbles / inputs */
+  --surface-2: #232e30;      /* raised / secondary fill */
+  --ink: #e9efe9;            /* primary text */
+  --ink-soft: #a7b2ab;
+  --ink-faint: #6f7b74;
+  --primary: #7bab90;        /* sage, lightened for contrast on dark */
+  --primary-soft: #223029;   /* dark sage tint (chip backgrounds) */
+  --primary-ink: #a9d0bb;    /* links / headings accent — light on dark */
+  --accent: #d4a973;         /* warm sand, lightened */
+  --accent-soft: #322718;
+  --amber: #e0b459;
+  --amber-soft: #322810;
+  --green: #7ba7ba;          /* soft sky-blue accent, lightened */
+  --green-soft: #1d2a30;
+  --gold: #d4a94f;
+  --danger: #e77e93;
+  --danger-soft: #3a2029;
+  --line: #2c3836;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 52px rgba(0, 0, 0, 0.55);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --glow: 0 12px 34px rgba(94, 140, 116, 0.38);
+  --ring: 0 0 0 4px rgba(123, 171, 144, 0.28);
+  --grad: linear-gradient(120deg, #6fa085 0%, #86b39c 48%, #a7c6bd 100%);
+  --grad-soft: linear-gradient(120deg, #223029 0%, #1f2a28 52%, #2b2519 100%);
+}
+
+/* Targeted fixes where a light colour was hard-coded (not variable-driven). */
+:root[data-theme='dark'] .card { border-color: var(--line); }
+:root[data-theme='dark'] .stat { background: var(--surface); }
+:root[data-theme='dark'] .app-shell { box-shadow: 0 0 60px rgba(0, 0, 0, 0.5); }
+:root[data-theme='dark'] .chat-header { background: rgba(20, 27, 29, 0.85); }
+:root[data-theme='dark'] .bottom-nav { background: rgba(20, 27, 29, 0.9); }
+:root[data-theme='dark'] .input,
+:root[data-theme='dark'] textarea.input,
+:root[data-theme='dark'] select.input { border-color: var(--line); }
+:root[data-theme='dark'] .chip.accent { color: var(--accent); }

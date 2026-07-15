@@ -7,13 +7,21 @@ import { MAX_BUDDIES } from '../constants'
 import { USE_SUPABASE } from '../lib/env'
 import { auth } from '../services/api'
 import { enablePush, disablePush, pushEnabled, pushSupported } from '../lib/push'
+import { useTheme, type ThemeChoice } from '../lib/theme'
 import { Icon } from '../components/Icon'
+
+const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: 'System' },
+]
 
 export function Profile() {
   const navigate = useNavigate()
   const { currentUser, activeRelationships, buddyOf, resetApp, trioEligibility, activeTrio } = useStore()
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
+  const [theme, setTheme] = useTheme()
   // The full profile field list is rarely needed at a glance — keep it tucked
   // away behind a tap so the page reads cleanly.
   const [showDetails, setShowDetails] = useState(false)
@@ -167,6 +175,28 @@ export function Profile() {
           GLPenPal is peer support — <strong>not medical advice</strong>. Never share dosing
           guidance, and for concerning symptoms contact a clinician or emergency services.
           You can report or block any buddy from your chat.
+        </p>
+      </div>
+
+      <div className="card">
+        <div className="row between" style={{ marginBottom: 10 }}>
+          <h3 style={{ margin: 0 }}>Appearance</h3>
+          <span className="row-ico"><Icon name="moon" size={18} /></span>
+        </div>
+        <div className="seg" role="group" aria-label="Theme">
+          {THEME_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              className={theme === opt.value ? 'on' : ''}
+              aria-pressed={theme === opt.value}
+              onClick={() => setTheme(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="muted" style={{ fontSize: 12.5, marginTop: 8, marginBottom: 0 }}>
+          “System” follows your device’s light or dark setting.
         </p>
       </div>
 

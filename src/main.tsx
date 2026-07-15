@@ -5,12 +5,17 @@ import { AppStoreProvider } from './store/AppStore'
 import { App } from './App'
 import { InstallPrompt } from './components/InstallPrompt'
 import { initSentry } from './lib/sentry'
+import { initTheme } from './lib/theme'
 import { SUPABASE_URL } from './lib/env'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/space-grotesk'
 import './index.css'
 
 void initSentry()
+
+// Apply the saved theme and keep "System" in sync with the OS setting. The
+// initial paint theme is already set by the inline script in index.html.
+initTheme()
 
 // Warm the TLS connection to Supabase so the first data request is faster.
 if (SUPABASE_URL) {

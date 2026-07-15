@@ -5,7 +5,7 @@ export type IconName =
   | 'home' | 'users' | 'growth' | 'chat' | 'profile' | 'bell'
   | 'lock' | 'heart' | 'shield' | 'spark' | 'logout' | 'clock' | 'search' | 'doc'
   | 'mail' | 'send' | 'check' | 'download' | 'share' | 'close' | 'plus'
-  | 'camera' | 'image' | 'reply'
+  | 'camera' | 'image' | 'reply' | 'moon'
 
 // Clean, consistent line icons (currentColor, 24px grid) used in place of
 // emoji for a more professional, branded look.
@@ -84,6 +84,8 @@ export function Icon({ name, size = 22, style }: { name: IconName; size?: number
       return <svg {...p}><rect x="3" y="4.5" width="18" height="15" rx="2.4" /><circle cx="8.5" cy="10" r="1.6" /><path d="m5 18 4.5-4.5a1.6 1.6 0 0 1 2.2 0L18 20" /></svg>
     case 'reply':
       return <svg {...p}><path d="M9 7 4 12l5 5" /><path d="M4 12h9.5a6.5 6.5 0 0 1 6.5 6.5V19" /></svg>
+    case 'moon':
+      return <svg {...p}><path d="M20.5 14.2A8 8 0 1 1 9.8 3.5a6.3 6.3 0 0 0 10.7 10.7Z" /></svg>
   }
 }
 
