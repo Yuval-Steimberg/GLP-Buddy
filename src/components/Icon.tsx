@@ -6,6 +6,7 @@ export type IconName =
   | 'lock' | 'heart' | 'shield' | 'spark' | 'logout' | 'clock' | 'search' | 'doc'
   | 'mail' | 'send' | 'check' | 'download' | 'share' | 'close' | 'plus'
   | 'camera' | 'image' | 'reply'
+  | 'sun' | 'moon' | 'contrast'
 
 // Clean, consistent line icons (currentColor, 24px grid) used in place of
 // emoji for a more professional, branded look.
@@ -84,6 +85,17 @@ export function Icon({ name, size = 22, style }: { name: IconName; size?: number
       return <svg {...p}><rect x="3" y="4.5" width="18" height="15" rx="2.4" /><circle cx="8.5" cy="10" r="1.6" /><path d="m5 18 4.5-4.5a1.6 1.6 0 0 1 2.2 0L18 20" /></svg>
     case 'reply':
       return <svg {...p}><path d="M9 7 4 12l5 5" /><path d="M4 12h9.5a6.5 6.5 0 0 1 6.5 6.5V19" /></svg>
+    case 'sun':
+      return (
+        <svg {...p}>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+        </svg>
+      )
+    case 'moon':
+      return <svg {...p}><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" /></svg>
+    case 'contrast':
+      return <svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor" stroke="none" /></svg>
   }
 }
 

@@ -8,12 +8,22 @@ import { USE_SUPABASE } from '../lib/env'
 import { auth } from '../services/api'
 import { enablePush, disablePush, pushEnabled, pushSupported } from '../lib/push'
 import { Icon } from '../components/Icon'
+import type { IconName } from '../components/Icon'
+import { getThemeChoice, setThemeChoice } from '../lib/theme'
+import type { ThemeChoice } from '../lib/theme'
+
+const THEME_OPTIONS: { value: ThemeChoice; label: string; icon: IconName }[] = [
+  { value: 'system', label: 'System', icon: 'contrast' },
+  { value: 'light', label: 'Light', icon: 'sun' },
+  { value: 'dark', label: 'Dark', icon: 'moon' },
+]
 
 export function Profile() {
   const navigate = useNavigate()
   const { currentUser, activeRelationships, buddyOf, resetApp, trioEligibility, activeTrio } = useStore()
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
+  const [theme, setTheme] = useState<ThemeChoice>(getThemeChoice)
   // The full profile field list is rarely needed at a glance — keep it tucked
   // away behind a tap so the page reads cleanly.
   const [showDetails, setShowDetails] = useState(false)
@@ -167,6 +177,26 @@ export function Profile() {
           GLPenPal is peer support — <strong>not medical advice</strong>. Never share dosing
           guidance, and for concerning symptoms contact a clinician or emergency services.
           You can report or block any buddy from your chat.
+        </p>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: 8 }}>Appearance</h3>
+        <div className="theme-seg" role="group" aria-label="Theme">
+          {THEME_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={'theme-seg-btn' + (theme === opt.value ? ' is-on' : '')}
+              aria-pressed={theme === opt.value}
+              onClick={() => { setThemeChoice(opt.value); setTheme(opt.value) }}
+            >
+              <Icon name={opt.icon} size={17} /> {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="muted" style={{ margin: '8px 2px 0', fontSize: 13 }}>
+          {theme === 'system' ? 'Follows your device’s light or dark setting.' : `Always ${theme}.`}
         </p>
       </div>
 
