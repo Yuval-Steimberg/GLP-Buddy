@@ -267,6 +267,20 @@ export function BuddyHome() {
         })
       )}
 
+      {/* Meal photo log */}
+      <div className="card list-tap" onClick={() => navigate('/meals')} style={{ background: 'var(--surface-2)' }}>
+        <div className="row">
+          <span className="row-ico"><Icon name="meal" size={22} /></span>
+          <div style={{ flex: 1 }}>
+            <strong>Log a meal</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Snap your plate for an estimate of calories &amp; protein.
+            </div>
+          </div>
+          <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+        </div>
+      </div>
+
       {/* The Coach */}
       <div className="card list-tap" onClick={() => navigate('/coach')} style={{ background: 'var(--surface-2)' }}>
         <div className="row">

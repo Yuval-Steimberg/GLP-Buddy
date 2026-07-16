@@ -7,6 +7,7 @@ import type { AppState, BuddyTrioGroup, TrioMessage, User } from '../types'
 import {
   rowToApproval,
   rowToCheckin,
+  rowToMeal,
   rowToMessage,
   rowToMilestone,
   rowToNotification,
@@ -108,6 +109,16 @@ export async function hydrate(userId: string): Promise<AppState> {
     state.checkins = checkins.map(rowToCheckin)
   } catch (e) {
     console.error('checkins fetch failed (is migration 0013 applied?)', e)
+  }
+
+  // The user's private meal log. Non-fatal for the same reason as checkins: if
+  // the meals table doesn't exist yet (migration 0015 not applied), degrade
+  // gracefully instead of bricking the whole app load.
+  try {
+    const meals = await api.meals.forUser(userId)
+    state.meals = meals.map(rowToMeal)
+  } catch (e) {
+    console.error('meals fetch failed (is migration 0015 applied?)', e)
   }
 
   return state

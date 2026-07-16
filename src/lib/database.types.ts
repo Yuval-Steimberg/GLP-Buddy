@@ -130,3 +130,21 @@ export interface CheckinRow {
   note: string | null
   created_at: string
 }
+
+export interface MealItemRow {
+  name: string
+  calories: number
+  protein_g: number
+}
+
+export interface MealRow {
+  id: string
+  user_id: string
+  image_url: string | null
+  title: string
+  calories: number
+  protein_g: number
+  items: MealItemRow[]
+  note: string | null
+  created_at: string
+}

@@ -21,6 +21,9 @@ import type {
   Checkin,
   CheckinStatus,
   JourneyCapsule,
+  Meal,
+  MealItem,
+  AnalyzedMeal,
 } from '../types'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
 import { BUDDY_LEVELS, MAX_BUDDIES, TERMS_VERSION, TRIO_MIN_ACCOUNT_AGE_DAYS } from '../constants'
@@ -136,6 +139,11 @@ interface AppStoreValue {
   postCheckin: (status: CheckinStatus, note?: string) => void
   requestSupport: () => void
   latestCheckin: (userId: string) => Checkin | null
+  // meals (private food log + photo nutrition estimate)
+  analyzeMeal: (imageDataUrl: string, note?: string) => Promise<AnalyzedMeal>
+  saveMeal: (meal: { imageUrl?: string; title: string; calories: number; proteinG: number; items: MealItem[]; note?: string }) => void
+  deleteMeal: (id: string) => void
+  myMeals: () => Meal[]
   buddyMemories: (rel: BuddyRelationship) => string[]
   journeyCapsule: (rel: BuddyRelationship, monthsAgo?: number) => JourneyCapsule
   sendEncouragement: (relationshipId: string) => void
@@ -1083,6 +1091,69 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     return new Date(c.createdAt).toDateString() === today ? c : null
   }, [state.checkins])
 
+  // ---- Meals: photo → calorie/protein estimate → private food log --------
+  // Estimate a meal photo's nutrition. Supabase mode calls the analyze-food
+  // Edge Function (Claude vision); demo mode returns a canned, clearly-
+  // approximate result so the flow is explorable without a backend.
+  const analyzeMeal = useCallback(async (imageDataUrl: string, note?: string): Promise<AnalyzedMeal> => {
+    if (!USE_SUPABASE) {
+      await new Promise((r) => setTimeout(r, 900))
+      return {
+        title: 'Sample meal',
+        calories: 520,
+        proteinG: 34,
+        items: [
+          { name: 'Grilled chicken', calories: 280, proteinG: 30 },
+          { name: 'Rice & vegetables', calories: 240, proteinG: 4 },
+        ],
+        confidence: 'medium',
+      }
+    }
+    return api.food.analyze(imageDataUrl, note)
+  }, [])
+
+  // Save an (optionally portion-adjusted) estimate to the user's private log.
+  const saveMeal = useCallback((meal: { imageUrl?: string; title: string; calories: number; proteinG: number; items: MealItem[]; note?: string }) => {
+    if (USE_SUPABASE) {
+      const meId = state.currentUserId
+      if (meId) {
+        setState((prev) => ({
+          ...prev,
+          meals: [{ id: genId('meal'), userId: meId, ...meal, createdAt: Date.now() }, ...prev.meals],
+        }))
+      }
+      runWrite('saveMeal', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.meals.add(me, meal)
+        await refresh()
+      })
+      return
+    }
+    setState((prev) => {
+      if (!prev.currentUserId) return prev
+      return {
+        ...prev,
+        meals: [{ id: genId('meal'), userId: prev.currentUserId, ...meal, createdAt: Date.now() }, ...prev.meals],
+      }
+    })
+  }, [refresh, state.currentUserId])
+
+  const deleteMeal = useCallback((id: string) => {
+    setState((prev) => ({ ...prev, meals: prev.meals.filter((m) => m.id !== id) }))
+    if (USE_SUPABASE) {
+      runWrite('deleteMeal', async () => { await api.meals.remove(id) })
+    }
+  }, [])
+
+  // The signed-in user's own meals, newest first.
+  const myMeals = useCallback((): Meal[] => {
+    const me = state.currentUserId
+    return state.meals
+      .filter((m) => !me || m.userId === me)
+      .slice()
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }, [state.meals, state.currentUserId])
+
   // (6) Buddy Memories — resurfaced "on this day" moments for a relationship.
   const buddyMemories = useCallback((rel: BuddyRelationship): string[] => {
     const me = state.currentUserId
@@ -1718,6 +1789,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       postCheckin,
       requestSupport,
       latestCheckin,
+      analyzeMeal,
+      saveMeal,
+      deleteMeal,
+      myMeals,
       buddyMemories,
       journeyCapsule,
       sendEncouragement,
@@ -1765,6 +1840,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       postCheckin,
       requestSupport,
       latestCheckin,
+      analyzeMeal,
+      saveMeal,
+      deleteMeal,
+      myMeals,
       buddyMemories,
       journeyCapsule,
       sendEncouragement,

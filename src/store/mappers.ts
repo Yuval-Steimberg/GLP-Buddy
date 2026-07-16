@@ -2,6 +2,7 @@
 import type {
   ApprovalRow,
   CheckinRow,
+  MealRow,
   MessageRow,
   MilestoneRow,
   NotificationRow,
@@ -31,6 +32,7 @@ import type {
   TreatmentStage,
   Checkin,
   CheckinStatus,
+  Meal,
 } from '../types'
 
 const ms = (iso: string) => Date.parse(iso)
@@ -146,6 +148,26 @@ export function rowToCheckin(r: CheckinRow): Checkin {
     id: r.id,
     userId: r.user_id,
     status: r.status as CheckinStatus,
+    note: r.note ?? undefined,
+    createdAt: ms(r.created_at),
+  }
+}
+
+export function rowToMeal(r: MealRow): Meal {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    imageUrl: r.image_url ?? undefined,
+    title: r.title,
+    calories: r.calories,
+    proteinG: r.protein_g,
+    items: Array.isArray(r.items)
+      ? r.items.map((it) => ({
+          name: String(it?.name ?? 'Item'),
+          calories: Number(it?.calories ?? 0),
+          proteinG: Number(it?.protein_g ?? 0),
+        }))
+      : [],
     note: r.note ?? undefined,
     createdAt: ms(r.created_at),
   }

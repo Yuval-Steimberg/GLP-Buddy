@@ -7,6 +7,7 @@ import { requireSupabase, supabase } from '../lib/supabase'
 import type {
   ApprovalRow,
   CheckinRow,
+  MealRow,
   MessageRow,
   MilestoneRow,
   NotificationRow,
@@ -654,6 +655,71 @@ export const checkins = {
       )
       .subscribe()
     return () => { void sb.removeChannel(channel) }
+  },
+}
+
+// ---- Meals (private food log) + photo nutrition analysis ------------------
+export const meals = {
+  // Insert a meal and return the saved row (so the client gets the server id).
+  async add(
+    userId: string,
+    meal: { imageUrl?: string; title: string; calories: number; proteinG: number; items: { name: string; calories: number; proteinG: number }[]; note?: string },
+  ): Promise<MealRow> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('meals')
+      .insert({
+        user_id: userId,
+        image_url: meal.imageUrl ?? null,
+        title: meal.title,
+        calories: meal.calories,
+        protein_g: meal.proteinG,
+        items: meal.items.map((i) => ({ name: i.name, calories: i.calories, protein_g: i.proteinG })),
+        note: meal.note || null,
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as MealRow
+  },
+
+  // The signed-in user's own meals (RLS restricts to self regardless).
+  async forUser(userId: string): Promise<MealRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('meals')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (error) throw error
+    return (data ?? []) as MealRow[]
+  },
+
+  async remove(id: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('meals').delete().eq('id', id)
+    if (error) throw error
+  },
+}
+
+// Estimate calories + protein from a meal photo (Claude vision Edge Function).
+export const food = {
+  async analyze(imageDataUrl: string, note?: string): Promise<{ title: string; calories: number; proteinG: number; items: { name: string; calories: number; proteinG: number }[]; confidence?: 'low' | 'medium' | 'high' }> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.functions.invoke('analyze-food', { body: { image: imageDataUrl, note } })
+    if (error) throw error
+    const r = data as { error?: string; title?: string; calories?: number; protein_g?: number; items?: { name?: string; calories?: number; protein_g?: number }[]; confidence?: 'low' | 'medium' | 'high' }
+    if (r.error || typeof r.calories !== 'number') {
+      throw new Error(r.error || 'could not analyze')
+    }
+    return {
+      title: r.title || 'Meal',
+      calories: r.calories,
+      proteinG: r.protein_g ?? 0,
+      items: (r.items ?? []).map((i) => ({ name: i.name ?? 'Item', calories: i.calories ?? 0, proteinG: i.protein_g ?? 0 })),
+      confidence: r.confidence,
+    }
   },
 }
 

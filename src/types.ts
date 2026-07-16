@@ -74,6 +74,35 @@ export interface Checkin {
   createdAt: number
 }
 
+// One food item within an analyzed meal.
+export interface MealItem {
+  name: string
+  calories: number
+  proteinG: number
+}
+
+// The estimate returned by the analyze-food function (before it's saved).
+export interface AnalyzedMeal {
+  title: string
+  calories: number
+  proteinG: number
+  items: MealItem[]
+  confidence?: 'low' | 'medium' | 'high'
+}
+
+// A saved meal in the user's private food log.
+export interface Meal {
+  id: string
+  userId: string
+  imageUrl?: string // compressed JPEG data URL of the photo
+  title: string
+  calories: number
+  proteinG: number
+  items: MealItem[]
+  note?: string
+  createdAt: number
+}
+
 export interface JourneyCapsule {
   label: string // e.g. "July 2026"
   monthsTogether: number
@@ -240,5 +269,6 @@ export interface AppState {
   trios: BuddyTrioGroup[]
   trioMessages: TrioMessage[]
   checkins: Checkin[]
+  meals: Meal[]
   passedUserIds: string[]
 }

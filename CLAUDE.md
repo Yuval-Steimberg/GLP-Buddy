@@ -68,7 +68,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `messages.image_url` (+ text nullable), 0010 **security hardening** (see below),
   0011 `messages.reply_to` (quoted replies), 0012 `timeline_events.image_url`
   (timeline photos), 0013 GLP features (injection day + check-ins + support RPC),
-  0014 `messages.from_coach` ("Hey Coach" in the buddy chat).
+  0014 `messages.from_coach` ("Hey Coach" in the buddy chat), 0015 `meals`
+  (private food-photo log — calorie/protein estimates).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -209,6 +210,31 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   - Uses the auto-injected `SUPABASE_URL` / `SUPABASE_ANON_KEY` /
     `SUPABASE_SERVICE_ROLE_KEY` edge secrets — no new secret to set. Redeploy
     `ask-coach` when shipping this (the in-chat branch is new).
+- **Food log / meal photo estimate** (migration 0015 `meals`; page
+  `src/pages/MealLog.tsx`, route `/meals`, entry card on BuddyHome; **never
+  medical/nutritional advice**): user photographs a meal → the
+  `supabase/functions/analyze-food` edge function (Claude **vision**, reuses the
+  same `ANTHROPIC_API_KEY` as the Coach, `MODEL`/`FOOD_MODEL` default
+  `claude-opus-4-8`, **verify_jwt ON**) returns strict JSON `{title, calories,
+  protein_g, items[]}` → result card with a **portion adjuster** (½×/1×/1.5×/2×
+  scales the numbers, user confirms) → `saveMeal` to the **private** `meals`
+  table. The function does NOT write to the DB (compute-only), strips code
+  fences, clamps numbers, returns `{error:'no_food'}` for non-food photos, and
+  handles `stop_reason==='refusal'`. The photo is a compressed JPEG data URL
+  (`fileToChatImage`), size-capped (3MB) like chat/timeline images.
+  - **Privacy:** `meals` is **own-data-only** RLS (NO buddy visibility, unlike
+    checkins). Sharing a meal is an explicit, separate action that reuses the
+    existing `addTimelinePhoto` (timeline) / `sendMessage` (chat) — copying the
+    photo + a caption into the already-RLS-scoped timeline/message. Nothing in
+    `meals` is exposed to anyone else.
+  - Client↔store: `analyzeMeal` (demo mode returns a canned estimate),
+    `saveMeal`/`deleteMeal`/`myMeals` in AppStore; `api.food.analyze` +
+    `api.meals.{add,forUser,remove}`; `rowToMeal` mapper; hydrate fetches own
+    meals in its own try/catch (degrade-gracefully rule — 0015 unapplied must not
+    brick the load). `AppState.meals` + `mockData` builders seed `meals: []`.
+  - **Deploy:** apply migration 0015, then `supabase functions deploy
+    analyze-food` (no new secret — reuses `ANTHROPIC_API_KEY`). Reaches the store
+    app only in the next native build.
 - **Brand logo system** (all in `src/components/Icon.tsx`; assets in
   `public/brand/`):
   - `BrandMark` = inline-SVG heart mark (small spots, in-app tab bar, install
@@ -320,6 +346,12 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   `--no-verify-jwt`). No SQL/migration. "Couldn't reach the Coach" = key not set,
   function not deployed, or no Anthropic credit (check Edge Function logs).
   Deploying `ask-coach` needs the file locally — `git pull` first if it's missing.
+- **Food log (meal photos):** apply migration **0015** (`meals` table), then
+  `supabase functions deploy analyze-food` (**keep verify_jwt ON**). No new
+  secret — reuses the Coach's `ANTHROPIC_API_KEY`. "Couldn't estimate that" =
+  key not set, function not deployed, or no Anthropic credit (check Edge Function
+  logs). Ship the migration before the frontend (the `/meals` page calls the
+  function + reads the table).
 - **Deploy order for a release that touches both:** apply the DB migration
   first, THEN push the frontend to the Netlify branch — the frontend depends on
   the new RPCs (see migration 0010 notes). Ship them close together.
