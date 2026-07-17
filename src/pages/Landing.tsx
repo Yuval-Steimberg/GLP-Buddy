@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { USE_SUPABASE } from '../lib/env'
+import { APP_STORE_URL, PLAY_STORE_URL } from '../constants'
 import { Icon, BrandLogo, BrandLockup } from '../components/Icon'
 
 export function Landing() {
@@ -54,6 +55,7 @@ export function Landing() {
                 See how it works <span aria-hidden>→</span>
               </button>
             </div>
+            <StoreBadges />
             <div className="lp-trust">
               <span><Icon name="spark" size={15} /> Free to join</span>
               <span><Icon name="lock" size={15} /> Private 1:1</span>
@@ -226,6 +228,7 @@ export function Landing() {
           <h2 className="lp-h2">Someone out there gets exactly what you're going through.</h2>
           <p className="lp-sub">Find them today — it only takes a couple of minutes.</p>
           <button className="lp-btn lp-btn-lg" onClick={cta}>Find my pen pal — it's free</button>
+          <StoreBadges center />
         </Reveal>
       </section>
 
@@ -309,6 +312,32 @@ function Counter({ to, suffix = '' }: { to: number; suffix?: string }) {
 
 function InlineCta({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return <button className="lp-inline-cta" onClick={onClick}>{children} <span aria-hidden>→</span></button>
+}
+
+// App-store download badges. Each badge renders only once its URL is filled in
+// (src/constants.ts) — so this is safe to ship before the apps go live.
+function StoreBadges({ center }: { center?: boolean }) {
+  if (!APP_STORE_URL && !PLAY_STORE_URL) return null
+  return (
+    <div className={`lp-store-row${center ? ' center' : ''}`}>
+      {APP_STORE_URL && (
+        <a className="lp-store-badge" href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Download on the App Store">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden fill="currentColor">
+            <path d="M17.05 12.04c-.03-2.9 2.37-4.29 2.48-4.36-1.35-1.98-3.46-2.25-4.21-2.28-1.79-.18-3.5 1.05-4.41 1.05-.91 0-2.31-1.03-3.8-1-1.95.03-3.75 1.13-4.76 2.88-2.03 3.52-.52 8.73 1.46 11.59.97 1.4 2.12 2.97 3.63 2.91 1.46-.06 2.01-.94 3.77-.94 1.76 0 2.26.94 3.8.91 1.57-.03 2.56-1.42 3.52-2.83 1.11-1.62 1.57-3.19 1.59-3.27-.03-.02-3.05-1.17-3.08-4.64zM14.13 3.57c.8-.98 1.35-2.33 1.2-3.68-1.16.05-2.57.77-3.4 1.74-.74.86-1.39 2.24-1.22 3.56 1.29.1 2.62-.66 3.42-1.62z" />
+          </svg>
+          <span><small>Download on the</small>App Store</span>
+        </a>
+      )}
+      {PLAY_STORE_URL && (
+        <a className="lp-store-badge" href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" aria-label="Get it on Google Play">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden fill="currentColor">
+            <path d="M3.6 2.3c-.24.25-.38.64-.38 1.14v17.12c0 .5.14.89.39 1.13l.06.06 9.59-9.59v-.22L3.66 2.24l-.06.06zm12.79 12.79l-3.2-3.2v-.22l3.2-3.2.07.04 3.79 2.15c1.08.62 1.08 1.62 0 2.24l-3.79 2.15-.07.04zM14.02 12l-9.4 9.4c.36.38.94.42 1.6.05l11.2-6.36L14.02 12zM7.82 2.55C7.16 2.18 6.58 2.22 6.22 2.6l9.4 9.4 2.4-2.4L6.82 3.24z" />
+          </svg>
+          <span><small>Get it on</small>Google Play</span>
+        </a>
+      )}
+    </div>
+  )
 }
 
 /* ---------------- building blocks ---------------- */

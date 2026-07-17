@@ -15,6 +15,7 @@ import {
   rowToTimeline,
   rowToTrioMessage,
   rowToUser,
+  rowToWeightLog,
 } from './mappers'
 
 export async function hydrate(userId: string): Promise<AppState> {
@@ -112,13 +113,23 @@ export async function hydrate(userId: string): Promise<AppState> {
   }
 
   // The user's private meal log. Non-fatal for the same reason as checkins: if
-  // the meals table doesn't exist yet (migration 0015 not applied), degrade
+  // the meals table doesn't exist yet (migration 0018 not applied), degrade
   // gracefully instead of bricking the whole app load.
   try {
     const meals = await api.meals.forUser(userId)
     state.meals = meals.map(rowToMeal)
   } catch (e) {
-    console.error('meals fetch failed (is migration 0015 applied?)', e)
+    console.error('meals fetch failed (is migration 0018 applied?)', e)
+  }
+
+  // The user's private weight history (for progress recaps). Non-fatal: if the
+  // weight_logs table doesn't exist yet (migration 0016 not applied), degrade
+  // gracefully instead of bricking the whole app load.
+  try {
+    const logs = await api.weightLogs.forUser(userId)
+    state.weightLogs = logs.map(rowToWeightLog)
+  } catch (e) {
+    console.error('weight logs fetch failed (is migration 0016 applied?)', e)
   }
 
   return state

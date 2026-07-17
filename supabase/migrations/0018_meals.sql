@@ -1,5 +1,5 @@
 -- ===========================================================================
--- 0015 — Meal photo log (private food records).
+-- 0018 — Meal photo log (private food records).
 --
 -- A user photographs a meal; the `analyze-food` Edge Function (Claude vision)
 -- estimates calories + protein, and the result is saved here as a PRIVATE

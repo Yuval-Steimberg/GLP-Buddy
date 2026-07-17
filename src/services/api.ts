@@ -17,6 +17,7 @@ import type {
   TrioMemberRow,
   TrioMessageRow,
   TrioRow,
+  WeightLogRow,
 } from '../lib/database.types'
 import type { Profile } from '../types'
 
@@ -172,6 +173,7 @@ export const profiles = {
       age_confirmed: true,
       terms_version: null,
       is_staff: false,
+      is_premium: false,
       ended_relationship_count: 0,
       updated_at: (r.created_at as string) ?? new Date(0).toISOString(),
       ...r,
@@ -703,6 +705,61 @@ export const meals = {
   },
 }
 
+// ---- Weight logs (private to the user) ------------------------------------
+export const weightLogs = {
+  async add(userId: string, kg: number): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('weight_logs').insert({ user_id: userId, kg })
+    if (error) throw error
+  },
+
+  // The caller's own weight history (RLS is self-only).
+  async forUser(userId: string): Promise<WeightLogRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('weight_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('logged_at', { ascending: false })
+      .limit(400)
+    if (error) throw error
+    return data ?? []
+  },
+}
+
+// ---- Staff admin dashboard (is_staff-gated RPCs; migration 0017) ----------
+export const admin = {
+  async overview() {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_overview')
+    if (error) throw error
+    return data as unknown
+  },
+  async signupsDaily(): Promise<{ day: string; count: number }[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_signups_daily')
+    if (error) throw error
+    return (data as { day: string; count: number }[]) ?? []
+  },
+  async users(search?: string) {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_users', { p_limit: 200, p_search: search ?? null })
+    if (error) throw error
+    return (data as Record<string, unknown>[]) ?? []
+  },
+  async reports() {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('admin_reports', { p_limit: 300 })
+    if (error) throw error
+    return (data as Record<string, unknown>[]) ?? []
+  },
+  async resolveReport(id: string, resolved: boolean): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.rpc('admin_resolve_report', { p_id: id, p_resolved: resolved })
+    if (error) throw error
+  },
+}
+
 // Estimate calories + protein from a meal photo (Claude vision Edge Function).
 export const food = {
   async analyze(imageDataUrl: string, note?: string): Promise<{ title: string; calories: number; proteinG: number; items: { name: string; calories: number; proteinG: number }[]; confidence?: 'low' | 'medium' | 'high' }> {
@@ -732,3 +789,4 @@ export const support = {
     return (data as number) ?? 0
   },
 }
+

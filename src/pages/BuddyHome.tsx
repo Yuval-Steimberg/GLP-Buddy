@@ -4,6 +4,7 @@ import { useStore } from '../store/AppStore'
 import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
+import { WeightSheet } from '../components/WeightSheet'
 import { Icon } from '../components/Icon'
 import { timeAgo } from '../utils/format'
 import { CHECKIN_OPTIONS } from '../constants'
@@ -24,9 +25,14 @@ export function BuddyHome() {
     latestCheckin,
     buddyMemories,
     journeyCapsule,
+    reviewYears,
+    latestWeight,
     trioEligibility,
     activeTrio,
   } = useStore()
+  const availableYears = reviewYears()
+  const myWeight = latestWeight()
+  const [showWeight, setShowWeight] = useState(false)
   const rels = activeRelationships()
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
@@ -89,6 +95,9 @@ export function BuddyHome() {
           </div>
           <button className="btn ghost gets-it" style={{ marginTop: 12 }} onClick={askForSupport}>
             <Icon name="heart" size={16} /> I need someone who gets it
+          </button>
+          <button className="btn ghost" style={{ marginTop: 2 }} onClick={() => setShowWeight(true)}>
+            <Icon name="growth" size={16} /> {myWeight != null ? `Log weight · last ${myWeight} kg` : 'Log your weight (private)'}
           </button>
           {supportSent && (
             <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginTop: 10 }}>
@@ -216,6 +225,17 @@ export function BuddyHome() {
                 )}
               </div>
 
+              <div className="card flat list-tap jb-teaser" style={{ marginBottom: 14 }} onClick={() => navigate('/journey-book')}>
+                <span className="row-ico"><Icon name="doc" size={20} /></span>
+                <div style={{ flex: 1 }}>
+                  <strong>Your Journey Book</strong>
+                  <div className="muted" style={{ fontSize: 13 }}>
+                    Your whole story, written month by month — keep it forever.
+                  </div>
+                </div>
+                <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+              </div>
+
               <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 8 }}>Recent milestones</div>
               {recentMs.length === 0 ? (
                 <p className="muted" style={{ fontSize: 14, marginTop: 0 }}>
@@ -281,6 +301,20 @@ export function BuddyHome() {
         </div>
       </div>
 
+      {/* Year in Review — shareable end-of-year recap (viral). */}
+      {availableYears.length > 0 && (
+        <div className="card list-tap yir-entry" onClick={() => navigate('/year-in-review')}>
+          <span className="row-ico"><Icon name="spark" size={22} /></span>
+          <div style={{ flex: 1 }}>
+            <strong>Your GLP Journey {availableYears[0]}</strong>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Your year, wrapped — a recap you can share.
+            </div>
+          </div>
+          <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
+        </div>
+      )}
+
       {/* The Coach */}
       <div className="card list-tap" onClick={() => navigate('/coach')} style={{ background: 'var(--surface-2)' }}>
         <div className="row">
@@ -305,6 +339,7 @@ export function BuddyHome() {
       {milestoneFor && (
         <MilestoneSheet open onClose={() => setMilestoneFor(null)} relationshipId={milestoneFor} />
       )}
+      <WeightSheet open={showWeight} onClose={() => setShowWeight(false)} />
     </div>
   )
 }

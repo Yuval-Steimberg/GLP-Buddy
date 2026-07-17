@@ -228,7 +228,7 @@ export function Profile() {
           {(!USE_SUPABASE || currentUser.isStaff) && (
             <button className="row list-tap" style={{ width: '100%', background: 'none' }} onClick={() => navigate('/moderation')}>
               <span className="row-ico"><Icon name="shield" size={18} /></span>
-              <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Moderation queue (staff)</span>
+              <span style={{ fontWeight: 700, flex: 1, textAlign: 'left' }}>Admin dashboard (staff)</span>
               <span className="muted">›</span>
             </button>
           )}

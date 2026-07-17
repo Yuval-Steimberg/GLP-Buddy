@@ -23,6 +23,7 @@ export interface ProfileRow {
   age_confirmed: boolean
   terms_version: string | null
   is_staff: boolean
+  is_premium: boolean
   onboarding_complete: boolean
   ended_relationship_count: number
   created_at: string
@@ -146,5 +147,13 @@ export interface MealRow {
   protein_g: number
   items: MealItemRow[]
   note: string | null
+  created_at: string
+}
+
+export interface WeightLogRow {
+  id: string
+  user_id: string
+  kg: number
+  logged_at: string
   created_at: string
 }

@@ -103,6 +103,55 @@ export interface Meal {
   createdAt: number
 }
 
+// ---- Staff admin dashboard (all fed by is_staff-gated RPCs) ---------------
+export interface AdminOverview {
+  users_total: number
+  users_7d: number
+  users_30d: number
+  onboarded: number
+  premium: number
+  staff: number
+  pairs_active: number
+  pairs_total: number
+  messages_total: number
+  messages_7d: number
+  milestones_total: number
+  checkins_7d: number
+  reports_open: number
+  reports_total: number
+}
+
+export interface AdminUser {
+  id: string
+  nickname: string
+  medication: string
+  treatmentStage: string
+  country: string
+  createdAt: number
+  onboardingComplete: boolean
+  isPremium: boolean
+  isStaff: boolean
+}
+
+export interface AdminReport {
+  id: string
+  kind: string
+  reason: string
+  resolved: boolean
+  createdAt: number
+  reporterId: string
+  reporterNick: string
+  targetId: string
+  targetNick: string
+}
+
+export interface WeightLog {
+  id: string
+  userId: string
+  kg: number
+  loggedAt: number
+}
+
 export interface JourneyCapsule {
   label: string // e.g. "July 2026"
   monthsTogether: number
@@ -113,6 +162,53 @@ export interface JourneyCapsule {
   favoriteMemory?: string
 }
 
+// One month "chapter" in the Journey Book — an auto-written story of a buddy
+// pair's month, derived entirely from existing data (no new schema).
+export interface JourneyChapter {
+  key: string // 'YYYY-MM'
+  label: string // 'July 2026'
+  monthsTogether: number
+  milestoneTypes: MilestoneType[]
+  milestones: number
+  messages: number
+  photos: number
+  story: string[] // the auto-written narrative lines for this month
+}
+
+// The whole Journey Book for a relationship — cover stats + monthly chapters.
+export interface JourneyBook {
+  meName: string
+  buddyName: string
+  startDate: number
+  totalDays: number
+  totalMonths: number
+  totalMilestones: number
+  totalMessages: number
+  totalPhotos: number
+  topMilestone?: MilestoneType // the "biggest" milestone reached across the journey
+  chapters: JourneyChapter[] // oldest → newest
+}
+
+// A shareable end-of-year recap aggregated across ALL the user's buddies for a
+// calendar year — the viral "Your GLP Journey 2026" card. Derived, no schema.
+export interface YearReview {
+  year: number
+  meName: string
+  journeyStart?: number // earliest relationship/milestone date overall
+  daysOnJourney: number // days on the journey by the end of the reviewed year
+  buddies: number // distinct buddies connected during the year
+  milestones: number
+  messages: number
+  photos: number
+  toughWeeks: number // distinct weeks with a rough side-effect check-in
+  kgLost?: number // weight lost during the year, if weight was logged
+  strongestMonth?: string // e.g. 'August'
+  topMilestone?: MilestoneType
+  milestoneTypes: MilestoneType[] // distinct milestone types reached this year
+  favoriteEncouragement?: string // a received message that stood out (no name)
+  hasData: boolean
+}
+
 export interface User {
   id: string
   profile: Profile
@@ -120,6 +216,7 @@ export interface User {
   acceptedSafety: boolean
   onboardingComplete: boolean
   isStaff?: boolean
+  isPremium?: boolean // premium subscriber — unlocks Journey Book keepsake exports
   // Behaviour signals used for Buddy Trio eligibility scoring.
   endedRelationshipCount: number
 }
@@ -270,5 +367,6 @@ export interface AppState {
   trioMessages: TrioMessage[]
   checkins: Checkin[]
   meals: Meal[]
+  weightLogs: WeightLog[]
   passedUserIds: string[]
 }

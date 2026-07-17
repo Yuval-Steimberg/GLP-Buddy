@@ -39,9 +39,21 @@ npx cap open ios        # opens Xcode
 In Xcode:
 1. Select the project → **Signing & Capabilities** → set your **Team**.
 2. Set version (1.0.0) and build (1).
-3. **Product → Archive** → **Distribute App → App Store Connect**.
-4. In **App Store Connect** (appstoreconnect.apple.com): create the app
-   (bundle id `com.glpenpal.app`), fill the listing, upload screenshots,
+3. **Add the required privacy usage strings** to `ios/App/App/Info.plist`
+   (the app lets users attach photos in chat, the timeline, onboarding and their
+   profile — iOS **crashes on tap and Apple rejects** if these are missing or
+   blank). Add:
+   ```xml
+   <key>NSCameraUsageDescription</key>
+   <string>GLPenPal uses the camera only when you choose to take a photo to share with your buddy or add to your timeline.</string>
+   <key>NSPhotoLibraryUsageDescription</key>
+   <string>GLPenPal lets you pick photos from your library to share with your buddy, add to your timeline, or set as your avatar.</string>
+   <key>NSPhotoLibraryAddUsageDescription</key>
+   <string>GLPenPal saves a shared Journey card or recap image to your photos when you choose to share it.</string>
+   ```
+4. **Product → Archive** → **Distribute App → App Store Connect**.
+5. In **App Store Connect** (appstoreconnect.apple.com): create the app
+   (bundle id `com.glpenpal.mobile.ios`), fill the listing, upload screenshots,
    set the **Privacy Policy URL** = `https://glpenpal.com/privacy`, and a
    **support URL/email**. Submit for review.
 

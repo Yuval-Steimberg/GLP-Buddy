@@ -167,6 +167,7 @@ export function buildEmptyState(): AppState {
     trioMessages: [],
     checkins: [],
     meals: [],
+    weightLogs: [],
     passedUserIds: [],
   }
 }
@@ -190,6 +191,7 @@ export function buildInitialState(): AppState {
     trioMessages: [],
     checkins: [],
     meals: [],
+    weightLogs: [],
     passedUserIds: [],
   }
 }

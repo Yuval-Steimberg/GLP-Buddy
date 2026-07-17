@@ -10,6 +10,7 @@ import type {
   RelationshipRow,
   TimelineEventRow,
   TrioMessageRow,
+  WeightLogRow,
 } from '../lib/database.types'
 import type {
   AppNotification,
@@ -33,6 +34,7 @@ import type {
   Checkin,
   CheckinStatus,
   Meal,
+  WeightLog,
 } from '../types'
 
 const ms = (iso: string) => Date.parse(iso)
@@ -67,6 +69,7 @@ export function rowToUser(r: ProfileRow): User {
     acceptedSafety: r.accepted_safety,
     onboardingComplete: r.onboarding_complete,
     isStaff: r.is_staff,
+    isPremium: r.is_premium,
     endedRelationshipCount: r.ended_relationship_count,
   }
 }
@@ -170,6 +173,15 @@ export function rowToMeal(r: MealRow): Meal {
       : [],
     note: r.note ?? undefined,
     createdAt: ms(r.created_at),
+  }
+}
+
+export function rowToWeightLog(r: WeightLogRow): WeightLog {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    kg: Number(r.kg),
+    loggedAt: ms(r.logged_at),
   }
 }
 
