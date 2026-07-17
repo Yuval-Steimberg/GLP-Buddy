@@ -56,6 +56,18 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   hand-concatenated copy for pasting into the SQL Editor — **regenerate it**
   whenever you add a migration (cat 0001..latest in order). It is skipped by
   `supabase db push` (doesn't match the timestamp filename pattern) — that's fine.
+- **⚠️ Migration-history mismatch (bit us 2026-07):** the remote DB's migration
+  history is OUT OF SYNC because several migrations were applied by pasting into
+  the SQL Editor (which does NOT record them in `supabase_migrations`). So
+  `supabase db push` tries to RE-APPLY already-applied migrations and dies with
+  `... already exists (SQLSTATE 42710)`. **Preferred way to ship a new migration:
+  paste its `.sql` into the SQL Editor** (our migrations are idempotent —
+  `if not exists` / `drop policy if exists` / `add column if not exists`). We ran
+  `supabase migration repair --status applied 0010 … 0018` to reconcile the
+  history — but **`repair` marks a migration applied WITHOUT running it**, so if a
+  table/column was never actually created, `db push` will now SKIP it and it stays
+  missing. After any repair, VERIFY the object exists (e.g. `select count(*) from
+  public.meals;`) and paste the SQL manually if not.
 - All tables use RLS; a user only sees their own data or data for relationships/
   trios they belong to. Helpers: `is_relationship_member`, `is_trio_member`,
   `is_staff`.
