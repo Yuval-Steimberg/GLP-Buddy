@@ -164,6 +164,19 @@ export interface WeightLog {
   loggedAt: number
 }
 
+// A shared buddy goal/challenge — a pair sets a joint target (e.g. "log 5
+// meals this week") and tallies progress together with a manual "+1" tap.
+export interface Goal {
+  id: string
+  relationshipId: string
+  title: string
+  targetCount: number
+  progressCount: number
+  createdBy: string
+  createdAt: number
+  completedAt?: number
+}
+
 export interface JourneyCapsule {
   label: string // e.g. "July 2026"
   monthsTogether: number
@@ -380,5 +393,6 @@ export interface AppState {
   checkins: Checkin[]
   meals: Meal[]
   weightLogs: WeightLog[]
+  goals: Goal[]
   passedUserIds: string[]
 }

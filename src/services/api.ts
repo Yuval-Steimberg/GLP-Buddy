@@ -7,6 +7,7 @@ import { requireSupabase, supabase } from '../lib/supabase'
 import type {
   ApprovalRow,
   CheckinRow,
+  GoalRow,
   MealRow,
   MessageRow,
   MilestoneRow,
@@ -727,6 +728,60 @@ export const weightLogs = {
       .limit(400)
     if (error) throw error
     return data ?? []
+  },
+}
+
+// ---- Shared buddy goals/challenges (visible to both members of a pair) ----
+export const goals = {
+  async add(relationshipId: string, createdBy: string, title: string, targetCount: number): Promise<GoalRow> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('goals')
+      .insert({ relationship_id: relationshipId, created_by: createdBy, title, target_count: targetCount })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as GoalRow
+  },
+
+  // Goals for the caller's relationships (RLS also restricts to membership).
+  async forRelationships(relationshipIds: string[]): Promise<GoalRow[]> {
+    if (relationshipIds.length === 0) return []
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('goals')
+      .select('*')
+      .in('relationship_id', relationshipIds)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data ?? []
+  },
+
+  // Atomic +1 via RPC so two buddies tapping at once can't race each other.
+  async increment(id: string): Promise<GoalRow> {
+    const sb = requireSupabase()
+    const { data, error } = await sb.rpc('increment_goal_progress', { p_goal_id: id })
+    if (error) throw error
+    return data as GoalRow
+  },
+
+  async remove(id: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('goals').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  subscribeAll(cb: (g: GoalRow) => void) {
+    const sb = requireSupabase()
+    const channel = sb
+      .channel('goals-all')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'goals' },
+        (payload) => { if (payload.new && (payload.new as GoalRow).id) cb(payload.new as GoalRow) },
+      )
+      .subscribe()
+    return () => { void sb.removeChannel(channel) }
   },
 }
 

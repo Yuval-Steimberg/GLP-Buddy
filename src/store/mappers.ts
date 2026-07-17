@@ -2,6 +2,7 @@
 import type {
   ApprovalRow,
   CheckinRow,
+  GoalRow,
   MealRow,
   MessageRow,
   MilestoneRow,
@@ -17,6 +18,7 @@ import type {
   BuddyRelationship,
   ChatMessage,
   GenderPreference,
+  Goal,
   MatchApproval,
   Medication,
   Milestone,
@@ -188,6 +190,19 @@ export function rowToWeightLog(r: WeightLogRow): WeightLog {
     userId: r.user_id,
     kg: Number(r.kg),
     loggedAt: ms(r.logged_at),
+  }
+}
+
+export function rowToGoal(r: GoalRow): Goal {
+  return {
+    id: r.id,
+    relationshipId: r.relationship_id,
+    title: r.title,
+    targetCount: r.target_count,
+    progressCount: r.progress_count,
+    createdBy: r.created_by,
+    createdAt: ms(r.created_at),
+    completedAt: r.completed_at ? ms(r.completed_at) : undefined,
   }
 }
 

@@ -168,6 +168,7 @@ export function buildEmptyState(): AppState {
     checkins: [],
     meals: [],
     weightLogs: [],
+    goals: [],
     passedUserIds: [],
   }
 }
@@ -192,6 +193,7 @@ export function buildInitialState(): AppState {
     checkins: [],
     meals: [],
     weightLogs: [],
+    goals: [],
     passedUserIds: [],
   }
 }

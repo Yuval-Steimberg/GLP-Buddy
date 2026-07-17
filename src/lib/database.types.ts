@@ -163,3 +163,14 @@ export interface WeightLogRow {
   logged_at: string
   created_at: string
 }
+
+export interface GoalRow {
+  id: string
+  relationship_id: string
+  title: string
+  target_count: number
+  progress_count: number
+  created_by: string
+  created_at: string
+  completed_at: string | null
+}

@@ -26,6 +26,7 @@ import type {
   AnalyzedMeal,
   JourneyBook,
   YearReview,
+  Goal,
 } from '../types'
 import { availableReviewYears, buildJourneyBook, buildYearReview } from '../utils/journey'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
@@ -34,7 +35,7 @@ import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { showLocalNotification } from '../lib/push'
 import { hydrate } from './hydrate'
-import { rowToCheckin, rowToMessage, rowToNotification, rowToTimeline } from './mappers'
+import { rowToCheckin, rowToGoal, rowToMessage, rowToNotification, rowToTimeline } from './mappers'
 
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -158,6 +159,13 @@ interface AppStoreValue {
   myMeals: () => Meal[]
   buddyMemories: (rel: BuddyRelationship) => string[]
   journeyCapsule: (rel: BuddyRelationship, monthsAgo?: number) => JourneyCapsule
+  // check-in streak (consecutive days, derived — no schema)
+  currentStreak: (userId: string) => number
+  // shared buddy goals/challenges (migration 0020)
+  goalsFor: (relationshipId: string) => Goal[]
+  createGoal: (relationshipId: string, title: string, targetCount: number) => void
+  incrementGoal: (goalId: string) => void
+  removeGoal: (goalId: string) => void
   sendEncouragement: (relationshipId: string) => void
   addReflection: (relationshipId: string, text: string) => void
   // notifications
@@ -321,7 +329,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           return { ...prev, checkins: [c, ...prev.checkins] }
         })
       })
-      cleanupRealtime = () => { unsubNtf(); unsubMsg(); unsubTl(); unsubChk() }
+      // Live shared goals: a buddy's "+1" or a new goal appears without a refresh.
+      const unsubGoal = api.goals.subscribeAll((row) => {
+        setState((prev) => {
+          const g = rowToGoal(row)
+          const i = prev.goals.findIndex((x) => x.id === g.id)
+          if (i === -1) return { ...prev, goals: [g, ...prev.goals] }
+          const goals = prev.goals.slice()
+          goals[i] = g
+          return { ...prev, goals }
+        })
+      })
+      cleanupRealtime = () => { unsubNtf(); unsubMsg(); unsubTl(); unsubChk(); unsubGoal() }
     })
     // When the app returns to the foreground (e.g. tapped a push notification),
     // quietly re-pull fresh data in the background. Throttled so rapid focus/
@@ -1271,6 +1290,91 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state.milestones, state.messages, state.timeline])
 
+  // Current check-in streak — consecutive days with at least one check-in,
+  // ending today or yesterday (today not having a check-in yet doesn't break
+  // the streak until the day is actually missed). Pure/derived, no schema.
+  const currentStreak = useCallback((userId: string): number => {
+    const days = new Set(state.checkins.filter((c) => c.userId === userId).map((c) => new Date(c.createdAt).toDateString()))
+    let streak = 0
+    const cursor = new Date()
+    if (!days.has(cursor.toDateString())) cursor.setDate(cursor.getDate() - 1)
+    while (days.has(cursor.toDateString())) {
+      streak++
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    return streak
+  }, [state.checkins])
+
+  // ---- Shared buddy goals/challenges (migration 0020) --------------------
+  // A buddy pair sets a joint target and tallies progress together with a
+  // manual "+1" tap (either buddy can log progress toward the same goal).
+  const goalsFor = useCallback((relationshipId: string): Goal[] => {
+    return state.goals
+      .filter((g) => g.relationshipId === relationshipId)
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }, [state.goals])
+
+  const createGoal = useCallback((relationshipId: string, title: string, targetCount: number) => {
+    const t = title.trim()
+    if (!t || !Number.isFinite(targetCount) || targetCount <= 0) return
+    const target = Math.round(targetCount)
+    if (USE_SUPABASE) {
+      const meId = state.currentUserId
+      if (meId) {
+        setState((prev) => ({
+          ...prev,
+          goals: [
+            { id: genId('goal'), relationshipId, title: t, targetCount: target, progressCount: 0, createdBy: meId, createdAt: Date.now() },
+            ...prev.goals,
+          ],
+        }))
+      }
+      runWrite('createGoal', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) await api.goals.add(relationshipId, me, t, target)
+        await refresh()
+      })
+      return
+    }
+    setState((prev) => {
+      if (!prev.currentUserId) return prev
+      return {
+        ...prev,
+        goals: [
+          { id: genId('goal'), relationshipId, title: t, targetCount: target, progressCount: 0, createdBy: prev.currentUserId, createdAt: Date.now() },
+          ...prev.goals,
+        ],
+      }
+    })
+  }, [refresh, state.currentUserId])
+
+  // Tally +1 toward a shared goal. Optimistic locally; the Supabase RPC applies
+  // the increment atomically so two buddies tapping at once can't race, and
+  // fires a "goal reached" notification to both buddies when it completes.
+  const incrementGoal = useCallback((goalId: string) => {
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.map((g) => {
+        if (g.id !== goalId || g.completedAt) return g
+        const progressCount = Math.min(g.targetCount, g.progressCount + 1)
+        return { ...g, progressCount, completedAt: progressCount >= g.targetCount ? Date.now() : undefined }
+      }),
+    }))
+    if (USE_SUPABASE) {
+      runWrite('incrementGoal', async () => {
+        await api.goals.increment(goalId)
+        await refresh()
+      })
+    }
+  }, [refresh])
+
+  const removeGoal = useCallback((goalId: string) => {
+    setState((prev) => ({ ...prev, goals: prev.goals.filter((g) => g.id !== goalId) }))
+    if (USE_SUPABASE) {
+      runWrite('removeGoal', async () => { await api.goals.remove(goalId) })
+    }
+  }, [])
+
   // The Journey Book — the full month-by-month auto-written story of a buddy
   // pair, from the month they matched to now. Free to read (the retention hook);
   // Premium unlocks the keepsake PDF + shareable image exports (JourneyBook.tsx).
@@ -1898,6 +2002,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       myMeals,
       buddyMemories,
       journeyCapsule,
+      currentStreak,
+      goalsFor,
+      createGoal,
+      incrementGoal,
+      removeGoal,
       sendEncouragement,
       addReflection,
       unreadCount,
@@ -1955,6 +2064,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       myMeals,
       buddyMemories,
       journeyCapsule,
+      currentStreak,
+      goalsFor,
+      createGoal,
+      incrementGoal,
+      removeGoal,
       sendEncouragement,
       addReflection,
       unreadCount,

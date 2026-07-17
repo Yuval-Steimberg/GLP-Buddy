@@ -87,7 +87,8 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `profiles.is_premium` (premium tier — see Monetization below), 0016
   `weight_logs` (optional private weight logging — powers real "kg lost"), 0017
   admin dashboard RPCs (see Admin below), 0018 `meals` (private food-photo log —
-  calorie/protein estimates), 0019 `meals` full macros (carbs/fat/fiber columns).
+  calorie/protein estimates), 0019 `meals` full macros (carbs/fat/fiber columns),
+  0020 `goals` (shared buddy goals/challenges — see below).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -275,6 +276,29 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   Buddy Memories (`buddyMemories(rel)`, client-derived anniversaries); Journey
   Capsule (`journeyCapsule(rel, monthsAgo)`) — its own screen `/capsule` with
   month browsing + canvas PNG export via Web Share (`Capsule.tsx`).
+- **Check-in streaks** (BuddyHome, top card, pure/derived — no schema):
+  `currentStreak(userId)` in `AppStore.tsx` walks backwards day-by-day over
+  `state.checkins` counting consecutive days with a check-in; today not yet
+  logged doesn't break the streak (grace until the day is actually missed).
+  Shown as a `.ms-badge` + "N-day check-in streak" line, only when `> 0`.
+- **Shared buddy goals/challenges** (migration **0020** `goals`; BuddyHome
+  "SHARED GOALS" card per relationship, between the Journey Book teaser and
+  Recent milestones): a buddy pair sets a joint target (e.g. "log 5 meals this
+  week") via `GoalSheet.tsx` (`createGoal`) and either buddy taps **"+1"**
+  (`incrementGoal`) to tally shared progress on the same goal — reuses the
+  existing `.progress` bar CSS. **Visible to both members**, unlike
+  checkins/meals/weight_logs (per-user RLS) — `goals` RLS is
+  `is_relationship_member`-scoped instead. Progress only moves through the
+  **atomic `increment_goal_progress` RPC** (no client UPDATE grant on the
+  table), so two buddies tapping "+1" at once can't race into a lost update;
+  the RPC also stamps `completed_at` and a trigger notifies both buddies
+  (`'goal_reached'`, already an existing `NotificationType`) when the target is
+  reached. Realtime via `api.goals.subscribeAll` mirrors the checkins pattern
+  (global subscription, RLS scopes delivery). `hydrate` fetches goals per
+  active relationship in its own try/catch (same degrade-gracefully rule as
+  checkins/meals/weight_logs — an unapplied 0020 must not brick the load).
+  Deploy: apply migration 0020 (paste into the SQL Editor, idempotent) before
+  shipping the frontend.
 - **AI Coach** (`src/pages/Coach.tsx`, `/coach`, reached from a card on BuddyHome
   AND an always-present entry at the top of the Chat tab `ChatList`): a
   wellness/habits companion, **never medical advice**. `/coach` is NOT in
@@ -483,6 +507,11 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   `0018_meals.sql` / `0019_meal_macros.sql` into the SQL Editor instead (both
   idempotent), or `supabase migration repair --status applied <n>` the already-run
   ones first.
+- **Shared buddy goals:** apply migration **0020** (`goals` table + the
+  `increment_goal_progress` RPC + `notify_on_goal_complete` trigger — paste
+  `0020_goals.sql` into the SQL Editor, idempotent) before shipping the
+  frontend (BuddyHome's "SHARED GOALS" card calls the RPC directly). No new
+  secret or edge function.
 - **Stripe billing (web Premium):** `supabase secrets set STRIPE_SECRET_KEY=sk_…
   STRIPE_PRICE_ID=price_… STRIPE_WEBHOOK_SECRET=whsec_…` then
   `supabase functions deploy create-checkout` (**keep verify_jwt ON**) and

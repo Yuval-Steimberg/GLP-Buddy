@@ -5,6 +5,7 @@ import { TopBar } from '../components/TopBar'
 import { Avatar } from '../components/Avatar'
 import { MilestoneSheet } from '../components/MilestoneSheet'
 import { WeightSheet } from '../components/WeightSheet'
+import { GoalSheet } from '../components/GoalSheet'
 import { Icon } from '../components/Icon'
 import { timeAgo } from '../utils/format'
 import { CHECKIN_OPTIONS } from '../constants'
@@ -29,12 +30,17 @@ export function BuddyHome() {
     latestWeight,
     trioEligibility,
     activeTrio,
+    currentStreak,
+    goalsFor,
+    incrementGoal,
+    removeGoal,
   } = useStore()
   const availableYears = reviewYears()
   const myWeight = latestWeight()
   const [showWeight, setShowWeight] = useState(false)
   const rels = activeRelationships()
   const [milestoneFor, setMilestoneFor] = useState<string | null>(null)
+  const [goalFor, setGoalFor] = useState<string | null>(null)
   const [encouraged, setEncouraged] = useState<string | null>(null)
   const [supportSent, setSupportSent] = useState(false)
   // Buddy cards start collapsed — just name + medication — so the page is easy
@@ -53,6 +59,7 @@ export function BuddyHome() {
   const greet = `Hi ${currentUser?.profile.nickname}`
   const todayWeekday = new Date().getDay()
   const myCheckin = currentUser ? latestCheckin(currentUser.id) : null
+  const myStreak = currentUser ? currentStreak(currentUser.id) : 0
 
   const encourage = (rel: BuddyRelationship) => {
     sendEncouragement(rel.id)
@@ -93,6 +100,12 @@ export function BuddyHome() {
               </button>
             ))}
           </div>
+          {myStreak > 0 && (
+            <div className="row" style={{ gap: 6, marginTop: 10 }}>
+              <span className="ms-badge"><Icon name="spark" size={15} /></span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{myStreak}-day check-in streak</span>
+            </div>
+          )}
           <button className="btn ghost gets-it" style={{ marginTop: 12 }} onClick={askForSupport}>
             <Icon name="heart" size={16} /> I need someone who gets it
           </button>
@@ -236,6 +249,49 @@ export function BuddyHome() {
                 <span style={{ fontWeight: 800, color: 'var(--primary-ink)' }}>›</span>
               </div>
 
+              <div className="card flat" style={{ marginBottom: 14 }}>
+                <div className="row between">
+                  <div className="muted" style={{ fontSize: 12, fontWeight: 800 }}>SHARED GOALS</div>
+                  <button className="btn ghost sm" onClick={() => setGoalFor(rel.id)}>
+                    <Icon name="plus" size={14} /> New goal
+                  </button>
+                </div>
+                {goalsFor(rel.id).length === 0 ? (
+                  <p className="muted" style={{ fontSize: 13, margin: '8px 0 0' }}>
+                    Set a target you'll both work toward — like "log 5 meals this week."
+                  </p>
+                ) : (
+                  <div className="stack" style={{ marginTop: 8, gap: 12 }}>
+                    {goalsFor(rel.id).map((g) => {
+                      const pct = Math.min(100, Math.round((g.progressCount / g.targetCount) * 100))
+                      const done = !!g.completedAt
+                      return (
+                        <div key={g.id}>
+                          <div className="row between" style={{ marginBottom: 4 }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>{g.title}</span>
+                            <span className="muted" style={{ fontSize: 12 }}>{g.progressCount}/{g.targetCount}</span>
+                          </div>
+                          <div className="progress" style={{ marginBottom: done ? 4 : 8 }}>
+                            <span style={{ width: `${pct}%` }} />
+                          </div>
+                          {done ? (
+                            <div className="row" style={{ gap: 6 }}>
+                              <Icon name="check" size={14} style={{ color: 'var(--primary-ink)' }} />
+                              <span style={{ fontSize: 12, color: 'var(--primary-ink)', fontWeight: 700 }}>Goal reached!</span>
+                            </div>
+                          ) : (
+                            <div className="btn-row">
+                              <button className="btn sm" onClick={() => incrementGoal(g.id)}>+1</button>
+                              <button className="btn ghost sm" onClick={() => removeGoal(g.id)}>Remove</button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 8 }}>Recent milestones</div>
               {recentMs.length === 0 ? (
                 <p className="muted" style={{ fontSize: 14, marginTop: 0 }}>
@@ -338,6 +394,9 @@ export function BuddyHome() {
 
       {milestoneFor && (
         <MilestoneSheet open onClose={() => setMilestoneFor(null)} relationshipId={milestoneFor} />
+      )}
+      {goalFor && (
+        <GoalSheet open onClose={() => setGoalFor(null)} relationshipId={goalFor} />
       )}
       <WeightSheet open={showWeight} onClose={() => setShowWeight(false)} />
     </div>

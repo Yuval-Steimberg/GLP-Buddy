@@ -7,6 +7,7 @@ import type { AppState, BuddyTrioGroup, TrioMessage, User } from '../types'
 import {
   rowToApproval,
   rowToCheckin,
+  rowToGoal,
   rowToMeal,
   rowToMessage,
   rowToMilestone,
@@ -130,6 +131,16 @@ export async function hydrate(userId: string): Promise<AppState> {
     state.weightLogs = logs.map(rowToWeightLog)
   } catch (e) {
     console.error('weight logs fetch failed (is migration 0016 applied?)', e)
+  }
+
+  // Shared buddy goals/challenges for each active relationship. Non-fatal: if
+  // the goals table doesn't exist yet (migration 0020 not applied), degrade
+  // gracefully instead of bricking the whole app load.
+  try {
+    const goalRows = await api.goals.forRelationships(rels.map((r) => r.id))
+    state.goals = goalRows.map(rowToGoal)
+  } catch (e) {
+    console.error('goals fetch failed (is migration 0020 applied?)', e)
   }
 
   return state
