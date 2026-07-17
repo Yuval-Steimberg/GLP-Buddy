@@ -481,29 +481,36 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   source art in `resources/`. Full step-by-step in `APPLE-STORE-UPLOAD.md`.
 
 ## Pending for the NEXT App Store build (ship AFTER the current version is approved)
-Done + verified on branch `claude/apple-store-upload-snyqvn`, but NOT in the
-currently-in-review iOS binary. These ride into the next native build (they were
-tested on the PWA first):
+These 3 features are **already merged into `main` + the prod branch
+`claude/glp-buddy-mvp-c0ante`** (commit `2051a08`) and live on the PWA — but are
+**NOT** in the currently-in-review iOS binary. They ride into the next native
+build (tested on the PWA first):
 1. **Dark mode** (System/Light/Dark) — `src/lib/theme.ts`, `data-theme` on
    `<html>`, `:root[data-theme="dark"]` palette in `index.css`, anti-flash inline
    script in `index.html`, Profile → Appearance control. Pure frontend.
 2. **Collapse-by-default on Home** — BuddyHome buddy cards always start collapsed
    (+ a `visibilitychange` re-collapse on foreground). Pure frontend.
 3. **Food log** (meal photo → calories/protein) — migration **0018** `meals` +
-   `analyze-food` edge function + `/meals` page + "Log a meal" Home card. Needs
-   backend deploy: apply 0018, `supabase functions deploy analyze-food` (reuses
-   `ANTHROPIC_API_KEY`, verify_jwt ON).
+   `analyze-food` edge function + `/meals` page + "Log a meal" Home card. Backend
+   deploy required for it to actually work: apply migration **0018** (`supabase db
+   push` or paste `0018_meals.sql`) + `supabase functions deploy analyze-food`
+   (reuses `ANTHROPIC_API_KEY`, verify_jwt ON). Frontend degrades gracefully if
+   0018 isn't applied (hydrate try/catch) so it won't brick the app.
 Native rebuild to release (see `APPLE-STORE-UPLOAD.md`): set `.env.production` →
 `npm run cap:ios` → bump the Xcode **Build** number → Archive → upload → submit as
 a **NEW version** in App Store Connect.
-- ⚠️ **Integration caveat:** production (`claude/glp-buddy-mvp-c0ante` / `main`)
-  advanced to `aa27923` after we branched (Premium removed, Journey Book, Year in
-  Review, weight logging, admin dashboard, **bundle id → `com.glpenpal.mobile.ios`**).
-  This branch must be MERGED onto that before building — it can no longer
-  fast-forward. `APPLE-STORE-UPLOAD.md` still says the old `com.glpenpal.app` bundle
-  id; reconcile to `com.glpenpal.mobile.ios` during integration.
+- ✅ **Integration done (2026-07):** built on `claude/apple-store-upload-snyqvn`,
+  then MERGED onto the advanced production (`aa27923` → `2051a08`; that base had
+  Premium removed, Journey Book, Year in Review, weight logging, admin dashboard,
+  bundle id `com.glpenpal.mobile.ios`). Our meals migration was renumbered
+  **`0015 → 0018`** (prod already used 0015 premium / 0016 weight_logs / 0017
+  admin). Pushed to BOTH `main` and `claude/glp-buddy-mvp-c0ante` (kept in sync),
+  so whichever branch Netlify watches got it — redeploy "without cache" to serve.
+- ⚠️ `APPLE-STORE-UPLOAD.md` still says the OLD `com.glpenpal.app` bundle id; the
+  real one is **`com.glpenpal.mobile.ios`** (`capacitor.config.ts`). Reconcile that
+  doc before the next native build.
 - ⚠️ A separate `claude/dark-mode-option-k2p7lr` branch has a DUPLICATE dark-mode
-  implementation. Ship only ONE (default: the verified one on this branch).
+  implementation; we shipped OURS (verified). Do NOT also merge that branch.
 
 ## Staff admin dashboard
 - **`/moderation`** (`src/pages/Moderation.tsx`, staff-only via `Guard staff`,
