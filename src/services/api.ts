@@ -665,7 +665,7 @@ export const meals = {
   // Insert a meal and return the saved row (so the client gets the server id).
   async add(
     userId: string,
-    meal: { imageUrl?: string; title: string; calories: number; proteinG: number; items: { name: string; calories: number; proteinG: number }[]; note?: string },
+    meal: { imageUrl?: string; title: string; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number; items: { name: string; grams: number; calories: number; proteinG: number; carbsG: number; fatG: number }[]; note?: string },
   ): Promise<MealRow> {
     const sb = requireSupabase()
     const { data, error } = await sb
@@ -676,7 +676,10 @@ export const meals = {
         title: meal.title,
         calories: meal.calories,
         protein_g: meal.proteinG,
-        items: meal.items.map((i) => ({ name: i.name, calories: i.calories, protein_g: i.proteinG })),
+        carbs_g: meal.carbsG,
+        fat_g: meal.fatG,
+        fiber_g: meal.fiberG,
+        items: meal.items.map((i) => ({ name: i.name, grams: i.grams, calories: i.calories, protein_g: i.proteinG, carbs_g: i.carbsG, fat_g: i.fatG })),
         note: meal.note || null,
       })
       .select('*')
@@ -760,21 +763,31 @@ export const admin = {
   },
 }
 
-// Estimate calories + protein from a meal photo (Claude vision Edge Function).
+// Estimate full macros from a meal photo (Claude vision Edge Function).
 export const food = {
-  async analyze(imageDataUrl: string, note?: string): Promise<{ title: string; calories: number; proteinG: number; items: { name: string; calories: number; proteinG: number }[]; confidence?: 'low' | 'medium' | 'high' }> {
+  async analyze(imageDataUrl: string, note?: string): Promise<import('../types').AnalyzedMeal> {
     const sb = requireSupabase()
     const { data, error } = await sb.functions.invoke('analyze-food', { body: { image: imageDataUrl, note } })
     if (error) throw error
-    const r = data as { error?: string; title?: string; calories?: number; protein_g?: number; items?: { name?: string; calories?: number; protein_g?: number }[]; confidence?: 'low' | 'medium' | 'high' }
+    const r = data as {
+      error?: string; title?: string; calories?: number; calories_low?: number; calories_high?: number
+      protein_g?: number; carbs_g?: number; fat_g?: number; fiber_g?: number
+      items?: { name?: string; grams?: number; calories?: number; protein_g?: number; carbs_g?: number; fat_g?: number }[]
+      confidence?: 'low' | 'medium' | 'high'
+    }
     if (r.error || typeof r.calories !== 'number') {
       throw new Error(r.error || 'could not analyze')
     }
     return {
       title: r.title || 'Meal',
       calories: r.calories,
+      caloriesLow: r.calories_low,
+      caloriesHigh: r.calories_high,
       proteinG: r.protein_g ?? 0,
-      items: (r.items ?? []).map((i) => ({ name: i.name ?? 'Item', calories: i.calories ?? 0, proteinG: i.protein_g ?? 0 })),
+      carbsG: r.carbs_g ?? 0,
+      fatG: r.fat_g ?? 0,
+      fiberG: r.fiber_g ?? 0,
+      items: (r.items ?? []).map((i) => ({ name: i.name ?? 'Item', grams: i.grams ?? 0, calories: i.calories ?? 0, proteinG: i.protein_g ?? 0, carbsG: i.carbs_g ?? 0, fatG: i.fat_g ?? 0 })),
       confidence: r.confidence,
     }
   },

@@ -75,7 +75,7 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `profiles.is_premium` (premium tier — see Monetization below), 0016
   `weight_logs` (optional private weight logging — powers real "kg lost"), 0017
   admin dashboard RPCs (see Admin below), 0018 `meals` (private food-photo log —
-  calorie/protein estimates).
+  calorie/protein estimates), 0019 `meals` full macros (carbs/fat/fiber columns).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -309,18 +309,34 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   - Uses the auto-injected `SUPABASE_URL` / `SUPABASE_ANON_KEY` /
     `SUPABASE_SERVICE_ROLE_KEY` edge secrets — no new secret to set. Redeploy
     `ask-coach` when shipping this (the in-chat branch is new).
-- **Food log / meal photo estimate** (migration 0018 `meals`; page
-  `src/pages/MealLog.tsx`, route `/meals`, entry card on BuddyHome; **never
+- **Food log / meal photo estimate** (migrations 0018 `meals` + **0019** macros;
+  page `src/pages/MealLog.tsx`, route `/meals`, entry card on BuddyHome; **never
   medical/nutritional advice**): user photographs a meal → the
   `supabase/functions/analyze-food` edge function (Claude **vision**, reuses the
   same `ANTHROPIC_API_KEY` as the Coach, `MODEL`/`FOOD_MODEL` default
-  `claude-opus-4-8`, **verify_jwt ON**) returns strict JSON `{title, calories,
-  protein_g, items[]}` → result card with a **portion adjuster** (½×/1×/1.5×/2×
-  scales the numbers, user confirms) → `saveMeal` to the **private** `meals`
-  table. The function does NOT write to the DB (compute-only), strips code
-  fences, clamps numbers, returns `{error:'no_food'}` for non-food photos, and
-  handles `stop_reason==='refusal'`. The photo is a compressed JPEG data URL
-  (`fileToChatImage`), size-capped (3MB) like chat/timeline images.
+  `claude-opus-4-8`, **verify_jwt ON**) returns strict JSON with **full macros +
+  per-item grams**: `{title, calories, calories_low/high, protein_g, carbs_g,
+  fat_g, fiber_g, confidence, items:[{name, grams, calories, protein_g, carbs_g,
+  fat_g}]}`. The prompt tells it to estimate **grams per item** using visual scale
+  and to fold in **hidden calories** (oil/butter/dressing). Totals are summed from
+  the items (server + client) so they stay consistent when edited.
+  - **Per-item grams = the accuracy mechanism** (replaced the old ½×/2× portion
+    multiplier): the result card shows a gram stepper per item; editing grams
+    linearly rescales that item's macros and the meal totals recompute live
+    (`scaleItem` in MealLog). A **TODAY** card sums the day's logged meals
+    (cal/protein/carbs/fat). Confidence + calorie range shown for honesty.
+  - Migration **0019** (`0019_meal_macros.sql`) adds `carbs_g`/`fat_g`/`fiber_g`
+    to `meals` (idempotent `add column if not exists`); the richer `items` shape
+    (grams + carbs/fat) rides in the existing jsonb (no schema change). `MealItem`
+    gains `grams/carbsG/fatG`; `Meal`/`AnalyzedMeal` gain `carbsG/fatG/fiberG`.
+  - The function does NOT write to the DB (compute-only), strips code fences,
+    clamps numbers, returns `{error:'no_food'}` for non-food photos, and handles
+    `stop_reason==='refusal'`. The photo is a compressed JPEG data URL
+    (`fileToChatImage`), size-capped (3MB) like chat/timeline images.
+  - **Redeploy `analyze-food` + apply migration 0019 when shipping this** (both are
+    additive; frontend degrades gracefully via hydrate try/catch + mapper `?? 0`
+    defaults if 0019 isn't applied). Possible future accuracy upgrades (not built):
+    barcode → Open Food Facts, verified-DB lookup, LiDAR depth, daily targets.
   - **Privacy:** `meals` is **own-data-only** RLS (NO buddy visibility, unlike
     checkins). Sharing a meal is an explicit, separate action that reuses the
     existing `addTimelinePhoto` (timeline) / `sendMessage` (chat) — copying the
@@ -445,12 +461,16 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   `--no-verify-jwt`). No SQL/migration. "Couldn't reach the Coach" = key not set,
   function not deployed, or no Anthropic credit (check Edge Function logs).
   Deploying `ask-coach` needs the file locally — `git pull` first if it's missing.
-- **Food log (meal photos):** apply migration **0018** (`meals` table), then
-  `supabase functions deploy analyze-food` (**keep verify_jwt ON**). No new
-  secret — reuses the Coach's `ANTHROPIC_API_KEY`. "Couldn't estimate that" =
-  key not set, function not deployed, or no Anthropic credit (check Edge Function
-  logs). Ship the migration before the frontend (the `/meals` page calls the
-  function + reads the table).
+- **Food log (meal photos):** apply migrations **0018** (`meals` table) **+ 0019**
+  (macro columns), then `supabase functions deploy analyze-food` (**keep verify_jwt
+  ON**). No new secret — reuses the Coach's `ANTHROPIC_API_KEY`. "Couldn't estimate
+  that" = key not set, function not deployed, or no Anthropic credit (check Edge
+  Function logs). Ship the migrations before the frontend (the `/meals` page calls
+  the function + reads the table). NOTE: `supabase db push` may choke if earlier
+  migrations were applied via the SQL Editor (history mismatch) — paste
+  `0018_meals.sql` / `0019_meal_macros.sql` into the SQL Editor instead (both
+  idempotent), or `supabase migration repair --status applied <n>` the already-run
+  ones first.
 - **Stripe billing (web Premium):** `supabase secrets set STRIPE_SECRET_KEY=sk_…
   STRIPE_PRICE_ID=price_… STRIPE_WEBHOOK_SECRET=whsec_…` then
   `supabase functions deploy create-checkout` (**keep verify_jwt ON**) and
@@ -490,12 +510,12 @@ build (tested on the PWA first):
    script in `index.html`, Profile → Appearance control. Pure frontend.
 2. **Collapse-by-default on Home** — BuddyHome buddy cards always start collapsed
    (+ a `visibilitychange` re-collapse on foreground). Pure frontend.
-3. **Food log** (meal photo → calories/protein) — migration **0018** `meals` +
-   `analyze-food` edge function + `/meals` page + "Log a meal" Home card. Backend
-   deploy required for it to actually work: apply migration **0018** (`supabase db
-   push` or paste `0018_meals.sql`) + `supabase functions deploy analyze-food`
-   (reuses `ANTHROPIC_API_KEY`, verify_jwt ON). Frontend degrades gracefully if
-   0018 isn't applied (hydrate try/catch) so it won't brick the app.
+3. **Food log** (meal photo → **full macros + per-item grams**) — migrations
+   **0018** `meals` + **0019** macro columns + `analyze-food` edge function +
+   `/meals` page + "Log a meal" Home card. Backend deploy required: apply 0018 +
+   0019 (paste the `.sql` files into the SQL Editor — both idempotent) + `supabase
+   functions deploy analyze-food` (reuses `ANTHROPIC_API_KEY`, verify_jwt ON).
+   Frontend degrades gracefully if unapplied (hydrate try/catch + mapper `?? 0`).
 Native rebuild to release (see `APPLE-STORE-UPLOAD.md`): set `.env.production` →
 `npm run cap:ios` → bump the Xcode **Build** number → Archive → upload → submit as
 a **NEW version** in App Store Connect.

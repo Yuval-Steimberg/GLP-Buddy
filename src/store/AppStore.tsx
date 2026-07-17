@@ -153,7 +153,7 @@ interface AppStoreValue {
   latestCheckin: (userId: string) => Checkin | null
   // meals (private food log + photo nutrition estimate)
   analyzeMeal: (imageDataUrl: string, note?: string) => Promise<AnalyzedMeal>
-  saveMeal: (meal: { imageUrl?: string; title: string; calories: number; proteinG: number; items: MealItem[]; note?: string }) => void
+  saveMeal: (meal: { imageUrl?: string; title: string; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number; items: MealItem[]; note?: string }) => void
   deleteMeal: (id: string) => void
   myMeals: () => Meal[]
   buddyMemories: (rel: BuddyRelationship) => string[]
@@ -1149,10 +1149,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       return {
         title: 'Sample meal',
         calories: 520,
+        caloriesLow: 440,
+        caloriesHigh: 610,
         proteinG: 34,
+        carbsG: 52,
+        fatG: 18,
+        fiberG: 6,
         items: [
-          { name: 'Grilled chicken', calories: 280, proteinG: 30 },
-          { name: 'Rice & vegetables', calories: 240, proteinG: 4 },
+          { name: 'Grilled chicken', grams: 150, calories: 280, proteinG: 30, carbsG: 0, fatG: 16 },
+          { name: 'Rice & vegetables', grams: 180, calories: 240, proteinG: 4, carbsG: 52, fatG: 2 },
         ],
         confidence: 'medium',
       }
@@ -1161,7 +1166,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Save an (optionally portion-adjusted) estimate to the user's private log.
-  const saveMeal = useCallback((meal: { imageUrl?: string; title: string; calories: number; proteinG: number; items: MealItem[]; note?: string }) => {
+  const saveMeal = useCallback((meal: { imageUrl?: string; title: string; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number; items: MealItem[]; note?: string }) => {
     if (USE_SUPABASE) {
       const meId = state.currentUserId
       if (meId) {

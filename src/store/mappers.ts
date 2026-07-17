@@ -164,11 +164,17 @@ export function rowToMeal(r: MealRow): Meal {
     title: r.title,
     calories: r.calories,
     proteinG: r.protein_g,
+    carbsG: Number(r.carbs_g ?? 0),
+    fatG: Number(r.fat_g ?? 0),
+    fiberG: Number(r.fiber_g ?? 0),
     items: Array.isArray(r.items)
       ? r.items.map((it) => ({
           name: String(it?.name ?? 'Item'),
+          grams: Number(it?.grams ?? 0),
           calories: Number(it?.calories ?? 0),
           proteinG: Number(it?.protein_g ?? 0),
+          carbsG: Number(it?.carbs_g ?? 0),
+          fatG: Number(it?.fat_g ?? 0),
         }))
       : [],
     note: r.note ?? undefined,

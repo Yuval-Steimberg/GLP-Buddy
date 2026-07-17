@@ -134,8 +134,11 @@ export interface CheckinRow {
 
 export interface MealItemRow {
   name: string
+  grams?: number
   calories: number
   protein_g: number
+  carbs_g?: number
+  fat_g?: number
 }
 
 export interface MealRow {
@@ -145,6 +148,9 @@ export interface MealRow {
   title: string
   calories: number
   protein_g: number
+  carbs_g: number
+  fat_g: number
+  fiber_g: number
   items: MealItemRow[]
   note: string | null
   created_at: string

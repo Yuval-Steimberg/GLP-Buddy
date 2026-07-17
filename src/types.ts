@@ -74,18 +74,27 @@ export interface Checkin {
   createdAt: number
 }
 
-// One food item within an analyzed meal.
+// One food item within an analyzed meal. Grams drive per-item editing: scaling
+// grams scales the item's macros, and meal totals are the sum of items.
 export interface MealItem {
   name: string
+  grams: number
   calories: number
   proteinG: number
+  carbsG: number
+  fatG: number
 }
 
 // The estimate returned by the analyze-food function (before it's saved).
 export interface AnalyzedMeal {
   title: string
   calories: number
+  caloriesLow?: number
+  caloriesHigh?: number
   proteinG: number
+  carbsG: number
+  fatG: number
+  fiberG: number
   items: MealItem[]
   confidence?: 'low' | 'medium' | 'high'
 }
@@ -98,6 +107,9 @@ export interface Meal {
   title: string
   calories: number
   proteinG: number
+  carbsG: number
+  fatG: number
+  fiberG: number
   items: MealItem[]
   note?: string
   createdAt: number
