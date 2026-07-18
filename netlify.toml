@@ -28,7 +28,7 @@
     #  - style-src 'unsafe-inline' — runtime-injected <style> (fonts); React inline
     #    styles set element.style directly and don't need it, fonts do.
     #  Update the *.supabase.co host if you use a custom Supabase domain.
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://plausible.io; worker-src 'self'; manifest-src 'self'"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'sha256-BEQ8sNOEldJmnwNHsCfvBDAiDlpRbgWomDk9NUIddp8=' https://plausible.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://plausible.io; worker-src 'self'; manifest-src 'self'"
 
 # Never cache the service workers (must always fetch the newest to pick up
 # a fresh build; stale SWs are the #1 cause of "app won't update").
