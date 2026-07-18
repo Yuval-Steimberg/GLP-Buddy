@@ -168,6 +168,8 @@ export function buildEmptyState(): AppState {
     checkins: [],
     meals: [],
     weightLogs: [],
+    injectionLogs: [],
+    symptomLogs: [],
     goals: [],
     passedUserIds: [],
   }
@@ -193,6 +195,8 @@ export function buildInitialState(): AppState {
     checkins: [],
     meals: [],
     weightLogs: [],
+    injectionLogs: [],
+    symptomLogs: [],
     goals: [],
     passedUserIds: [],
   }

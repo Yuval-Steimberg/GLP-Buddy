@@ -3,6 +3,7 @@ import type {
   ApprovalRow,
   CheckinRow,
   GoalRow,
+  InjectionLogRow,
   MealRow,
   MessageRow,
   MilestoneRow,
@@ -11,6 +12,7 @@ import type {
   RelationshipRow,
   TimelineEventRow,
   TrioMessageRow,
+  SymptomLogRow,
   WeightLogRow,
 } from '../lib/database.types'
 import type {
@@ -19,6 +21,7 @@ import type {
   ChatMessage,
   GenderPreference,
   Goal,
+  InjectionLog,
   MatchApproval,
   Medication,
   Milestone,
@@ -36,6 +39,7 @@ import type {
   Checkin,
   CheckinStatus,
   Meal,
+  SymptomLog,
   WeightLog,
 } from '../types'
 
@@ -190,6 +194,31 @@ export function rowToWeightLog(r: WeightLogRow): WeightLog {
     userId: r.user_id,
     kg: Number(r.kg),
     loggedAt: ms(r.logged_at),
+  }
+}
+
+export function rowToInjectionLog(r: InjectionLogRow): InjectionLog {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    medication: r.medication,
+    dose: r.dose_text ?? undefined,
+    injectionSite: r.injection_site ?? undefined,
+    note: r.note ?? undefined,
+    injectedAt: ms(r.injected_at),
+    createdAt: ms(r.created_at),
+  }
+}
+
+export function rowToSymptomLog(r: SymptomLogRow): SymptomLog {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    symptom: r.symptom,
+    severity: Math.min(5, Math.max(1, Number(r.severity))) as SymptomLog['severity'],
+    note: r.note ?? undefined,
+    loggedAt: ms(r.logged_at),
+    createdAt: ms(r.created_at),
   }
 }
 

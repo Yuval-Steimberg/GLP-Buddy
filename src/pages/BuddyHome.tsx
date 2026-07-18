@@ -83,6 +83,17 @@ export function BuddyHome() {
         <p>Small check-ins. Real progress. Someone who understands.</p>
       </div>
 
+      <button className="card journey-entry" onClick={() => navigate('/journey')}>
+        <span className="journey-entry-icon"><Icon name="syringe" size={23} /></span>
+        <span className="journey-entry-copy">
+          <span className="section-kicker">MY GLP JOURNEY</span>
+          <strong>Track the week. See the pattern.</strong>
+          <small>Injections, symptoms, insights and a clinician-ready summary.</small>
+        </span>
+        <span className="plus-chip"><Icon name="spark" size={12} /> Plus</span>
+        <span className="journey-entry-arrow" aria-hidden>›</span>
+      </button>
+
       {rels.length > 0 && (
         <div className="card daily-pulse">
           <div className="daily-pulse-head">

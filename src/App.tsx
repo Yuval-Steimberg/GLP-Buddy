@@ -58,6 +58,7 @@ const imports = {
   Recap: () => import('./pages/Recap').then((m) => ({ default: m.Recap })),
   Coach: () => import('./pages/Coach').then((m) => ({ default: m.Coach })),
   Meals: () => import('./pages/MealLog').then((m) => ({ default: m.MealLog })),
+  Journey: () => import('./pages/Journey').then((m) => ({ default: m.Journey })),
   Moderation: () => import('./pages/Moderation').then((m) => ({ default: m.Moderation })),
   Privacy: () => import('./pages/legal/Privacy').then((m) => ({ default: m.Privacy })),
   Terms: () => import('./pages/legal/Terms').then((m) => ({ default: m.Terms })),
@@ -89,11 +90,12 @@ const YearInReview = lazyWithReload(imports.YearInReview)
 const Recap = lazyWithReload(imports.Recap)
 const Coach = lazyWithReload(imports.Coach)
 const Meals = lazyWithReload(imports.Meals)
+const Journey = lazyWithReload(imports.Journey)
 const Moderation = lazyWithReload(imports.Moderation)
 const Privacy = lazyWithReload(imports.Privacy)
 const Terms = lazyWithReload(imports.Terms)
 
-const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pending', '/trio', '/notifications']
+const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pending', '/trio', '/journey', '/notifications']
 
 function Loading() {
   return (
@@ -219,6 +221,7 @@ export function App() {
           <Route path="/recap" element={<Guard><Recap /></Guard>} />
           <Route path="/coach" element={<Guard><Coach /></Guard>} />
           <Route path="/meals" element={<Guard><Meals /></Guard>} />
+          <Route path="/journey" element={<Guard><Journey /></Guard>} />
           <Route path="/moderation" element={<Guard staff><Moderation /></Guard>} />
 
           {/* Public legal pages */}

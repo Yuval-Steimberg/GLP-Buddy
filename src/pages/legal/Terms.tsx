@@ -18,6 +18,7 @@ export function Terms() {
 
         <h3>Not medical advice</h3>
         <p><strong>GLPenPal is a peer-support platform and does not provide medical advice.</strong> Users must not advise each other about dosing, medication changes, stopping medication, or urgent symptoms. For medical questions or concerning symptoms, contact a clinician. In an emergency, call your local emergency services.</p>
+        <p>Journey logs, insights and clinician summaries are based on information you enter. They may be incomplete or inaccurate and are not clinical records, diagnoses, symptom assessments, treatment recommendations or medication guidance.</p>
 
         <h3>Community conduct</h3>
         <p>Be kind and respectful. No harassment, hate, spam, selling, sharing of others' private information, or impersonation. Don't give or solicit medical/dosing guidance.</p>

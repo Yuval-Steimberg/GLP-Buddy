@@ -27,6 +27,8 @@ import type {
   JourneyBook,
   YearReview,
   Goal,
+  InjectionLog,
+  SymptomLog,
 } from '../types'
 import { availableReviewYears, buildJourneyBook, buildYearReview } from '../utils/journey'
 import { buildEmptyState, buildInitialState } from '../data/mockData'
@@ -35,7 +37,15 @@ import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
 import { showLocalNotification } from '../lib/push'
 import { hydrate } from './hydrate'
-import { rowToCheckin, rowToGoal, rowToMessage, rowToNotification, rowToTimeline } from './mappers'
+import {
+  rowToCheckin,
+  rowToGoal,
+  rowToInjectionLog,
+  rowToMessage,
+  rowToNotification,
+  rowToSymptomLog,
+  rowToTimeline,
+} from './mappers'
 
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
@@ -150,6 +160,12 @@ interface AppStoreValue {
   postCheckin: (status: CheckinStatus, note?: string) => void
   postWeight: (kg: number) => void
   latestWeight: () => number | null
+  logInjection: (entry: Omit<InjectionLog, 'id' | 'userId' | 'createdAt'>) => void
+  deleteInjection: (id: string) => void
+  myInjectionLogs: () => InjectionLog[]
+  logSymptom: (entry: Omit<SymptomLog, 'id' | 'userId' | 'createdAt'>) => void
+  deleteSymptom: (id: string) => void
+  mySymptomLogs: () => SymptomLog[]
   requestSupport: () => void
   latestCheckin: (userId: string) => Checkin | null
   // meals (private food log + photo nutrition estimate)
@@ -1139,6 +1155,98 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     return mine[0]?.kg ?? null
   }, [state.currentUserId, state.weightLogs])
 
+  const logInjection = useCallback((
+    entry: Omit<InjectionLog, 'id' | 'userId' | 'createdAt'>,
+  ) => {
+    const add = (meId: string) => (prev: AppState): AppState => ({
+      ...prev,
+      injectionLogs: [
+        { ...entry, id: genId('inj'), userId: meId, createdAt: Date.now() },
+        ...prev.injectionLogs,
+      ],
+    })
+    if (USE_SUPABASE) {
+      const meId = state.currentUserId
+      if (meId) setState(add(meId))
+      runWrite('logInjection', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) {
+          const saved = await api.injectionLogs.add(me, entry)
+          setState((prev) => ({
+            ...prev,
+            injectionLogs: [
+              rowToInjectionLog(saved),
+              ...prev.injectionLogs.filter((x) => !x.id.startsWith('inj_')),
+            ],
+          }))
+        }
+      })
+      return
+    }
+    setState((prev) => (prev.currentUserId ? add(prev.currentUserId)(prev) : prev))
+  }, [runWrite, state.currentUserId])
+
+  const deleteInjection = useCallback((id: string) => {
+    setState((prev) => ({ ...prev, injectionLogs: prev.injectionLogs.filter((x) => x.id !== id) }))
+    if (USE_SUPABASE && !id.startsWith('inj_')) {
+      runWrite('deleteInjection', async () => { await api.injectionLogs.remove(id) })
+    }
+  }, [runWrite])
+
+  const myInjectionLogs = useCallback((): InjectionLog[] => {
+    const me = state.currentUserId
+    if (!me) return []
+    return state.injectionLogs
+      .filter((x) => x.userId === me)
+      .sort((a, b) => b.injectedAt - a.injectedAt)
+  }, [state.currentUserId, state.injectionLogs])
+
+  const logSymptom = useCallback((
+    entry: Omit<SymptomLog, 'id' | 'userId' | 'createdAt'>,
+  ) => {
+    const add = (meId: string) => (prev: AppState): AppState => ({
+      ...prev,
+      symptomLogs: [
+        { ...entry, id: genId('sym'), userId: meId, createdAt: Date.now() },
+        ...prev.symptomLogs,
+      ],
+    })
+    if (USE_SUPABASE) {
+      const meId = state.currentUserId
+      if (meId) setState(add(meId))
+      runWrite('logSymptom', async () => {
+        const me = await api.auth.currentUserId()
+        if (me) {
+          const saved = await api.symptomLogs.add(me, entry)
+          setState((prev) => ({
+            ...prev,
+            symptomLogs: [
+              rowToSymptomLog(saved),
+              ...prev.symptomLogs.filter((x) => !x.id.startsWith('sym_')),
+            ],
+          }))
+        }
+      })
+      return
+    }
+    setState((prev) => (prev.currentUserId ? add(prev.currentUserId)(prev) : prev))
+  }, [runWrite, state.currentUserId])
+
+  const deleteSymptom = useCallback((id: string) => {
+    setState((prev) => ({ ...prev, symptomLogs: prev.symptomLogs.filter((x) => x.id !== id) }))
+    if (USE_SUPABASE && !id.startsWith('sym_')) {
+      runWrite('deleteSymptom', async () => { await api.symptomLogs.remove(id) })
+    }
+  }, [runWrite])
+
+  const mySymptomLogs = useCallback((): SymptomLog[] => {
+    const me = state.currentUserId
+    if (!me) return []
+    return state.symptomLogs
+      .filter((x) => x.userId === me)
+      .sort((a, b) => b.loggedAt - a.loggedAt)
+  }, [state.currentUserId, state.symptomLogs])
+
   // (11) "Someone Gets It" — one tap notifies all active buddies.
   const requestSupport = useCallback(() => {
     if (USE_SUPABASE) {
@@ -1994,6 +2102,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       postCheckin,
       postWeight,
       latestWeight,
+      logInjection,
+      deleteInjection,
+      myInjectionLogs,
+      logSymptom,
+      deleteSymptom,
+      mySymptomLogs,
       requestSupport,
       latestCheckin,
       analyzeMeal,
@@ -2056,6 +2170,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       postCheckin,
       postWeight,
       latestWeight,
+      logInjection,
+      deleteInjection,
+      myInjectionLogs,
+      logSymptom,
+      deleteSymptom,
+      mySymptomLogs,
       requestSupport,
       latestCheckin,
       analyzeMeal,

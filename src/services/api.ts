@@ -8,6 +8,7 @@ import type {
   ApprovalRow,
   CheckinRow,
   GoalRow,
+  InjectionLogRow,
   MealRow,
   MessageRow,
   MilestoneRow,
@@ -18,6 +19,7 @@ import type {
   TrioMemberRow,
   TrioMessageRow,
   TrioRow,
+  SymptomLogRow,
   WeightLogRow,
 } from '../lib/database.types'
 import type { Profile } from '../types'
@@ -731,6 +733,94 @@ export const weightLogs = {
       .limit(400)
     if (error) throw error
     return data ?? []
+  },
+}
+
+// ---- Private injection and symptom journey logs ---------------------------
+export const injectionLogs = {
+  async add(
+    userId: string,
+    entry: {
+      medication: string
+      dose?: string
+      injectionSite?: string
+      note?: string
+      injectedAt: number
+    },
+  ): Promise<InjectionLogRow> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('injection_logs')
+      .insert({
+        user_id: userId,
+        medication: entry.medication,
+        dose_text: entry.dose || null,
+        injection_site: entry.injectionSite || null,
+        note: entry.note || null,
+        injected_at: new Date(entry.injectedAt).toISOString(),
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as InjectionLogRow
+  },
+
+  async forUser(userId: string): Promise<InjectionLogRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('injection_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('injected_at', { ascending: false })
+      .limit(160)
+    if (error) throw error
+    return (data ?? []) as InjectionLogRow[]
+  },
+
+  async remove(id: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('injection_logs').delete().eq('id', id)
+    if (error) throw error
+  },
+}
+
+export const symptomLogs = {
+  async add(
+    userId: string,
+    entry: { symptom: string; severity: number; note?: string; loggedAt: number },
+  ): Promise<SymptomLogRow> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('symptom_logs')
+      .insert({
+        user_id: userId,
+        symptom: entry.symptom,
+        severity: entry.severity,
+        note: entry.note || null,
+        logged_at: new Date(entry.loggedAt).toISOString(),
+      })
+      .select('*')
+      .single()
+    if (error) throw error
+    return data as SymptomLogRow
+  },
+
+  async forUser(userId: string): Promise<SymptomLogRow[]> {
+    const sb = requireSupabase()
+    const { data, error } = await sb
+      .from('symptom_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('logged_at', { ascending: false })
+      .limit(240)
+    if (error) throw error
+    return (data ?? []) as SymptomLogRow[]
+  },
+
+  async remove(id: string): Promise<void> {
+    const sb = requireSupabase()
+    const { error } = await sb.from('symptom_logs').delete().eq('id', id)
+    if (error) throw error
   },
 }
 

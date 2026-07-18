@@ -17,10 +17,11 @@ export function Privacy() {
         <p>GLPenPal ("we") is a peer-support platform that connects people using GLP-1 medications. We are not a healthcare provider and do not provide medical advice.</p>
 
         <h3>What we collect</h3>
-        <p>Account details (email), profile information you provide (nickname, age range, gender, medication, treatment stage, weight ranges, goals, bio and interests), the messages and milestones you create, and basic technical/usage data.</p>
+        <p>Account details (email), profile information you provide (nickname, age range, gender, medication, treatment stage, weight ranges, goals, bio and interests), messages and milestones, and any private journey entries you choose to add such as injection history, symptoms, weights, meals and personal notes. We also process basic technical and usage data needed to operate and protect the service.</p>
 
         <h3>How we use it</h3>
-        <p>To create your account, suggest compatible buddies, operate chat, milestones and your shared timeline, send notifications, and keep the community safe (moderation, reports, blocks).</p>
+        <p>To create your account, suggest compatible buddies, operate chat, milestones and your shared timeline, provide private tracking summaries and exports, send notifications, and keep the community safe (moderation, reports, blocks).</p>
+        <p>Your injection, symptom, weight and meal logs are private to your account. They are not shown to buddies. A clinician summary is generated only when you request it and is then shared or downloaded using your device.</p>
 
         <h3>Health-related information</h3>
         <p>Some information you share (e.g. medication, weight ranges) is sensitive. We store it encrypted, restrict access using row-level security, and never sell it. Share only what you are comfortable with — your bio and messages are visible to matched buddies.</p>

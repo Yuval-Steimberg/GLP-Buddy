@@ -20,7 +20,7 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string; icon: IconName }[] = [
 
 export function Profile() {
   const navigate = useNavigate()
-  const { currentUser, activeRelationships, buddyOf, resetApp, trioEligibility, activeTrio } = useStore()
+  const { currentUser, isPremium, activeRelationships, buddyOf, resetApp, trioEligibility, activeTrio } = useStore()
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
   const [theme, setTheme] = useState<ThemeChoice>(getThemeChoice)
@@ -178,6 +178,21 @@ export function Profile() {
           guidance, and for concerning symptoms contact a clinician or emergency services.
           You can report or block any buddy from your chat.
         </p>
+      </div>
+
+      <div className="card plus-membership-card">
+        <div className="row between">
+          <span className="plus-chip"><Icon name="spark" size={13} /> GLPenPal Plus</span>
+          <span className="muted" style={{ fontSize: 12 }}>{isPremium ? 'Preview access' : 'Free plan'}</span>
+        </div>
+        <h3>Your journey, made useful</h3>
+        <p>
+          Private injection and symptom tracking, personal patterns and a clinician-ready summary.
+          Core buddy matching and chat always stay free.
+        </p>
+        <button className="btn" onClick={() => navigate('/journey')}>
+          Open My journey
+        </button>
       </div>
 
       <div className="card">

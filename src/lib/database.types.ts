@@ -164,6 +164,27 @@ export interface WeightLogRow {
   created_at: string
 }
 
+export interface InjectionLogRow {
+  id: string
+  user_id: string
+  medication: string
+  dose_text: string | null
+  injection_site: string | null
+  note: string | null
+  injected_at: string
+  created_at: string
+}
+
+export interface SymptomLogRow {
+  id: string
+  user_id: string
+  symptom: string
+  severity: number
+  note: string | null
+  logged_at: string
+  created_at: string
+}
+
 export interface GoalRow {
   id: string
   relationship_id: string

@@ -6,7 +6,7 @@ export type IconName =
   | 'lock' | 'heart' | 'shield' | 'spark' | 'logout' | 'clock' | 'search' | 'doc'
   | 'mail' | 'send' | 'check' | 'download' | 'share' | 'close' | 'plus'
   | 'camera' | 'image' | 'reply'
-  | 'sun' | 'moon' | 'contrast' | 'meal'
+  | 'sun' | 'moon' | 'contrast' | 'meal' | 'syringe' | 'pulse'
 
 // Clean, consistent line icons (currentColor, 24px grid) used in place of
 // emoji for a more professional, branded look.
@@ -103,6 +103,15 @@ export function Icon({ name, size = 22, style }: { name: IconName; size?: number
           <path d="M17 3c-1.7 0-3 1.8-3 4.5S15.3 12 17 12v9" />
         </svg>
       )
+    case 'syringe':
+      return (
+        <svg {...p}>
+          <path d="m14.5 4.5 5 5M16.8 2.2l5 5M5 14l5 5M8.5 16.5l8.8-8.8-3-3-8.8 8.8z" />
+          <path d="m5 19-2 2M11.5 9.5l3 3" />
+        </svg>
+      )
+    case 'pulse':
+      return <svg {...p}><path d="M3 12h4l2-5 4 10 2.5-5H21" /></svg>
   }
 }
 

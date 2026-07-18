@@ -8,12 +8,14 @@ import {
   rowToApproval,
   rowToCheckin,
   rowToGoal,
+  rowToInjectionLog,
   rowToMeal,
   rowToMessage,
   rowToMilestone,
   rowToNotification,
   rowToRelationship,
   rowToTimeline,
+  rowToSymptomLog,
   rowToTrioMessage,
   rowToUser,
   rowToWeightLog,
@@ -82,6 +84,14 @@ export async function hydrate(userId: string): Promise<AppState> {
     console.error('goals fetch failed (is migration 0020 applied?)', e)
     return []
   })
+  const injectionLogsPromise = api.injectionLogs.forUser(userId).catch((e) => {
+    console.error('injection logs fetch failed (is journey tracking migration applied?)', e)
+    return []
+  })
+  const symptomLogsPromise = api.symptomLogs.forUser(userId).catch((e) => {
+    console.error('symptom logs fetch failed (is journey tracking migration applied?)', e)
+    return []
+  })
 
   const [
     related,
@@ -91,6 +101,8 @@ export async function hydrate(userId: string): Promise<AppState> {
     meals,
     logs,
     goalRows,
+    injectionRows,
+    symptomRows,
   ] = await Promise.all([
     relatedPromise,
     relDataPromise,
@@ -99,6 +111,8 @@ export async function hydrate(userId: string): Promise<AppState> {
     mealsPromise,
     weightLogsPromise,
     goalsPromise,
+    injectionLogsPromise,
+    symptomLogsPromise,
   ])
 
   // Always refresh connected profiles with the fuller row; also pull any not in
@@ -143,6 +157,8 @@ export async function hydrate(userId: string): Promise<AppState> {
   state.meals = meals.map(rowToMeal)
   state.weightLogs = logs.map(rowToWeightLog)
   state.goals = goalRows.map(rowToGoal)
+  state.injectionLogs = injectionRows.map(rowToInjectionLog)
+  state.symptomLogs = symptomRows.map(rowToSymptomLog)
 
   return state
 }

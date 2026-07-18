@@ -164,6 +164,27 @@ export interface WeightLog {
   loggedAt: number
 }
 
+export interface InjectionLog {
+  id: string
+  userId: string
+  medication: string
+  dose?: string
+  injectionSite?: string
+  note?: string
+  injectedAt: number
+  createdAt: number
+}
+
+export interface SymptomLog {
+  id: string
+  userId: string
+  symptom: string
+  severity: 1 | 2 | 3 | 4 | 5
+  note?: string
+  loggedAt: number
+  createdAt: number
+}
+
 // A shared buddy goal/challenge — a pair sets a joint target (e.g. "log 5
 // meals this week") and tallies progress together with a manual "+1" tap.
 export interface Goal {
@@ -393,6 +414,8 @@ export interface AppState {
   checkins: Checkin[]
   meals: Meal[]
   weightLogs: WeightLog[]
+  injectionLogs: InjectionLog[]
+  symptomLogs: SymptomLog[]
   goals: Goal[]
   passedUserIds: string[]
 }
