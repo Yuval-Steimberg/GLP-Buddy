@@ -2,9 +2,11 @@
 // Run against a preview server: `node tests/smoke.mjs` (BASE overrides URL).
 import { chromium } from 'playwright'
 
-const base = process.env.BASE || 'http://localhost:4173'
+const base = process.argv[4] || process.env.BASE || 'http://localhost:4173'
 const browser = await chromium.launch()
-const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } })
+const width = Number(process.argv[2] || process.env.WIDTH || 390)
+const height = Number(process.argv[3] || process.env.HEIGHT || 844)
+const ctx = await browser.newContext({ viewport: { width, height }, hasTouch: true })
 const page = await ctx.newPage()
 const errors = []
 page.on('pageerror', (e) => errors.push('PAGEERROR: ' + e.message))
