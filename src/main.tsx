@@ -10,6 +10,7 @@ import { SUPABASE_URL } from './lib/env'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/space-grotesk'
 import './index.css'
+import './refresh.css'
 
 void initSentry()
 

@@ -76,12 +76,24 @@ export function BuddyHome() {
   }
 
   return (
-    <div className="screen">
+    <div className="screen home-screen">
       <TopBar title={greet} />
+      <div className="home-intro">
+        <span className="home-kicker">YOUR PRIVATE SUPPORT SPACE</span>
+        <p>Small check-ins. Real progress. Someone who understands.</p>
+      </div>
 
       {rels.length > 0 && (
-        <div className="card">
-          <div style={{ fontWeight: 800, fontSize: 14 }}>How are you feeling today?</div>
+        <div className="card daily-pulse">
+          <div className="daily-pulse-head">
+            <div>
+              <span className="section-kicker">DAILY PULSE</span>
+              <h2>How are you feeling?</h2>
+            </div>
+            {myStreak > 0 && (
+              <span className="streak-pill"><Icon name="spark" size={15} /> {myStreak} days</span>
+            )}
+          </div>
           {myCheckin ? (
             <p className="muted" style={{ fontSize: 13, marginTop: 6 }}>
               Shared today: <strong>{CHECKIN_OPTIONS.find((o) => o.status === myCheckin.status)?.label}</strong>. Tap to update.
@@ -100,18 +112,16 @@ export function BuddyHome() {
               </button>
             ))}
           </div>
-          {myStreak > 0 && (
-            <div className="row" style={{ gap: 6, marginTop: 10 }}>
-              <span className="ms-badge"><Icon name="spark" size={15} /></span>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{myStreak}-day check-in streak</span>
-            </div>
-          )}
-          <button className="btn ghost gets-it" style={{ marginTop: 12 }} onClick={askForSupport}>
-            <Icon name="heart" size={16} /> I need someone who gets it
-          </button>
-          <button className="btn ghost" style={{ marginTop: 2 }} onClick={() => setShowWeight(true)}>
-            <Icon name="growth" size={16} /> {myWeight != null ? `Log weight · last ${myWeight} kg` : 'Log your weight (private)'}
-          </button>
+          <div className="quick-actions">
+            <button className="quick-action gets-it" onClick={askForSupport}>
+              <span className="quick-action-icon"><Icon name="heart" size={18} /></span>
+              <span><strong>Need support</strong><small>Let your buddy know</small></span>
+            </button>
+            <button className="quick-action" onClick={() => setShowWeight(true)}>
+              <span className="quick-action-icon"><Icon name="growth" size={18} /></span>
+              <span><strong>Log weight</strong><small>{myWeight != null ? `Last ${myWeight} kg` : 'Private to you'}</small></span>
+            </button>
+          </div>
           {supportSent && (
             <div className="banner" style={{ background: 'var(--green-soft)', color: 'var(--green)', marginTop: 10 }}>
               Your buddies have been let know you could use some support.
@@ -150,7 +160,7 @@ export function BuddyHome() {
           const isOpen = expanded[rel.id] ?? false
 
           return (
-            <div className="card" key={rel.id}>
+            <div className={`card buddy-space${isOpen ? ' is-open' : ''}`} key={rel.id}>
               <button
                 className="buddy-head"
                 onClick={() => toggle(rel.id, isOpen)}
@@ -159,6 +169,7 @@ export function BuddyHome() {
               >
                 <Avatar name={buddy.profile.nickname} size={56} src={buddy.profile.avatarUrl} />
                 <div style={{ flex: 1, minWidth: 0 }}>
+                  <span className="section-kicker">YOUR PEN PAL</span>
                   <h3>{buddy.profile.nickname}</h3>
                   <div className="muted" style={{ fontSize: 13 }}>
                     {buddy.profile.medication}

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { Avatar } from '../components/Avatar'
-import { Icon } from '../components/Icon'
+import { BrandLockup, Icon, type IconName } from '../components/Icon'
 import { fileToAvatarDataUrl } from '../lib/image'
 import type { Profile } from '../types'
 import {
@@ -42,6 +42,20 @@ const emptyProfile: Profile = {
 }
 
 const TOTAL_STEPS = 6
+
+const ONBOARDING_STEPS: ReadonlyArray<{
+  title: string
+  shortTitle: string
+  eyebrow: string
+  icon: IconName
+}> = [
+  { title: 'Create your profile', shortTitle: 'About you', eyebrow: 'START WITH YOU', icon: 'profile' },
+  { title: 'Set your preferences', shortTitle: 'Preferences', eyebrow: 'YOUR IDEAL MATCH', icon: 'users' },
+  { title: 'Share your GLP journey', shortTitle: 'Medication', eyebrow: 'YOUR JOURNEY', icon: 'meal' },
+  { title: 'Mark your starting point', shortTitle: 'Progress', eyebrow: 'PRIVATE PROGRESS', icon: 'growth' },
+  { title: 'Choose your support style', shortTitle: 'Support', eyebrow: 'WHAT YOU NEED', icon: 'heart' },
+  { title: 'Show what makes you, you', shortTitle: 'Your story', eyebrow: 'THE HUMAN PART', icon: 'spark' },
+]
 
 export function Onboarding() {
   const navigate = useNavigate()
@@ -126,26 +140,68 @@ export function Onboarding() {
     else setStep((s) => s - 1)
   }
 
+  const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100)
+  const currentStep = ONBOARDING_STEPS[step]
+
   return (
-    <div className="screen no-nav">
-      <div className="topbar">
-        <button className="icon-btn" onClick={back} aria-label="Back">‹</button>
-        <span className="muted" style={{ fontWeight: 800 }}>
-          Step {step + 1} of {TOTAL_STEPS}
-        </span>
-        <div className="spacer" />
-      </div>
+    <div className="onboarding-screen">
+      <aside className="onboarding-rail" aria-label="Onboarding progress">
+        <BrandLockup height={48} />
+        <div className="onboarding-rail-copy">
+          <span className="onboarding-kicker">A BETTER MATCH STARTS HERE</span>
+          <h2>Let’s find your person.</h2>
+          <p>Six thoughtful steps. About two minutes. Everything stays private until you choose to connect.</p>
+        </div>
+        <ol className="onboarding-step-list">
+          {ONBOARDING_STEPS.map((item, index) => {
+            const status = index < step ? 'complete' : index === step ? 'active' : 'upcoming'
+            return (
+              <li key={item.shortTitle} className={`onboarding-step-item ${status}`}>
+                <span className="onboarding-step-icon">
+                  {status === 'complete' ? <Icon name="check" size={17} /> : <Icon name={item.icon} size={17} />}
+                </span>
+                <span>
+                  <small>0{index + 1}</small>
+                  <strong>{item.shortTitle}</strong>
+                </span>
+              </li>
+            )
+          })}
+        </ol>
+        <div className="onboarding-trust">
+          <Icon name="lock" size={18} />
+          <span><strong>Private by design</strong>Your health details are used only to improve matching.</span>
+        </div>
+      </aside>
 
-      <div className="progress">
-        <span style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }} />
-      </div>
+      <main className="onboarding-form">
+        <div className="onboarding-mobile-brand"><BrandLockup height={40} /></div>
+        <header className="onboarding-topbar">
+          <button className="onboarding-back" onClick={back} aria-label="Go back">
+            <span aria-hidden>‹</span> Back
+          </button>
+          <div className="onboarding-progress-copy">
+            <span>Step {step + 1} of {TOTAL_STEPS}</span>
+            <strong>{progress}%</strong>
+          </div>
+        </header>
 
-      {step === 0 && (
+        <div className="onboarding-progress" aria-label={`${progress}% complete`}>
+          <span style={{ width: `${progress}%` }} />
+        </div>
+
+        <div className="onboarding-step" key={step}>
+          <div className="onboarding-heading">
+            <span className="onboarding-kicker">{currentStep.eyebrow}</span>
+            <span className="onboarding-heading-icon"><Icon name={currentStep.icon} size={20} /></span>
+          </div>
+
+          {step === 0 && (
         <div>
           <h1>Let's get to know you</h1>
           <p>This helps us find someone who really gets your journey.</p>
-          <div className="field" style={{ textAlign: 'center' }}>
-            <label style={{ display: 'block' }}>Profile photo <span className="muted" style={{ fontWeight: 600 }}>(optional)</span></label>
+          <div className="field onboarding-photo-field">
+            <label>Profile photo <span className="muted" style={{ fontWeight: 600 }}>(optional)</span></label>
             <button
               type="button"
               className="avatar-picker"
@@ -288,14 +344,22 @@ export function Onboarding() {
         </div>
       )}
 
-      <button className="btn" disabled={!canContinue()} onClick={next} style={{ marginTop: 8 }}>
-        {step === TOTAL_STEPS - 1 ? 'Continue' : 'Next'}
-      </button>
-      {!canContinue() && (
-        <p className="muted center" style={{ fontSize: 12.5, marginTop: 10 }}>
-          {missingHint()}
-        </p>
-      )}
+        </div>
+
+        <footer className="onboarding-actions">
+          <div className="onboarding-action-copy" aria-live="polite">
+            {canContinue() ? (
+              <span className="ready"><Icon name="check" size={15} /> Looking good</span>
+            ) : (
+              <span>{missingHint()}</span>
+            )}
+          </div>
+          <button className="btn onboarding-next" disabled={!canContinue()} onClick={next}>
+            <span>{step === TOTAL_STEPS - 1 ? 'Build my matches' : 'Continue'}</span>
+            <span aria-hidden>›</span>
+          </button>
+        </footer>
+      </main>
     </div>
   )
 }
