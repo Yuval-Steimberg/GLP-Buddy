@@ -8,6 +8,8 @@ import { Icon, BrandLogo, BrandLockup } from '../components/Icon'
 export function Landing() {
   const navigate = useNavigate()
   const { currentUser } = useStore()
+  const heroCtaRef = useRef<HTMLDivElement>(null)
+  const [showMobileCta, setShowMobileCta] = useState(false)
 
   const cta = () => {
     if (USE_SUPABASE) return navigate('/auth')
@@ -16,6 +18,17 @@ export function Landing() {
   }
   const scrollTo = (id: string) => () =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+  useEffect(() => {
+    const heroCta = heroCtaRef.current
+    if (!heroCta) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowMobileCta(!entry.isIntersecting),
+      { threshold: 0.2 },
+    )
+    observer.observe(heroCta)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <div className="lp">
@@ -31,7 +44,7 @@ export function Landing() {
             <a onClick={scrollTo('voices')}>Community</a>
             <a onClick={scrollTo('faq')}>FAQ</a>
           </nav>
-          <button className="lp-btn lp-btn-sm" onClick={cta}>
+          <button className="lp-btn lp-btn-sm lp-nav-cta" onClick={cta}>
             {USE_SUPABASE ? 'Sign in' : 'Get started'}
           </button>
         </div>
@@ -43,27 +56,33 @@ export function Landing() {
         <div className="lp-glow lp-glow-b" />
         <div className="lp-hero-in">
           <div className="lp-hero-copy">
-            <div className="lp-eyebrow"><span className="lp-dot" /> Peer support for GLP‑1</div>
-            <h1 className="lp-h1">The GLP‑1 journey feels lighter <span className="lp-em">with someone beside you</span>.</h1>
+            <div className="lp-eyebrow"><span className="lp-dot" /> Private 1:1 support, matched to you</div>
+            <h1 className="lp-h1">Meet the one person who <span className="lp-em">gets your GLP‑1 journey</span>.</h1>
             <p className="lp-lead">
-              Get matched 1:1 with a pen pal on the same medication, stage and goals — for the
-              wins, the rough side‑effect weeks, and the days the scale makes no sense.
+              In about two minutes, meet a private pen pal on the same medication, stage and goals.
+              Someone to celebrate the wins and understand the rough weeks.
             </p>
-            <div className="lp-cta-row">
-              <button className="lp-btn lp-btn-lg" onClick={cta}>Find my pen pal — it's free</button>
+            <div className="lp-cta-row" ref={heroCtaRef}>
+              <button className="lp-btn lp-btn-lg" onClick={cta}>Find my GLP‑1 match</button>
               <button className="lp-btn lp-btn-ghost lp-btn-lg" onClick={scrollTo('how')}>
-                See how it works <span aria-hidden>→</span>
+                See the three steps <span aria-hidden>→</span>
               </button>
             </div>
             <StoreBadges />
             <div className="lp-trust">
-              <span><Icon name="spark" size={15} /> Free to join</span>
+              <span><Icon name="spark" size={15} /> Free</span>
               <span><Icon name="lock" size={15} /> Private 1:1</span>
-              <span><Icon name="shield" size={15} /> 18+ only</span>
+              <span><Icon name="users" size={15} /> Both opt in</span>
             </div>
           </div>
 
           <div className="lp-hero-art">
+            <MobileMatchPreview />
+            <div className="lp-quick-steps" aria-label="How matching works">
+              <span><b>1</b> Share your journey</span>
+              <span><b>2</b> See compatible people</span>
+              <span><b>3</b> Connect when it’s mutual</span>
+            </div>
             <div className="lp-phone-wrap">
               <PhoneMock />
             </div>
@@ -71,10 +90,7 @@ export function Landing() {
               <div className="lp-float-ico" style={{ background: 'var(--primary-soft)', color: 'var(--primary-ink)' }}>
                 <Icon name="users" size={18} />
               </div>
-              <div>
-                <div className="lp-float-t">New match · 94%</div>
-                <div className="lp-float-s">You and Maya connected</div>
-              </div>
+              <div><div className="lp-float-t">New match · 94%</div><div className="lp-float-s">You and Maya connected</div></div>
             </div>
             <div className="lp-float lp-float-ms">
               <div className="lp-float-ico" style={{ background: 'var(--green-soft)', color: 'var(--green)' }}>
@@ -227,10 +243,18 @@ export function Landing() {
           <div className="lp-logo-badge"><BrandLogo width={190} /></div>
           <h2 className="lp-h2">Someone out there gets exactly what you're going through.</h2>
           <p className="lp-sub">Find them today — it only takes a couple of minutes.</p>
-          <button className="lp-btn lp-btn-lg" onClick={cta}>Find my pen pal — it's free</button>
+          <button className="lp-btn lp-btn-lg" onClick={cta}>Find my GLP‑1 match</button>
           <StoreBadges center />
         </Reveal>
       </section>
+
+      <div className={`lp-mobile-dock${showMobileCta ? ' is-visible' : ''}`}>
+        <div>
+          <strong>Ready to meet your match?</strong>
+          <span>Free · private · about 2 minutes</span>
+        </div>
+        <button className="lp-btn" onClick={cta}>Start</button>
+      </div>
 
       <footer className="lp-footer">
         <div className="lp-footer-in">
@@ -425,6 +449,37 @@ function PhoneMock() {
           <span className="lp-app-ms-ico"><Icon name="spark" size={14} /></span>
           Maya reached <b>goal weight</b>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function MobileMatchPreview() {
+  return (
+    <div className="lp-mobile-match" aria-hidden>
+      <div className="lp-mobile-match-top">
+        <span>Example match</span>
+        <strong>94% compatible</strong>
+      </div>
+      <div className="lp-mobile-match-people">
+        <div className="lp-match-avatars">
+          <span>YO</span>
+          <span>MA</span>
+        </div>
+        <div>
+          <strong>You + Maya</strong>
+          <small>Wegovy · months 1–3</small>
+        </div>
+        <span className="lp-mutual-chip">Mutual</span>
+      </div>
+      <div className="lp-match-reasons">
+        <span>Same medication</span>
+        <span>Similar goals</span>
+        <span>Daily check-ins</span>
+      </div>
+      <div className="lp-match-message">
+        <Icon name="chat" size={16} />
+        <span>“Week two was rough for me too. You’re not alone.”</span>
       </div>
     </div>
   )
