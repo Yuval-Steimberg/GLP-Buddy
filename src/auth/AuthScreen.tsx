@@ -28,6 +28,9 @@ export function AuthScreen() {
           setNotice(`We sent a confirmation link to ${email}. Open it to activate your account, then come back and sign in.`)
         }
       } else {
+        // The signed-in landing chunk is small; fetch it alongside auth so it
+        // is already available when the session and profile are ready.
+        void import('../pages/BuddyHome')
         await auth.signIn(email, password)
         // On success the session fires and the App swaps to the app screens.
       }

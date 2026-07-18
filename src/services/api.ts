@@ -90,8 +90,11 @@ export const auth = {
 
   async currentUserId(): Promise<string | null> {
     if (!supabase) return null
-    const { data } = await supabase.auth.getUser()
-    return data.user?.id ?? null
+    // This is client-side routing/cache identity only; every data request is
+    // still authorized by Supabase RLS. Reading the locally cached session
+    // avoids a redundant auth-server round trip on startup and refresh.
+    const { data } = await supabase.auth.getSession()
+    return data.session?.user.id ?? null
   },
 
   onAuthChange(cb: (userId: string | null) => void) {
@@ -857,4 +860,3 @@ export const support = {
     return (data as number) ?? 0
   },
 }
-

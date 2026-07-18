@@ -110,9 +110,12 @@ export function App() {
   const session = useSession()
   const [recovering, setRecovering] = useState(false)
 
-  // Warm all route chunks once, during idle time after first paint, so
-  // navigating between pages doesn't show a loading spinner.
-  useEffect(() => { prefetchPages() }, [])
+  // Warm secondary route chunks only after the signed-in experience is ready.
+  // Loading every feature while somebody is still signing in competes with
+  // the auth + hydration requests on slower mobile connections.
+  useEffect(() => {
+    if (!USE_SUPABASE || currentUser) prefetchPages()
+  }, [currentUser])
 
   // Password-reset links arrive as a PASSWORD_RECOVERY auth event — show the
   // "set new password" screen over everything until it's done.

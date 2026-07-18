@@ -46,24 +46,12 @@ export async function hydrate(userId: string): Promise<AppState> {
   rels.forEach((r) => { relatedIds.add(r.user_a); relatedIds.add(r.user_b) })
   trioRows.forEach(({ members }) => members.forEach((m) => relatedIds.add(m.user_id)))
   relatedIds.delete(userId)
-  const missing = [...relatedIds].filter((id) => !users[id])
-  // Always refresh connected profiles with the fuller row; also pull any not in
-  // the discovery pool (e.g. a blocked ex-buddy excluded from discovery).
-  const related = await api.profiles.related([...relatedIds])
-  related.forEach((r) => { users[r.id] = rowToUser(r) })
-  // Anything still missing (shouldn't happen) is simply absent; selectors guard.
-  void missing
-  state.users = users
-
-  // Approvals → incoming/outgoing/passed all derive from this in selectors.
-  state.approvals = approvals.map(rowToApproval)
-  state.passedUserIds = approvals
-    .filter((a) => a.from_user === userId && a.status === 'passed')
-    .map((a) => a.to_user)
-
-  // Relationships and their nested data (fetched in parallel across relationships).
-  state.relationships = rels.map(rowToRelationship)
-  const relData = await Promise.all(
+  // Once the top-level rows are known, all remaining collections are
+  // independent. Start them together so login pays for one network round
+  // instead of waiting through related profiles → relationship data → trio
+  // messages → check-ins → meals → weight logs → goals in sequence.
+  const relatedPromise = api.profiles.related([...relatedIds])
+  const relDataPromise = Promise.all(
     rels.map(async (rel) => {
       const [msgs, miles, tl] = await Promise.all([
         api.chat.list(rel.id),
@@ -73,6 +61,59 @@ export async function hydrate(userId: string): Promise<AppState> {
       return { msgs, miles, tl }
     }),
   )
+  const trioMsgListsPromise = Promise.all(
+    trioRows.map(({ trio }) => api.trios.messages(trio.id)),
+  )
+  const buddyIds = new Set<string>([userId])
+  rels.forEach((r) => { buddyIds.add(r.user_a); buddyIds.add(r.user_b) })
+  const checkinsPromise = api.checkins.forUsers([...buddyIds]).catch((e) => {
+    console.error('checkins fetch failed (is migration 0013 applied?)', e)
+    return []
+  })
+  const mealsPromise = api.meals.forUser(userId).catch((e) => {
+    console.error('meals fetch failed (is migration 0018 applied?)', e)
+    return []
+  })
+  const weightLogsPromise = api.weightLogs.forUser(userId).catch((e) => {
+    console.error('weight logs fetch failed (is migration 0016 applied?)', e)
+    return []
+  })
+  const goalsPromise = api.goals.forRelationships(rels.map((r) => r.id)).catch((e) => {
+    console.error('goals fetch failed (is migration 0020 applied?)', e)
+    return []
+  })
+
+  const [
+    related,
+    relData,
+    trioMsgLists,
+    checkins,
+    meals,
+    logs,
+    goalRows,
+  ] = await Promise.all([
+    relatedPromise,
+    relDataPromise,
+    trioMsgListsPromise,
+    checkinsPromise,
+    mealsPromise,
+    weightLogsPromise,
+    goalsPromise,
+  ])
+
+  // Always refresh connected profiles with the fuller row; also pull any not in
+  // the discovery pool (e.g. a blocked ex-buddy excluded from discovery).
+  related.forEach((r) => { users[r.id] = rowToUser(r) })
+  state.users = users
+
+  // Approvals → incoming/outgoing/passed all derive from this in selectors.
+  state.approvals = approvals.map(rowToApproval)
+  state.passedUserIds = approvals
+    .filter((a) => a.from_user === userId && a.status === 'passed')
+    .map((a) => a.to_user)
+
+  // Relationships and their nested data.
+  state.relationships = rels.map(rowToRelationship)
   relData.forEach(({ msgs, miles, tl }) => {
     state.messages.push(...msgs.map(rowToMessage))
     state.milestones.push(...miles.map(rowToMilestone))
@@ -85,9 +126,6 @@ export async function hydrate(userId: string): Promise<AppState> {
   // Trios (active + pending) and their messages (fetched in parallel).
   const trios: BuddyTrioGroup[] = []
   const trioMessages: TrioMessage[] = []
-  const trioMsgLists = await Promise.all(
-    trioRows.map(({ trio }) => api.trios.messages(trio.id)),
-  )
   trioRows.forEach(({ trio, members }, i) => {
     trios.push({
       id: trio.id,
@@ -101,47 +139,10 @@ export async function hydrate(userId: string): Promise<AppState> {
   state.trios = trios
   state.trioMessages = trioMessages
 
-  // Check-ins for me + my active buddies (how everyone's feeling today).
-  // Non-fatal: if the checkins table doesn't exist yet (migration 0013 not
-  // applied), degrade gracefully instead of bricking the whole app load.
-  try {
-    const buddyIds = new Set<string>([userId])
-    rels.forEach((r) => { buddyIds.add(r.user_a); buddyIds.add(r.user_b) })
-    const checkins = await api.checkins.forUsers([...buddyIds])
-    state.checkins = checkins.map(rowToCheckin)
-  } catch (e) {
-    console.error('checkins fetch failed (is migration 0013 applied?)', e)
-  }
-
-  // The user's private meal log. Non-fatal for the same reason as checkins: if
-  // the meals table doesn't exist yet (migration 0018 not applied), degrade
-  // gracefully instead of bricking the whole app load.
-  try {
-    const meals = await api.meals.forUser(userId)
-    state.meals = meals.map(rowToMeal)
-  } catch (e) {
-    console.error('meals fetch failed (is migration 0018 applied?)', e)
-  }
-
-  // The user's private weight history (for progress recaps). Non-fatal: if the
-  // weight_logs table doesn't exist yet (migration 0016 not applied), degrade
-  // gracefully instead of bricking the whole app load.
-  try {
-    const logs = await api.weightLogs.forUser(userId)
-    state.weightLogs = logs.map(rowToWeightLog)
-  } catch (e) {
-    console.error('weight logs fetch failed (is migration 0016 applied?)', e)
-  }
-
-  // Shared buddy goals/challenges for each active relationship. Non-fatal: if
-  // the goals table doesn't exist yet (migration 0020 not applied), degrade
-  // gracefully instead of bricking the whole app load.
-  try {
-    const goalRows = await api.goals.forRelationships(rels.map((r) => r.id))
-    state.goals = goalRows.map(rowToGoal)
-  } catch (e) {
-    console.error('goals fetch failed (is migration 0020 applied?)', e)
-  }
+  state.checkins = checkins.map(rowToCheckin)
+  state.meals = meals.map(rowToMeal)
+  state.weightLogs = logs.map(rowToWeightLog)
+  state.goals = goalRows.map(rowToGoal)
 
   return state
 }
