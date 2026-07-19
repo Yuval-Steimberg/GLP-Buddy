@@ -14,6 +14,16 @@ export default defineConfig({
         importScripts: ['/push-sw.js'],
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // Large, rarely used report/monitoring chunks load on demand. Keeping
+        // them out of the install precache avoids competing with login on the
+        // first mobile visit while normal browser caching still applies.
+        globIgnores: [
+          '**/sentry-*.js',
+          '**/jspdf*.js',
+          '**/html2canvas*.js',
+          '**/purify*.js',
+          '**/index.es-*.js',
+        ],
       },
       manifest: {
         name: 'GLPenPal',

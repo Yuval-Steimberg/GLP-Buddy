@@ -68,10 +68,34 @@ let prefetched = false
 function prefetchPages() {
   if (prefetched) return
   prefetched = true
-  const run = () => Object.values(imports).forEach((fn) => { fn().catch(() => {}) })
-  const ric = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback
-  if (ric) ric(run)
-  else setTimeout(run, 1200)
+  const priority = [
+    imports.Matches,
+    imports.ChatList,
+    imports.Timeline,
+    imports.Profile,
+    imports.Notifications,
+    imports.Pending,
+  ]
+  const prioritySet = new Set(priority)
+  const secondary = Object.values(imports).filter((fn) => !prioritySet.has(fn))
+  const warm = (pages: Array<() => Promise<unknown>>) => {
+    pages.forEach((fn) => { fn().catch(() => {}) })
+  }
+  const idle = (task: () => void, delay: number) => {
+    window.setTimeout(() => {
+      const ric = (window as unknown as {
+        requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number
+      }).requestIdleCallback
+      if (ric) ric(task, { timeout: 2000 })
+      else task()
+    }, delay)
+  }
+
+  // Avoid a download storm when the core snapshot unlocks the app. Warm the
+  // likely navigation destinations first, then rare tools after the first
+  // screen and background data have had time to settle.
+  idle(() => warm(priority), 2500)
+  idle(() => warm(secondary), 9000)
 }
 
 const Matches = lazyWithReload(imports.Matches)

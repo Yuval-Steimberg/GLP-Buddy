@@ -21,24 +21,19 @@ import {
   rowToWeightLog,
 } from './mappers'
 
-export async function hydrate(userId: string): Promise<AppState> {
-  const state = buildEmptyState()
-  state.currentUserId = userId
-
-  // Fetch the independent top-level collections in parallel.
-  const [me, candidates, approvals, rels, notifs, trioRows] = await Promise.all([
+export async function hydrate(
+  userId: string,
+  onCoreReady?: (state: AppState) => void,
+): Promise<AppState> {
+  // Only identity, connection, and routing data block the first signed-in
+  // paint. Discovery and history can finish after the user is already home.
+  const [me, approvals, rels, notifs, trioRows] = await Promise.all([
     api.profiles.get(userId),
-    api.profiles.candidates(userId),
     api.matching.allForUser(userId),
     api.relationships.active(userId),
     api.notifications.list(userId),
     api.trios.mine(userId),
   ])
-
-  // Users: the (bounded, minimized) discovery pool, then the signed-in user.
-  const users: Record<string, User> = {}
-  candidates.forEach((c) => { users[c.id] = rowToUser(c) })
-  if (me) users[me.id] = rowToUser(me)
 
   // Fetch full profiles for everyone the user is connected to (buddies, pending
   // approvals, trio co-members). Profile reads are now scoped to connections
@@ -49,9 +44,9 @@ export async function hydrate(userId: string): Promise<AppState> {
   trioRows.forEach(({ members }) => members.forEach((m) => relatedIds.add(m.user_id)))
   relatedIds.delete(userId)
   // Once the top-level rows are known, all remaining collections are
-  // independent. Start them together so login pays for one network round
-  // instead of waiting through related profiles → relationship data → trio
-  // messages → check-ins → meals → weight logs → goals in sequence.
+  // independent. Start them together, including discovery, so background
+  // hydration pays for one network round.
+  const candidatesPromise = api.profiles.candidates(userId)
   const relatedPromise = api.profiles.related([...relatedIds])
   const relDataPromise = Promise.all(
     rels.map(async (rel) => {
@@ -93,8 +88,38 @@ export async function hydrate(userId: string): Promise<AppState> {
     return []
   })
 
+  // The connected profiles are the only second-wave data required to render
+  // relationship cards safely. Publish an immutable core snapshot as soon as
+  // they arrive; the provider keeps filling the rest in the background.
+  const related = await relatedPromise
+  const coreUsers: Record<string, User> = {}
+  if (me) coreUsers[me.id] = rowToUser(me)
+  related.forEach((r) => { coreUsers[r.id] = rowToUser(r) })
+
+  const trios: BuddyTrioGroup[] = trioRows.map(({ trio, members }) => ({
+    id: trio.id,
+    createdAt: Date.parse(trio.created_at),
+    active: trio.active,
+    memberIds: members.filter((m) => m.approved).map((m) => m.user_id),
+    pendingMemberIds: members.filter((m) => !m.approved).map((m) => m.user_id),
+  }))
+  const mappedApprovals = approvals.map(rowToApproval)
+  const coreState: AppState = {
+    ...buildEmptyState(),
+    currentUserId: userId,
+    users: coreUsers,
+    approvals: mappedApprovals,
+    passedUserIds: approvals
+      .filter((a) => a.from_user === userId && a.status === 'passed')
+      .map((a) => a.to_user),
+    relationships: rels.map(rowToRelationship),
+    notifications: notifs.map(rowToNotification),
+    trios,
+  }
+  onCoreReady?.(coreState)
+
   const [
-    related,
+    candidates,
     relData,
     trioMsgLists,
     checkins,
@@ -104,7 +129,7 @@ export async function hydrate(userId: string): Promise<AppState> {
     injectionRows,
     symptomRows,
   ] = await Promise.all([
-    relatedPromise,
+    candidatesPromise,
     relDataPromise,
     trioMsgListsPromise,
     checkinsPromise,
@@ -115,50 +140,34 @@ export async function hydrate(userId: string): Promise<AppState> {
     symptomLogsPromise,
   ])
 
+  // Discovery profiles are intentionally absent from the core snapshot. Add
+  // them now, then let authoritative signed-in/connected rows override the
+  // minimized discovery shape.
+  const users: Record<string, User> = {}
+  candidates.forEach((c) => { users[c.id] = rowToUser(c) })
+  if (me) users[me.id] = rowToUser(me)
   // Always refresh connected profiles with the fuller row; also pull any not in
   // the discovery pool (e.g. a blocked ex-buddy excluded from discovery).
   related.forEach((r) => { users[r.id] = rowToUser(r) })
-  state.users = users
-
-  // Approvals → incoming/outgoing/passed all derive from this in selectors.
-  state.approvals = approvals.map(rowToApproval)
-  state.passedUserIds = approvals
-    .filter((a) => a.from_user === userId && a.status === 'passed')
-    .map((a) => a.to_user)
-
-  // Relationships and their nested data.
-  state.relationships = rels.map(rowToRelationship)
-  relData.forEach(({ msgs, miles, tl }) => {
-    state.messages.push(...msgs.map(rowToMessage))
-    state.milestones.push(...miles.map(rowToMilestone))
-    state.timeline.push(...tl.map(rowToTimeline))
-  })
-
-  // Notifications.
-  state.notifications = notifs.map(rowToNotification)
 
   // Trios (active + pending) and their messages (fetched in parallel).
-  const trios: BuddyTrioGroup[] = []
   const trioMessages: TrioMessage[] = []
-  trioRows.forEach(({ trio, members }, i) => {
-    trios.push({
-      id: trio.id,
-      createdAt: Date.parse(trio.created_at),
-      active: trio.active,
-      memberIds: members.filter((m) => m.approved).map((m) => m.user_id),
-      pendingMemberIds: members.filter((m) => !m.approved).map((m) => m.user_id),
-    })
+  trioRows.forEach((_, i) => {
     trioMessages.push(...trioMsgLists[i].map(rowToTrioMessage))
   })
-  state.trios = trios
-  state.trioMessages = trioMessages
 
-  state.checkins = checkins.map(rowToCheckin)
-  state.meals = meals.map(rowToMeal)
-  state.weightLogs = logs.map(rowToWeightLog)
-  state.goals = goalRows.map(rowToGoal)
-  state.injectionLogs = injectionRows.map(rowToInjectionLog)
-  state.symptomLogs = symptomRows.map(rowToSymptomLog)
-
-  return state
+  return {
+    ...coreState,
+    users,
+    messages: relData.flatMap(({ msgs }) => msgs.map(rowToMessage)),
+    milestones: relData.flatMap(({ miles }) => miles.map(rowToMilestone)),
+    timeline: relData.flatMap(({ tl }) => tl.map(rowToTimeline)),
+    trioMessages,
+    checkins: checkins.map(rowToCheckin),
+    meals: meals.map(rowToMeal),
+    weightLogs: logs.map(rowToWeightLog),
+    goals: goalRows.map(rowToGoal),
+    injectionLogs: injectionRows.map(rowToInjectionLog),
+    symptomLogs: symptomRows.map(rowToSymptomLog),
+  }
 }

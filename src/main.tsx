@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppStoreProvider } from './store/AppStore'
 import { App } from './App'
 import { InstallPrompt } from './components/InstallPrompt'
-import { initSentry } from './lib/sentry'
 import { initTheme } from './lib/theme'
 import { SUPABASE_URL } from './lib/env'
 import '@fontsource-variable/inter'
@@ -12,7 +11,20 @@ import '@fontsource-variable/space-grotesk'
 import './index.css'
 import './refresh.css'
 
-void initSentry()
+function afterStartup(task: () => void) {
+  const ric = (window as unknown as {
+    requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number
+  }).requestIdleCallback
+  if (ric) ric(task, { timeout: 3000 })
+  else window.setTimeout(task, 2000)
+}
+
+// Error monitoring is still initialized on every visit, but it no longer
+// downloads its large SDK while auth and the first signed-in screen compete
+// for bandwidth.
+afterStartup(() => {
+  void import('./lib/sentry').then(({ initSentry }) => initSentry())
+})
 
 // Apply the saved light/dark/system theme and follow OS changes when on "system".
 initTheme()
@@ -30,11 +42,13 @@ if (SUPABASE_URL) {
 // VITE_PLAUSIBLE_DOMAIN is set (e.g. "glpenpal.com") — no-op otherwise.
 const analyticsDomain = import.meta.env.VITE_PLAUSIBLE_DOMAIN
 if (analyticsDomain) {
-  const s = document.createElement('script')
-  s.defer = true
-  s.setAttribute('data-domain', String(analyticsDomain))
-  s.src = 'https://plausible.io/js/script.js'
-  document.head.appendChild(s)
+  afterStartup(() => {
+    const s = document.createElement('script')
+    s.defer = true
+    s.setAttribute('data-domain', String(analyticsDomain))
+    s.src = 'https://plausible.io/js/script.js'
+    document.head.appendChild(s)
+  })
 }
 
 // NOTE: we deliberately do NOT add a controllerchange → reload handler here.

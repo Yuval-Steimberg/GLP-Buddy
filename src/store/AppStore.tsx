@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -207,6 +208,7 @@ const AppStoreContext = createContext<AppStoreValue | null>(null)
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(load)
+  const hydrateGeneration = useRef(0)
 
   // Local mode: persist the whole cache to localStorage. (Supabase mode is the
   // source of truth, so we never cache another user's data to disk.)
@@ -239,8 +241,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   // deadlocks supabase-js when invoked from inside the onAuthStateChange
   // callback below (the auth lock is already held during the callback).
   const hydrateFor = useCallback(async (userId: string) => {
+    const generation = ++hydrateGeneration.current
     try {
-      setState(await hydrate(userId))
+      const next = await hydrate(userId, (core) => {
+        if (generation !== hydrateGeneration.current) return
+        setState((prev) => {
+          // Background/focus refreshes retain the already-complete snapshot.
+          // The fast core snapshot is only needed to unlock an initial login.
+          if (prev.currentUserId === userId && prev.users[userId]) return prev
+          return core
+        })
+      })
+      if (generation === hydrateGeneration.current) setState(next)
     } catch (e) {
       console.error('hydrate failed', e)
     }
@@ -250,6 +262,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (!USE_SUPABASE) return
     const me = await api.auth.currentUserId()
     if (!me) {
+      hydrateGeneration.current += 1
       setState(buildEmptyState())
       return
     }
@@ -290,6 +303,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       cleanupRealtime = undefined
       subscribedFor = userId
       if (!userId) {
+        hydrateGeneration.current += 1
         setState(buildEmptyState())
         return
       }
