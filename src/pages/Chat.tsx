@@ -334,12 +334,6 @@ export function Chat() {
         </div>
       )}
 
-      {!msgs.some((m) => m.fromCoach) && pending.length === 0 && !replyTo && (
-        <button className="coach-hint" onClick={() => setText('Hey Coach, ')}>
-          <Icon name="spark" size={13} /> Tip: type <strong>&ldquo;Hey Coach…&rdquo;</strong> to ask the Coach together
-        </button>
-      )}
-
       <div className="chat-input">
         <button
           className="attach"

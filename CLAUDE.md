@@ -88,7 +88,10 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `weight_logs` (optional private weight logging — powers real "kg lost"), 0017
   admin dashboard RPCs (see Admin below), 0018 `meals` (private food-photo log —
   calorie/protein estimates), 0019 `meals` full macros (carbs/fat/fiber columns),
-  0020 `goals` (shared buddy goals/challenges — see below).
+  0020 `goals` (shared buddy goals/challenges — see below), 0021
+  **no-reshow of ended matches** (redefines `discover_candidates` to also
+  exclude anyone the caller shares a relationship row with — active OR ended —
+  so a disconnected/unmatched buddy never reappears in Matches; see below).
 - **Migration 0010 (security model — do NOT regress):**
   - `profiles` UPDATE is **column-scoped via GRANTs** (revoke-then-grant only
     editable columns). Privileged flags (`is_staff`, `onboarding_complete`,
@@ -104,6 +107,12 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
     bounded `discover_candidates(p_limit)` RPC (minimized columns, no
     staff/compliance fields). `hydrate.ts` fetches connected profiles via
     `api.profiles.related(ids)`; there is NO more `select * from profiles`.
+    **Migration 0021** extends this RPC to also exclude anyone the caller shares
+    a `relationships` row with (active OR ended) — so an ended match never
+    resurfaces. This REVERSES the old "fresh start / re-suggest the ex-buddy"
+    behaviour: `endRelationship` must NOT forget the pass, and the client
+    `suggestions()` selector filters ALL of my relationships, not just active
+    ones. Do not regress either half.
   - Relationships can't be client-inserted (only `approve_buddy` creates them);
     `trio_members` inserts are self/creator-only; `approve_trio_membership(trio)`
     approves + activates. All definer funcs pin `search_path=''`. Size CHECKs on
@@ -300,8 +309,12 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   Deploy: apply migration 0020 (paste into the SQL Editor, idempotent) before
   shipping the frontend.
 - **AI Coach** (`src/pages/Coach.tsx`, `/coach`, reached from a card on BuddyHome
-  AND an always-present entry at the top of the Chat tab `ChatList`): a
-  wellness/habits companion, **never medical advice**. `/coach` is NOT in
+  — its **dedicated** home). A wellness/habits companion, **never medical advice**.
+  ⚠️ The Coach is intentionally kept OUT of the messaging surface: the old
+  always-present Coach entry at the top of the Chat tab `ChatList` was **removed**
+  so the chat stays focused purely on person-to-person conversation. Reach the
+  Coach only from the BuddyHome card (or `/coach` directly) — do NOT re-add a
+  Coach row to `ChatList` or an in-chat summon. `/coach` is NOT in
   `NAV_PATHS`, so the bottom nav is hidden there — the header has its own back
   button (`navigate(-1)`, same as buddy `Chat`) or mobile users get trapped.
   Backed by the
@@ -319,9 +332,17 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   `**bold**`, no library — extracted to `src/components/CoachText.tsx`, shared
   with the in-chat Coach); the chat is capped to a centred `.chat-wrap.coach`
   760px column (buddy chat still goes full-width ≥640px).
-- **"Hey Coach" in the buddy chat** (migration 0014 `messages.from_coach`,
-  **server-authored + privacy-first**): typing `Hey Coach …` / `Coach: …` in a 1:1
-  chat (`COACH_TRIGGER` in AppStore) summons the Coach. The client calls
+- **"Hey Coach" in the buddy chat — REMOVED (do not reintroduce).** The in-chat
+  Coach summon (`COACH_TRIGGER`, `askCoachInChat`, `api.coach.askInChat`) and its
+  `.coach-hint` composer tip were **removed** to keep the chat strictly
+  person-to-person (the Coach lives only at `/coach` + the Home card now). The
+  DB plumbing is intentionally LEFT intact for optional re-enable: migration 0014
+  (`messages.from_coach` + column-scoped INSERT), the `ask-coach` edge function's
+  in-chat branch, `api.coach.askInChat`, and the `fromCoach` bubble renderer in
+  `Chat.tsx` (kept as a harmless fallback for any legacy rows) all still exist —
+  but nothing calls the summon. **Historical design (for if it's ever re-enabled):**
+  typing `Hey Coach …` / `Coach: …` in a 1:1 chat summoned the Coach; the client
+  called
   `api.coach.askInChat(relId, question)` → `ask-coach` in **in-chat mode**: the
   Edge Function verifies the caller's relationship membership (user-scoped client
   + RLS), asks Claude with **only the typed question** (no names, history, or
@@ -512,6 +533,14 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
   `0020_goals.sql` into the SQL Editor, idempotent) before shipping the
   frontend (BuddyHome's "SHARED GOALS" card calls the RPC directly). No new
   secret or edge function.
+- **No-reshow of ended matches:** apply migration **0021**
+  (`0021_no_reshow_ended_matches.sql` — a `create or replace` of the
+  `discover_candidates` RPC, idempotent, paste into the SQL Editor) so a
+  disconnected/unmatched buddy never reappears in Matches. **Apply it alongside
+  the frontend** (the client `suggestions()` selector also excludes ended
+  relationships, but in Supabase mode ended rels aren't hydrated, so the RPC is
+  what enforces it server-side). No new secret or edge function. Ship before the
+  Android/next store build so the store app gets the fresh-matches behaviour.
 - **Stripe billing (web Premium):** `supabase secrets set STRIPE_SECRET_KEY=sk_…
   STRIPE_PRICE_ID=price_… STRIPE_WEBHOOK_SECRET=whsec_…` then
   `supabase functions deploy create-checkout` (**keep verify_jwt ON**) and

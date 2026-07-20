@@ -51,10 +51,6 @@ import {
 const STORAGE_KEY = 'glpenpal-state-v1'
 const DAY = 24 * 60 * 60 * 1000
 
-// Matches a message that summons the Coach in a buddy chat: "Hey Coach, …",
-// "Coach: …", "coach what about…". The leading greeting is optional.
-const COACH_TRIGGER = /^\s*(?:hey|hi|hello|ok|okay|yo)?[\s,]*coach\b[\s,:!.?-]*/i
-
 function genId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`
 }
@@ -771,36 +767,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   // ---- chat --------------------------------------------------------------
-  // "Hey Coach …" inside a buddy chat summons the AI Coach; its reply is posted
-  // as a shared message (from_coach) so BOTH buddies see it. Only the asker's
-  // client makes the call — the other buddy just receives it via realtime.
-  const askCoachInChat = useCallback((relationshipId: string, rawText: string) => {
-    const q = rawText.replace(COACH_TRIGGER, '').trim() || rawText.trim()
-    void (async () => {
-      try {
-        if (!USE_SUPABASE) {
-          await new Promise((r) => setTimeout(r, 600))
-          setState((prev) => (prev.currentUserId ? {
-            ...prev,
-            messages: [...prev.messages, { id: genId('msg'), relationshipId, senderId: prev.currentUserId, text: "I'm just a demo here — but in the live app I'd cheer you both on (never medical advice). You're doing this together, and that counts for a lot.", createdAt: Date.now(), reactions: [], fromCoach: true }],
-          } : prev))
-          return
-        }
-        // Send ONLY the question — the Edge Function verifies membership and
-        // posts the reply into the shared chat (both buddies see it). No names,
-        // history, or profile data leave the app.
-        await api.coach.askInChat(relationshipId, q)
-        await refresh()
-      } catch (e) {
-        console.error('coach-in-chat failed', e)
-      }
-    })()
-  }, [refresh])
-
+  // Chat is strictly person-to-person. The AI Coach lives in its own dedicated
+  // space (/coach + the Home card) and is intentionally NOT summonable from a
+  // buddy conversation, to keep the chat focused on the two people in it.
   const sendMessage = useCallback((relationshipId: string, text: string, imageUrl?: string, replyTo?: string) => {
     const trimmed = text.trim()
     if (!trimmed && !imageUrl) return
-    const summonsCoach = COACH_TRIGGER.test(trimmed)
     if (USE_SUPABASE) {
       // Optimistic: show the message immediately with a client id. The realtime
       // insert echoes back the server row; we de-dupe on send-and-echo below.
@@ -823,7 +795,6 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           // arrive via realtime / next refresh.
           setState((prev) => ({ ...prev, messages: prev.messages.filter((m) => m.id !== tempId) }))
           await refresh()
-          if (summonsCoach) askCoachInChat(relationshipId, trimmed)
         } catch (e) {
           console.error('sendMessage failed', e)
           // Mark the placeholder as failed so it doesn't silently vanish.
@@ -854,8 +825,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         ],
       }
     })
-    if (summonsCoach) askCoachInChat(relationshipId, trimmed)
-  }, [refresh, state.currentUserId, askCoachInChat])
+  }, [refresh, state.currentUserId])
 
   const reactToMessage = useCallback((messageId: string, reaction: Reaction) => {
     if (USE_SUPABASE) {
@@ -1753,8 +1723,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           ...prev.users,
           [u.id]: { ...u, endedRelationshipCount: u.endedRelationshipCount + 1 },
         },
-        // Allow re-suggesting / fresh start: forget the pass on the ex-buddy.
-        passedUserIds: prev.passedUserIds.filter((id) => id !== otherId),
+        // Permanently exclude the ex-buddy from future match suggestions — an
+        // ended match must never resurface. The ended relationship row already
+        // excludes them (see the suggestions() selector), and we also record the
+        // pass so the exclusion survives even if that row is ever pruned.
+        passedUserIds: otherId
+          ? [...new Set([...prev.passedUserIds, otherId])]
+          : prev.passedUserIds,
       }
     })
   }, [refresh])
@@ -1965,9 +1940,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const suggestions = useCallback((): MatchSuggestion[] => {
     if (!currentUser) return []
     const me = currentUser
-    const myActiveIds = new Set(
+    // Anyone I've ever been connected to — active OR ended. Once a match ends
+    // (either side disconnects/unmatches) that person is permanently removed
+    // from discovery and never resurfaces. In Supabase mode ended relationships
+    // aren't hydrated, so the discover_candidates RPC enforces the same rule
+    // server-side (see migration 0021); this covers demo mode + active buddies.
+    const myBuddyIds = new Set(
       state.relationships
-        .filter((r) => r.active && r.userIds.includes(me.id))
+        .filter((r) => r.userIds.includes(me.id))
         .flatMap((r) => r.userIds),
     )
     const blockedIds = new Set(
@@ -1980,7 +1960,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     return Object.values(state.users)
       .filter((u) => u.id !== me.id)
       .filter((u) => !state.passedUserIds.includes(u.id))
-      .filter((u) => !myActiveIds.has(u.id))
+      .filter((u) => !myBuddyIds.has(u.id))
       .filter((u) => !blockedIds.has(u.id))
       .filter((u) => !outgoingIds.has(u.id))
       .filter((u) => {
