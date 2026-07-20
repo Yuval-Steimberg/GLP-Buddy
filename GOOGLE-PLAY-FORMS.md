@@ -1,0 +1,119 @@
+# GLPenPal — Google Play Console form answers
+
+Fill-in-the-blank answers for the Play Console setup forms, derived from what
+the app actually does. Play won't let you publish until these are all green.
+Anything marked **[YOU]** needs a value only you have.
+
+---
+
+## 1) App access (Play Console → App content → App access)
+The app is **sign-in gated**, so reviewers need a working login.
+- Choose: **All or some functionality is restricted**.
+- Add an instruction:
+  - Name: `Demo account`
+  - Username/email: **[YOU]** — a real account email (ideally pre-matched with a buddy so the 1:1 chat + timeline are visible)
+  - Password: **[YOU]**
+  - Any other instructions: `Sign in with the email/password above. The account is already matched with a buddy, so Chat, Timeline and Matches are all reachable from the bottom nav.`
+
+> Tip: create this demo account in the live app first, and if possible match it
+> with a second test account so the reviewer sees a real conversation.
+
+---
+
+## 2) Ads (App content → Ads)
+- **No, my app does not contain ads.**
+
+---
+
+## 3) Content rating (App content → Content rating)
+Start the IARC questionnaire. Category: **Reference, News, or Educational** (or
+**Social Networking / Communication**). Honest answers for GLPenPal:
+- Violence / scary content: **No**
+- Sexual content / nudity: **No**
+- Profanity / crude humor: **No**
+- Controlled substances (drugs/alcohol/tobacco): **No** — it's peer support for
+  prescribed medication, not promotion of drugs. (If asked about references to
+  medication in a health context, answer per the exact wording; do not claim the
+  app *depicts or encourages* drug use — it does not.)
+- Gambling: **No**
+- **Users can interact / communicate:** **Yes** (1:1 chat + shared timeline)
+- **Users can share user-generated content:** **Yes** (messages, photos, milestones)
+- **Shares user's current physical location:** **No**
+- Personal/sensitive info shared publicly: **No** (all data is private, RLS-scoped)
+- Digital purchases: **No** (nothing sold in-app right now)
+
+Expected outcome: **Teen-ish** (e.g. ESRB Teen / PEGI 12). That's fine and lines
+up with the 18+ audience setting below.
+
+---
+
+## 4) Target audience & content (App content → Target audience)
+- Target age group: **18 and over** only. (The app is 18+; do NOT tick any
+  under-18 box or you fall under the Families policy + extra requirements.)
+- Appeals to children: **No**.
+
+---
+
+## 5) Data safety (App content → Data safety) — the big one
+Overall answers:
+- **Does your app collect or share any of the required user data types?** → **Yes**
+- **Is all user data encrypted in transit?** → **Yes** (HTTPS + Supabase).
+- **Do you provide a way for users to request that their data is deleted?** →
+  **Yes** — the app has in-app account deletion (`delete_own_account`) that
+  cascades all their data. Deletion URL/instructions: in-app **Profile → delete
+  account** (and support email `yuvalste13@gmail.com`).
+
+### Data types to declare
+For each: **Collected = Yes**, **Shared = No** (Supabase/Sentry are processors
+acting on your behalf, not third parties using data for their own purposes),
+**Processing = not ephemeral** (stored), **Required** unless noted, and the
+purposes listed.
+
+| Data type (Google's list) | Why the app has it | Purposes |
+|---|---|---|
+| **Personal info → Email address** | Sign-in / account | Account management, App functionality |
+| **Personal info → Name** | Nickname / display name | App functionality |
+| **Personal info → User IDs** | Account/profile id | Account management, App functionality |
+| **Photos and videos → Photos** | Avatar, chat, timeline, meal photos (optional) | App functionality |
+| **Messages → Other in-app messages** | 1:1 buddy chat | App functionality |
+| **Health and fitness → Health info** | Medication, treatment stage, weight ranges, weight logs, meal/calorie estimates, injection day | App functionality |
+| **App activity → App interactions** *(only if you enabled analytics — Plausible)* | Usage/product analytics | Analytics |
+| **App info & performance → Crash logs / Diagnostics** *(only if Sentry is enabled)* | Error tracking | App functionality (stability) |
+
+Notes:
+- **Location:** **Not collected** (no GPS/precise or approximate location).
+- **Financial info:** **Not collected** (no payments in the shipped app).
+- Photos/health data are **optional** where the user chooses to add them; email
+  is **required**.
+- If you have NOT set `VITE_SENTRY_DSN` / analytics in the native build, drop the
+  last two rows (only declare what you actually ship).
+
+---
+
+## 6) Government apps / financial features declaration
+Already covered on the account-type checklist → **None of the above**.
+
+---
+
+## 7) Store listing essentials (Grow → Store presence → Main store listing)
+- **App name:** `GLPenPal`
+- **Short description (80):** `1:1 peer support for your GLP-1 journey — matched by medication, stage & goals.`
+- **Full description:** paste from `STORE-LISTING.md`.
+- **App icon:** 512×512 (generated by `@capacitor/assets`; export from `resources/icon.png` if Play wants a separate upload).
+- **Feature graphic (1024×500):** `store-screenshots/play-feature-graphic-cream.png` or `-sage.png`.
+- **Phone screenshots:** from `store-screenshots/` (min 2, up to 8).
+- **Category:** Health & Fitness. **Tags:** support, wellness, community.
+- **Contact email:** `yuvalste13@gmail.com`
+- **Privacy Policy URL:** `https://glpenpal.com/privacy` (live in-app).
+
+---
+
+## 8) Privacy Policy (App content → Privacy policy)
+- URL: `https://glpenpal.com/privacy`
+
+---
+
+### Order to complete them
+App access → Ads → Content rating → Target audience → Data safety → Privacy
+policy → Store listing. Once all show a green check and your account
+verification clears, you can roll out a release.
