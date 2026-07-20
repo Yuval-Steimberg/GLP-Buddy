@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/AppStore'
 import { Icon } from '../components/Icon'
+import { DataSkeleton } from '../components/AppLoading'
 import { timeAgo } from '../utils/format'
 import { USE_SUPABASE } from '../lib/env'
 import * as api from '../services/api'
@@ -85,7 +86,7 @@ export function Moderation() {
       </div>
 
       {error && <div className="banner" style={{ background: '#fbeaea', color: '#a1352f', marginBottom: 12 }}>{error}</div>}
-      {loading && <p className="muted center" style={{ marginTop: 30 }}>Loading…</p>}
+      {loading && <DataSkeleton />}
 
       {!loading && tab === 'overview' && overview && (
         <>

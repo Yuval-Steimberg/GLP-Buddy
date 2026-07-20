@@ -9,7 +9,7 @@ import { AuthScreen } from './auth/AuthScreen'
 import { ResetPassword } from './auth/ResetPassword'
 import { useSession } from './auth/useSession'
 import { auth } from './services/api'
-import { BrandMark } from './components/Icon'
+import { AppLoading, RouteSkeleton } from './components/AppLoading'
 import { USE_SUPABASE } from './lib/env'
 
 // Code-split the authenticated app + secondary screens so the landing/auth
@@ -121,15 +121,6 @@ const Terms = lazyWithReload(imports.Terms)
 
 const NAV_PATHS = ['/home', '/matches', '/timeline', '/chat', '/profile', '/pending', '/trio', '/journey', '/notifications']
 
-function Loading() {
-  return (
-    <div className="empty" style={{ marginTop: 120 }}>
-      <div className="empty-ico"><BrandMark size={30} /></div>
-      <p>Loading…</p>
-    </div>
-  )
-}
-
 export function App() {
   const { currentUser } = useStore()
   const location = useLocation()
@@ -163,7 +154,7 @@ export function App() {
     if (session.loading) {
       return (
         <div className="app-shell">
-          <main className="app-main"><Loading /></main>
+          <main className="app-main"><AppLoading /></main>
         </div>
       )
     }
@@ -173,7 +164,7 @@ export function App() {
       return (
         <div className="app-shell">
           <main className="app-main">
-            <Suspense fallback={<Loading />}>
+            <Suspense fallback={<AppLoading message="Opening GLPenPal" />}>
               <Routes>
                 <Route path="/auth" element={<AuthScreen />} />
                 <Route path="/privacy" element={<Privacy />} />
@@ -194,7 +185,7 @@ export function App() {
   if (USE_SUPABASE && session.userId && !currentUser) {
     return (
       <div className="app-shell">
-        <main className="app-main"><Loading /></main>
+        <main className="app-main"><AppLoading message="Preparing your buddy space" /></main>
       </div>
     )
   }
@@ -209,7 +200,7 @@ export function App() {
     <div className="app-shell">
       {showNav && <BottomNav />}
       <main className="app-main">
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<RouteSkeleton />}>
         <Routes>
           <Route
             path="/"
