@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom'
 import { useInstallPrompt } from '../lib/pwa'
 import { BrandMark, Icon } from './Icon'
 
@@ -5,9 +6,16 @@ import { BrandMark, Icon } from './Icon'
 // the native install dialog; on iOS Safari — which has no install API — it shows
 // the Share → Add to Home Screen steps. Hidden once installed or dismissed, and
 // never shown when already running as an installed PWA.
+//
+// Suppressed on the public marketing landing page ("/") — once the native App
+// Store / Google Play links are live there (see StoreBadges in Landing.tsx),
+// pointing a fresh visitor at "add to home screen" instead of the real store
+// listings is the wrong nudge. It still shows elsewhere in the app (e.g. for
+// existing signed-in PWA users navigating the product).
 export function InstallPrompt() {
+  const { pathname } = useLocation()
   const { canShow, iosSafari, install, dismiss } = useInstallPrompt()
-  if (!canShow) return null
+  if (pathname === '/' || !canShow) return null
 
   return (
     <div className="install-banner" role="dialog" aria-label="Install GLPenPal">
