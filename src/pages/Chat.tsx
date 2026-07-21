@@ -414,7 +414,7 @@ export function Chat() {
       {/* Report */}
       <Sheet open={reportOpen} onClose={() => setReportOpen(false)}>
         <h2>Report {buddy.profile.nickname}</h2>
-        <p style={{ marginTop: 4 }}>Reports go to our moderation team (placeholder for MVP).</p>
+        <p style={{ marginTop: 4 }}>Reports go to our safety team and are reviewed promptly. We may remove content or suspend the account.</p>
         <div className="stack">
           {['Inappropriate messages', 'Gave medical/dosing advice', 'Harassment', 'Spam or selling', 'Other'].map((r) => (
             <button

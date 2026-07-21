@@ -24,7 +24,7 @@ export function Terms() {
         <p>Be kind and respectful. No harassment, hate, spam, selling, sharing of others' private information, or impersonation. Don't give or solicit medical/dosing guidance.</p>
 
         <h3>Reports, blocks &amp; moderation</h3>
-        <p>You can report or block any user. We may remove content or suspend accounts that violate these terms. We aim to review reports promptly but provide the service "as is".</p>
+        <p>You can report or block any user directly from a conversation. <strong>We have zero tolerance for objectionable content and abusive users.</strong> We review reports promptly (we aim for within 24 hours) and may remove content and suspend or permanently remove accounts that violate these terms. Blocking a user immediately ends the connection and prevents any further contact.</p>
 
         <h3>Your content</h3>
         <p>You own what you write. You grant us a limited license to store and display it to your buddies so the service can function.</p>
