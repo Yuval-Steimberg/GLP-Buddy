@@ -50,6 +50,22 @@ Brand name is **GLPenPal** (do NOT reintroduce the old "GLP Buddy" name).
   stats band, problem, feature rows, how-it-works, community voices
   (representative quotes, labelled not-medical-advice — never fabricate named
   reviews for a health product), values, FAQ, final CTA.
+  - **App Store / Google Play badges** (`StoreBadges` in `Landing.tsx`, shown
+    in the hero and the final CTA): already wired to `APP_STORE_URL` /
+    `PLAY_STORE_URL` in `src/constants.ts` — a badge renders only once its URL
+    is non-empty, so this is safe to ship before either app is live. **Both
+    are currently empty strings** (both apps are mid-review, 2026-07).
+  - **The global "Install GLPenPal / Add to Home Screen" banner
+    (`InstallPrompt`, mounted in `main.tsx`) is suppressed on `/` (the landing
+    page)** — added 2026-07 so a first-time visitor isn't nudged toward the
+    PWA instead of the real store listings once those go live. It still shows
+    on every other route (e.g. for existing signed-in PWA users). ⚠️ **This
+    change is NOT yet merged to `main`/prod** — it's sitting on
+    `claude/repo-audit-merge-branches-vda980` only, deliberately held back per
+    explicit instruction until the real store URLs exist. **When the App
+    Store and Play Store links are ready: fill both constants in
+    `src/constants.ts` AND merge/ship this branch's landing change together**
+    — they're meant to land in the same deploy.
 
 ## Supabase
 - Migrations in `supabase/migrations/000N_*.sql`. `ALL_MIGRATIONS.sql` is a
@@ -562,13 +578,18 @@ scripts live in the scratchpad dir; clean up screenshots from `store-screenshots
 - Wipe all data to test from scratch: `supabase/maintenance/reset_all_data.sql`
   (SQL Editor). Re-grant staff after: `update profiles set is_staff=true where id='…'`.
 - **Native store builds (iOS/Android, Capacitor):** the `ios/`/`android/` shells
-  are NOT committed — generate on a Mac with `npx cap add ios`. The web app is
-  bundled at BUILD time, so env vars must be supplied locally (Netlify's dashboard
-  doesn't reach the Mac): create `.env.production` with `VITE_BACKEND=supabase` +
-  `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` BEFORE `npm run cap:ios`, or the
-  store app ships in **demo mode with fake data** (the #1 gotcha). Every re-upload
-  needs a higher Xcode **Build** number. Bundle id `com.glpenpal.app`; icon/splash
-  source art in `resources/`. Full step-by-step in `APPLE-STORE-UPLOAD.md`.
+  are NOT committed — generate on a Mac with `npx cap add ios` / `add android`.
+  The web app is bundled at BUILD time, so env vars must be supplied locally
+  (Netlify's dashboard doesn't reach the Mac): create `.env.production` with
+  `VITE_BACKEND=supabase` + `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
+  BEFORE building, or the store app ships in **demo mode with fake data** (the
+  #1 gotcha, applies to both platforms). Every re-upload needs a higher
+  version (Xcode **Build** number for iOS; `versionCode` in
+  `android/app/build.gradle` for Android). **Bundle/package ids differ on
+  purpose:** iOS `com.glpenpal.mobile.ios`, Android `com.glpenpal.app`. Icon/
+  splash source art in `resources/`. Full step-by-step: `APPLE-STORE-UPLOAD.md`
+  (iOS), `PLAY-STORE-FINISH.md` (Android — start there; it links the rest of
+  the Google Play doc set).
 
 ## Pending for the NEXT App Store build (ship AFTER the current version is approved)
 These 3 features are **already merged into `main` + the prod branch
@@ -651,11 +672,79 @@ a **NEW version** in App Store Connect.
   `GLPenPal`) so `Distribute → Upload` has a home (avoids "App Record Creation
   Error"). Reviewer: **provide a demo login** (app is sign-in-gated) — ideally an
   account pre-matched with a buddy so the 1:1 chat/timeline is reachable.
+- **First submission (2026-07), rejection + fix (metadata-only, no rebuild):**
+  Apple rejected build `1.0 (1)` under **Guideline 2.3.6 — Accurate Metadata**:
+  the Age Rating questionnaire hadn't been marked **"User-Generated Content" =
+  Yes**, even though the app has buddy chat/timeline. Fix was **App Store
+  Connect → App Information → Age Rating → edit → set User-Generated Content =
+  Yes** (also set Health/Wellness Topics = Yes; the med-related "Medical
+  Treatment Information" question = Infrequent), then **resubmit the same
+  build** — no new archive/upload needed for a metadata-only rejection. If
+  Apple (or Google) ever separately invokes Guideline 1.2 (UGC safety), the
+  ready-to-paste reply is in `UGC-SAFETY.md` — the app already has report,
+  block, a staff moderation dashboard, and a zero-tolerance Terms clause.
+
+### Android / Google Play (first submission, 2026-07)
+- **Android `applicationId` is deliberately DIFFERENT from iOS:
+  `com.glpenpal.app`** (vs. iOS's `com.glpenpal.mobile.ios`) — set in
+  `android/app/build.gradle` `defaultConfig`, NOT in `capacitor.config.ts`
+  (that file's `appId` only seeds `cap add android`'s starting point; it's
+  overridden by hand afterward). **This is permanent once uploaded to Play —
+  never re-run `cap add android` in a way that would reset it.** Leave
+  `namespace` in `build.gradle` as the Capacitor default; Android allows
+  `applicationId` ≠ `namespace` and Play only cares about `applicationId`.
+- **`scripts/android-build.sh`** is the one-command local build prep: checks
+  `.env.production` is real (not demo mode), runs `cap add android` if
+  missing, sets the `com.glpenpal.app` id + version in `build.gradle`,
+  generates icons/splash, builds + `cap sync`. Prints the remaining
+  keystore/signed-bundle steps at the end. Run this before opening Android
+  Studio, not `npm run cap:android` directly, the first time.
+- **Play Console developer account is an Israel-based Individual account**
+  (payments profile country **Israel**, address **Hazav 30, Yavne** — this was
+  corrected mid-setup from a placeholder US address; the account/payments
+  country is permanent once set, so don't reintroduce a US address anywhere).
+- **New developer accounts cannot publish straight to Production.** Google
+  requires a **closed testing track**: upload the `.aab`, add a tester email
+  list, get **≥12 real testers to opt in** (via the tester link — works from
+  any device/browser with a Google account, an Android phone isn't required
+  just to opt in, only to actually install), and hold **14 continuous days**
+  before "Apply for production access" unlocks. Do the store listing + all
+  "App content" policy forms in parallel — none of that is gated by
+  verification/testing, only the final Production rollout is.
+- **Account verification (identity doc + payments address) runs in the
+  background** and only blocks the final Production publish — the entire
+  build, upload to Internal/Closed testing, and every listing/content form can
+  be completed before it clears.
+- **Store assets generated this session, committed under `store-screenshots/`:**
+  `play-store-icon-512.png` (512×512), `play-feature-graphic-cream.png` /
+  `-sage.png` (1024×500, pick one — regenerate both via
+  `scripts/gen_feature_graphic.py` from `public/brand/logo-lockup.png`), and
+  **tablet screenshots** (`tablet-7in-*.png` 1080×1920, `tablet-10in-*.png`
+  1620×2880 — Play's Main store listing requires these; generated via
+  `store-screenshots/shots-tablet-android.mjs`, same demo-state pattern as
+  `shots.mjs`/`shots-ipad.mjs`, viewport width kept ≥980 CSS px so the tablet
+  sidebar layout renders).
+- **Content rating category: "Social"** (not "Communication" — matching
+  strangers by compatibility, not just messaging known contacts) and
+  **"Nutrition and weight management"** is the one Health-features box that
+  applies (meal + weight logging); do NOT check "Medication and treatment
+  management" — the medication field is for matching only, not dosing/
+  adherence, and checking it would misrepresent the app. Full reasoning +
+  every other form answer is in `GOOGLE-PLAY-FORMS.md`.
 
 ## Guide docs (repo root)
 `GETTING-STARTED-PWA.md` (go-live + install + smoke test),
 `APPLE-STORE-UPLOAD.md` (**full Apple App Store guide** — build → upload →
-listing copy + privacy + reviewer notes, all inlined; `STORE-LISTING.md` was
-folded into it and deleted), `STORE-SETUP.md` (short iOS+Android build notes),
-`ACTIVATE-OPTIONAL.md` (push/SMTP/analytics/Sentry), `PRODUCTION.md`,
-`GO_LIVE.md`.
+listing copy + privacy + reviewer notes, all inlined), `STORE-LISTING.md`
+(store copy for both platforms — still a separate live file, despite an old
+note elsewhere claiming it was folded away), `STORE-SETUP.md` (short
+iOS+Android build notes), `ACTIVATE-OPTIONAL.md` (push/SMTP/analytics/Sentry),
+`PRODUCTION.md`, `GO_LIVE.md`.
+- **Google Play doc set (added 2026-07, first Android submission):**
+  `PLAY-STORE-FINISH.md` is the **master checklist** — start there. It links
+  out to `GOOGLE-PLAY-UPLOAD.md` (command-by-command local build guide),
+  `GOOGLE-PLAY-FORMS.md` (pre-answered Data Safety / Content Rating / App
+  access / Ads / Target audience forms), `REVIEWER-ACCESS.md` (how to set up +
+  word the demo/reviewer account for the App access form), and
+  `UGC-SAFETY.md` (ready-to-paste Guideline-1.2-style reply if either store
+  ever asks about report/block/moderation — the app already has all of it).
