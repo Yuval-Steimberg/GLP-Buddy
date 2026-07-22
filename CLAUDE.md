@@ -683,6 +683,21 @@ a **NEW version** in App Store Connect.
   Apple (or Google) ever separately invokes Guideline 1.2 (UGC safety), the
   ready-to-paste reply is in `UGC-SAFETY.md` — the app already has report,
   block, a staff moderation dashboard, and a zero-tolerance Terms clause.
+- **Second rejection, same submission — Guideline 1.1 Safety: Objectionable
+  Content, metadata-only again.** Apple flagged the literal string **"18+"**
+  in the App Store **description** field (`"description – 18+."`) as if the
+  app were *marketing* objectionable/adult content — a known false-positive
+  pattern for apps that (like this one) also involve matching with new
+  people. ⚠️ **Do not put "18+" / "adults only" / an explicit age number
+  anywhere in the free-text App Store description or promotional text** — the
+  structured **Age Rating** field (17+) is the correct, non-flagged place for
+  that, plus the in-app onboarding age gate. Fixed by deleting the "18+ only."
+  bullet from the "Built for privacy and safety" list in both
+  `STORE-LISTING.md` and `APPLE-STORE-UPLOAD.md` (they had duplicated the same
+  description text) → re-save the Description field in App Store Connect →
+  resubmit the same build, no rebuild. Google Play's "Target audience: 18+" is
+  a different, structured **field** (not free-text marketing copy) — that one
+  is fine and unaffected by this gotcha.
 
 ### Android / Google Play (first submission, 2026-07)
 - **Android `applicationId` is deliberately DIFFERENT from iOS:
