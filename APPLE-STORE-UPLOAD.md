@@ -291,7 +291,6 @@ Built for privacy and safety
 - Private 1:1 conversations. No public feeds, no follower counts.
 - You choose what to share — a nickname is all you need.
 - Report or block anyone, anytime.
-- 18+ only.
 
 Peer support — not medical advice. GLPenPal is a place to feel understood by people who get it. It does not provide medical, dosing, or clinical guidance. Always talk to a qualified healthcare professional about your treatment, and for urgent symptoms contact a clinician or emergency services.
 
