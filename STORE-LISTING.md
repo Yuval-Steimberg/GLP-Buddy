@@ -48,7 +48,6 @@ who's on the same path.
 - Private 1:1 conversations. No public feeds, no follower counts.
 - You choose what to share — a nickname is all you need.
 - Report or block anyone, anytime.
-- 18+ only.
 
 **Peer support — not medical advice.** GLPenPal is a place to feel understood by
 people who get it. It does not provide medical, dosing, or clinical guidance.
