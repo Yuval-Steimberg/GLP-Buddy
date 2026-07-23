@@ -1,14 +1,17 @@
 // On-brand "sage" avatar palette — varied for distinguishing people, but cohesive
 // eucalyptus / sky-blue / warm-sand wellness tones.
+// Warm, wellness-first initials palette — sage / teal / clay / sand / olive.
+// Kept deliberately in-family so avatars never clash with the app canvas
+// (also used by the share-card exports).
 const AVATAR_COLORS = [
-  '#5e8c74', // sage
-  '#5f8497', // sky blue
-  '#c2955f', // warm sand
-  '#7ba890', // soft green
-  '#6d94a6', // dusty blue
-  '#b0885a', // ochre
-  '#8a9c72', // olive
-  '#9a7b8c', // muted mauve
+  '#4f8265', // eucalyptus sage
+  '#5f8497', // soft sky blue
+  '#c07a52', // warm clay
+  '#6f9a86', // muted green
+  '#4d7c8a', // deep teal
+  '#b5893f', // amber ochre
+  '#7f9a68', // olive
+  '#c2895e', // terracotta sand
 ]
 
 export function avatarColor(seed: string): string {
