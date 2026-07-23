@@ -15,13 +15,16 @@ export function Avatar({ name, size = 44, src }: { name: string; size?: number; 
       />
     )
   }
+  const base = avatarColor(name)
   return (
     <div
       className="avatar"
       style={{
         width: size,
         height: size,
-        background: avatarColor(name),
+        // Subtle two-tone fill (lighter top-left → deeper bottom-right) so
+        // initials avatars read with depth instead of a flat disc.
+        background: `linear-gradient(145deg, color-mix(in srgb, ${base} 88%, #fff), ${base} 52%, color-mix(in srgb, ${base} 82%, #000))`,
         fontSize: size * 0.4,
       }}
     >

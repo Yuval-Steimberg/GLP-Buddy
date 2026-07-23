@@ -1810,3 +1810,64 @@ h3 { letter-spacing: -0.015em; }
     transition: none !important;
   }
 }
+
+/* =======================================================================
+   PASS 2 — Craft refinements toward the Apple / Airbnb / Spotify bar.
+   Chiefly a restrained typographic system: hierarchy comes from size,
+   space and rhythm — not from making everything heavy-black.
+   ======================================================================= */
+
+/* ---- Editorial type scale ------------------------------------------- */
+/* App UI headings use Inter (humanist, calm, trustworthy) rather than the
+   geometric Space Grotesk display face, which read a touch "techy". Space
+   Grotesk is reserved for the brand wordmark + big numeric stats, where its
+   character earns its place. Hierarchy comes from size/space, not weight. */
+.topbar .title,
+.app-main:not(:has(.lp)) h1,
+.app-main:not(:has(.lp)) h2,
+.app-main:not(:has(.lp)) h3 {
+  font-family: var(--font-body);
+}
+.topbar .title {
+  font-weight: 640; font-size: 29px; letter-spacing: -0.033em; line-height: 1.05;
+}
+h1 { font-weight: 650; letter-spacing: -0.03em; line-height: 1.06; }
+h2 { font-weight: 640; letter-spacing: -0.024em; line-height: 1.15; }
+h3 { font-weight: 640; letter-spacing: -0.014em; line-height: 1.25; }
+/* Body copy: a touch more line-height for calm readability. */
+p, .muted, .home-intro p, .match-profile-bio { line-height: 1.55; }
+/* Big display numbers keep presence without the black weight. */
+.stat .num, .journey-insight strong, .meal-cal strong, .meal-macro strong,
+.meal-today-grid strong, .data-skeleton-number { font-weight: 620; letter-spacing: -0.03em; }
+/* Section eyebrows stay quiet and evenly tracked. */
+.home-kicker, .section-kicker { font-weight: 700; letter-spacing: 0.11em; font-size: 10.5px; }
+
+/* Card titles / list headings: semibold, not black; give them breathing room. */
+.card h2, .card h3 { font-weight: 620; }
+.buddy-head h3, .match-card-identity h2, .match-profile-person h2 { font-weight: 640; }
+
+/* ---- Composer send: confident when ready, calm when resting --------- */
+button.send { background: var(--grad); box-shadow: var(--glow); transition: transform 0.16s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease); }
+.chat-input .send:disabled, button.send:disabled {
+  opacity: 1; background: var(--surface-2); color: var(--ink-faint); box-shadow: none;
+}
+.chat-input .send:not(:disabled):active, button.send:not(:disabled):active { transform: scale(0.9); }
+
+/* ---- Selection state gets a clear, calm ring ------------------------- */
+.option.selected, .checkin-chip.selected {
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+  background: var(--primary-soft); color: var(--primary-ink);
+}
+
+/* ---- List / section headings spacing rhythm ------------------------- */
+.screen > h2, .screen > h3 { margin-inline: 4px; }
+
+/* ---- Avatars: keep the sheen subtle over the new gradient fill ------- */
+.avatar:not(img)::after { background: linear-gradient(157deg, rgba(255,255,255,.28), rgba(255,255,255,0) 48%); }
+
+/* ---- Notification bell button: quiet, tappable, on-brand ------------- */
+.icon-btn { color: var(--ink); }
+
+/* ---- Cards: rely a little more on the hairline, a little less on lift  */
+.card { box-shadow: 0 1px 2px rgba(58,46,28,.04), 0 10px 24px -14px rgba(58,46,28,.18); }
+:root[data-theme='dark'] .card { box-shadow: 0 1px 2px rgba(0,0,0,.25), 0 12px 26px -14px rgba(0,0,0,.45); }

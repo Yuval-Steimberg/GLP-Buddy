@@ -243,7 +243,11 @@ export function MealLog() {
       {/* History */}
       <h3 style={{ margin: '22px 4px 10px' }}>Your meals</h3>
       {meals.length === 0 ? (
-        <p className="muted" style={{ margin: '0 4px' }}>No meals yet — log your first one above.</p>
+        <div className="empty">
+          <div className="empty-ico"><Icon name="meal" size={30} /></div>
+          <h3>Nothing logged yet</h3>
+          <p>Snap your first plate above and your meals will build a private food diary here.</p>
+        </div>
       ) : (
         <div className="stack">
           {meals.map((m: Meal) => {
